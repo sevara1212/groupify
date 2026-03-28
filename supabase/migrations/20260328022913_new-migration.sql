@@ -162,3 +162,4 @@ create policy "Allow all on quiz_questions"  on quiz_questions  for all using (t
 create policy "Allow all on quiz_answers"    on quiz_answers    for all using (true) with check (true);
 create policy "Allow all on tasks"           on tasks           for all using (true) with check (true);
 create policy "Allow all on risk_alerts"     on risk_alerts     for all using (true) with check (true);
+create policy "Allow all on messages"        on messages        for all using (true) with check (true);

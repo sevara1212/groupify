@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2 } from 'lucide-react';
+import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2, Share2, MessageCircle, Link2, Check } from 'lucide-react';
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
@@ -82,6 +82,31 @@ export default function InviteTeam() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const shareMessage = `Join our Groupify project${joinCode ? ` using code: ${joinCode}` : ''}!\n\n${joinUrl}`;
+
+  const handleShareEmail = () => {
+    const subject = encodeURIComponent('Join our Groupify project!');
+    const body = encodeURIComponent(`Hey!\n\nI've created a group project on Groupify. Click the link below to join and take the quiz so we can allocate tasks fairly.\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(`Hey! Join our Groupify project 🎓\n\n${joinUrl}${joinCode ? `\n\nJoin code: ${joinCode}` : ''}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join our Groupify project',
+          text: `Join our Groupify project${joinCode ? ` (code: ${joinCode})` : ''}`,
+          url: joinUrl,
+        });
+      } catch { /* user cancelled */ }
+    }
+  };
+
   const handleAddMember = async () => {
     if (!newName.trim() || adding) return;
     setAdding(true);
@@ -145,16 +170,53 @@ export default function InviteTeam() {
               </div>
             )}
 
-            {/* Unique join URL bar */}
-            <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-6"
-              style={{ border: '1px solid #EDE9FE', backgroundColor: '#F8F7FF' }}>
-              <span className="flex-1 text-sm font-mono truncate" style={{ color: '#1C1829' }}>{joinUrl}</span>
-              <button onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all"
-                style={{ borderColor: copied ? '#C4B5FD' : '#EDE9FE', color: copied ? '#8B5CF6' : '#6B6584', backgroundColor: copied ? '#F5F3FF' : 'transparent' }}>
-                <Copy size={11} />
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
+            {/* Join link + share options */}
+            <div className="rounded-xl mb-6 overflow-hidden" style={{ border: '1px solid #EDE9FE' }}>
+              {/* URL bar */}
+              <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: '#F8F7FF', borderBottom: '1px solid #EDE9FE' }}>
+                <Link2 size={14} style={{ color: '#8B5CF6' }} className="flex-shrink-0" />
+                <span className="flex-1 text-sm font-mono truncate" style={{ color: '#1C1829' }}>{joinUrl}</span>
+                <button onClick={handleCopy}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                  style={{
+                    backgroundColor: copied ? '#8B5CF6' : 'white',
+                    color: copied ? 'white' : '#6B6584',
+                    border: copied ? '1px solid #8B5CF6' : '1px solid #EDE9FE',
+                  }}>
+                  {copied ? <Check size={11} /> : <Copy size={11} />}
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </button>
+              </div>
+              {/* Share buttons row */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-white">
+                <span className="text-xs font-semibold mr-1" style={{ color: '#A09BB8' }}>Share via:</span>
+                <button onClick={handleShareEmail}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+                  style={{ backgroundColor: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#EFF6FF'; }}>
+                  <Mail size={12} />
+                  Email
+                </button>
+                <button onClick={handleShareWhatsApp}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+                  style={{ backgroundColor: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#D1FAE5'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#ECFDF5'; }}>
+                  <MessageCircle size={12} />
+                  WhatsApp
+                </button>
+                {typeof navigator !== 'undefined' && navigator.share && (
+                  <button onClick={handleNativeShare}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+                    style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6', border: '1px solid #C4B5FD' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDE9FE'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F5F3FF'; }}>
+                    <Share2 size={12} />
+                    More
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Add member manually */}
