@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, Check, AlertTriangle, Calendar, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
+import { Loader2, Check, AlertTriangle, Calendar, ArrowRight } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
+import Card from '../components/ui/Card';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 
@@ -27,7 +28,7 @@ export default function Rebalance() {
     })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(setPlan)
-      .catch(() => setError('Could not generate a rebalance plan. Please try again.'))
+      .catch(() => setError('Could not generate rebalance plan.'))
       .finally(() => setLoading(false));
   }, [projectId, task_id, from_member_id]);
 
@@ -47,18 +48,15 @@ export default function Rebalance() {
     }
   };
 
-  /* Loading state */
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-5" style={{ backgroundColor: '#F8F7FF' }}>
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', boxShadow: '0 8px 24px rgba(139,92,246,0.3)', animation: 'pulse 1.4s ease-in-out infinite' }}>
-          <Sparkles size={24} color="white" />
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', boxShadow: '0 8px 20px rgba(139,92,246,0.3)', animation: 'pulse 1.4s ease-in-out infinite' }}>
+          <Loader2 size={22} color="white" className="animate-spin" />
         </div>
-        <div className="text-center">
-          <p className="text-base font-bold" style={{ color: '#1C1829' }}>Calculating rebalance plan…</p>
-          <p className="text-sm font-medium mt-1" style={{ color: '#6B6584' }}>Finding the best reassignment</p>
-        </div>
+        <p className="text-sm font-medium" style={{ color: '#6B6584' }}>Calculating rebalance plan…</p>
+        <style>{`@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(0.95)}}`}</style>
       </div>
     );
   }
@@ -66,57 +64,55 @@ export default function Rebalance() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
       <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold mb-2" style={{ color: '#1C1829', letterSpacing: '-0.02em' }}>
-            Rebalance Tasks
-          </h1>
-          <p className="text-sm font-medium leading-relaxed" style={{ color: '#6B6584' }}>
-            Review the proposed task reassignment before applying changes.
-          </p>
-        </div>
+        <h1 className="text-2xl font-extrabold mb-1" style={{ color: '#1C1829', letterSpacing: '-0.02em' }}>
+          Rebalance Tasks
+        </h1>
+        <p className="text-sm mb-7" style={{ color: '#6B6584' }}>
+          Review the proposed reassignment before applying.
+        </p>
 
         {error && (
-          <div className="rounded-2xl px-5 py-4 mb-6 flex items-start gap-3 animate-slide-down"
+          <div className="rounded-2xl px-4 py-3 mb-6 flex items-start gap-3"
             style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }}>
-            <AlertTriangle size={18} className="mt-0.5 flex-shrink-0" style={{ color: '#D97706' }} />
-            <p className="text-sm font-semibold" style={{ color: '#92400E' }}>{error}</p>
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" style={{ color: '#D97706' }} />
+            <p className="text-sm font-medium" style={{ color: '#92400E' }}>{error}</p>
           </div>
         )}
 
         {plan && (
-          <div className="space-y-6">
-            {/* Before / After comparison */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Current */}
-              <div className="rounded-2xl p-6" style={{ backgroundColor: '#FEF3C7', border: '1.5px solid #FDE68A' }}>
+          <div className="space-y-4">
+            {/* Before / After */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Before */}
+              <div className="rounded-2xl p-5" style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }}>
                 <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#92400E' }}>
-                  Currently Assigned
+                  Current
                 </p>
                 <div className="flex items-center gap-3">
-                  <Avatar name={plan.original_member?.name || '?'} color="#D97706" size="lg" />
+                  <Avatar name={plan.original_member?.name || '?'} color="#D97706" size="md" />
                   <div>
-                    <p className="text-base font-bold" style={{ color: '#1C1829' }}>{plan.original_member?.name}</p>
-                    <p className="text-xs font-medium" style={{ color: '#92400E' }}>Needs help with this task</p>
+                    <p className="text-sm font-bold" style={{ color: '#1C1829' }}>{plan.original_member?.name}</p>
+                    <p className="text-xs" style={{ color: '#92400E' }}>Currently assigned</p>
                   </div>
                 </div>
               </div>
 
-              {/* Proposed */}
-              <div className="rounded-2xl p-6" style={{ backgroundColor: '#F5F3FF', border: '1.5px solid #C4B5FD' }}>
-                <p className="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-1.5" style={{ color: '#6D28D9' }}>
-                  <Sparkles size={12} /> Proposed
+              {/* After */}
+              <div className="rounded-2xl p-5" style={{ backgroundColor: '#F5F3FF', border: '1px solid #C4B5FD' }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#6D28D9' }}>
+                  Proposed ✦
                 </p>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {(plan.proposed || []).map((p, idx) => (
                     <div key={p.member_id} className="flex items-start gap-3">
-                      <Avatar name={p.member_name} color={MEMBER_COLORS[idx % MEMBER_COLORS.length]} size="md" />
+                      <Avatar name={p.member_name} color={MEMBER_COLORS[idx % MEMBER_COLORS.length]} size="sm" />
                       <div className="min-w-0">
                         <p className="text-sm font-bold" style={{ color: '#1C1829' }}>{p.member_name}</p>
-                        <p className="text-xs truncate font-medium" style={{ color: '#6B6584' }}>{p.section}</p>
+                        <p className="text-xs truncate" style={{ color: '#6B6584' }}>{p.section}</p>
                         {p.estimated_completion_date && (
-                          <span className="inline-flex items-center gap-1 mt-1.5 text-xs px-2.5 py-1 rounded-full font-bold"
+                          <span className="inline-flex items-center gap-1 mt-1 text-xs px-2 py-0.5 rounded-full font-semibold"
                             style={{ backgroundColor: '#EDE9FE', color: '#8B5CF6' }}>
-                            <Calendar size={10} /> {p.estimated_completion_date}
+                            <Calendar size={9} /> {p.estimated_completion_date}
                           </span>
                         )}
                       </div>
@@ -128,22 +124,16 @@ export default function Rebalance() {
 
             {/* Rubric impact */}
             {plan.rubric_impact && (
-              <div className="rounded-2xl px-5 py-4 flex items-start gap-3"
-                style={{ backgroundColor: '#E0F2FE', border: '1px solid #BAE6FD' }}>
-                <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" style={{ color: '#0369A1' }} />
-                <p className="text-sm font-medium" style={{ color: '#0369A1' }}>{plan.rubric_impact}</p>
+              <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#E0F2FE', border: '1px solid #BAE6FD', color: '#0369A1' }}>
+                <p className="text-sm">{plan.rubric_impact}</p>
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4">
-              <Button variant="ghost" onClick={() => navigate('/risk-alerts')} className="gap-1.5">
-                <ArrowLeft size={14} /> Back to Alerts
-              </Button>
-              <Button variant="filled" onClick={handleApply} disabled={confirming} className="gap-2 px-7">
+            <div className="flex justify-end">
+              <Button variant="filled" onClick={handleApply} disabled={confirming} className="gap-2">
                 {confirming
-                  ? <><Loader2 size={15} className="animate-spin" /> Applying…</>
-                  : <><Check size={15} /> Apply Plan</>}
+                  ? <><Loader2 size={14} className="animate-spin" /> Applying…</>
+                  : <><Check size={14} /> Apply Updated Plan</>}
               </Button>
             </div>
           </div>

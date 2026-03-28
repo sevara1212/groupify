@@ -10,33 +10,31 @@ const STEPS = [
 
 export default function StepProgressBar({ currentStep }) {
   return (
-    <nav aria-label="Progress" className="w-full flex items-center justify-center gap-0 mb-10">
+    <div className="w-full flex items-center justify-center gap-0 mb-10">
       {STEPS.map((step, i) => {
         const n = i + 1;
         const done = n < currentStep;
         const active = n === currentStep;
+        const future = n > currentStep;
 
         return (
           <React.Fragment key={step.label}>
-            <div className="flex flex-col items-center gap-2.5 min-w-[90px]">
+            <div className="flex flex-col items-center gap-2 min-w-[80px]">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={
-                  done
-                    ? { backgroundColor: '#8B5CF6', color: 'white', boxShadow: '0 2px 8px rgba(139,92,246,0.25)' }
-                    : active
-                    ? { backgroundColor: '#8B5CF6', color: 'white', boxShadow: '0 0 0 4px #EDE9FE, 0 2px 12px rgba(139,92,246,0.3)' }
-                    : { backgroundColor: '#F3F0FF', color: '#A09BB8' }
+                  done   ? { backgroundColor: '#EDE9FE', color: '#8B5CF6' }
+                  : active ? { backgroundColor: '#8B5CF6', color: 'white', boxShadow: '0 0 0 4px #EDE9FE' }
+                  :          { backgroundColor: '#F3F0FF', color: '#A09BB8' }
                 }
-                aria-current={active ? 'step' : undefined}
               >
-                {done ? <Check size={14} strokeWidth={3} /> : n}
+                {done ? <Check size={13} strokeWidth={3} /> : n}
               </div>
               <span
-                className="text-xs text-center leading-tight font-medium"
+                className="text-xs text-center leading-tight"
                 style={{
-                  color: done ? '#8B5CF6' : active ? '#1C1829' : '#A09BB8',
-                  fontWeight: active ? 700 : done ? 600 : 500,
+                  color: active ? '#8B5CF6' : '#A09BB8',
+                  fontWeight: active ? 600 : 500,
                 }}
               >
                 {step.label}
@@ -44,13 +42,13 @@ export default function StepProgressBar({ currentStep }) {
             </div>
             {i < STEPS.length - 1 && (
               <div
-                className="flex-1 h-0.5 mb-7 mx-2 rounded-full transition-all duration-500"
+                className="flex-1 h-0.5 mb-6 mx-1 rounded-full transition-all"
                 style={{ backgroundColor: n < currentStep ? '#8B5CF6' : '#EDE9FE' }}
               />
             )}
           </React.Fragment>
         );
       })}
-    </nav>
+    </div>
   );
 }
