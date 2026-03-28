@@ -1,33 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2, Share2, MessageCircle, Link2, Check, Send, AlertTriangle, X } from 'lucide-react';
+import {
+  Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus,
+  Loader2, Share2, MessageCircle, Link2, Check, QrCode,
+} from 'lucide-react';
 
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
-const STATUS_CFG = {
-  quizDone:    { label: 'Quiz Done',    icon: CheckCircle, color: '#8B5CF6', bg: '#F5F3FF', border: '#C4B5FD' },
-  quizPending: { label: 'Quiz Pending', icon: Clock,       color: '#D97706', bg: '#FEF3C7', border: '#FDE68A' },
-  invited:     { label: 'Invited',      icon: Mail,        color: '#A09BB8', bg: '#F5F5F5', border: '#E5E7EB' },
-};
-
 const MEMBER_COLORS = ['#8B5CF6', '#EC4899', '#D97706', '#0EA5E9', '#0D9488', '#6366F1', '#DC2626', '#16A34A'];
 
-function StatusBadge({ type }) {
-  const c = STATUS_CFG[type] || STATUS_CFG.invited;
-  const Icon = c.icon;
-  return (
+function StatusBadge({ done }) {
+  return done ? (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
-      style={{ color: c.color, backgroundColor: c.bg, borderColor: c.border }}>
-      <Icon size={11} strokeWidth={2.5} />
-      {c.label}
+      style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF', borderColor: '#C4B5FD' }}>
+      <CheckCircle size={11} strokeWidth={2.5} /> Quiz Done
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+      style={{ color: '#D97706', backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }}>
+      <Clock size={11} strokeWidth={2.5} /> Pending
     </span>
   );
 }
@@ -36,21 +33,16 @@ export default function InviteTeam() {
   const navigate = useNavigate();
   const { projectId } = useProject();
   const { user } = useAuth();
-  const inviterName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your teammate';
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [projectName, setProjectName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: '' }
-  const [sentEmails, setSentEmails] = useState([]);
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [quizGenState, setQuizGenState] = useState('generating'); // 'generating' | 'done' | 'error'
+  const [quizGenState, setQuizGenState] = useState('generating');
 
-  // Fetch project to get join code + name, then generate quiz in background
   useEffect(() => {
     (async () => {
       try {
@@ -62,7 +54,6 @@ export default function InviteTeam() {
         }
       } catch { /* ignore */ }
 
-      // Generate quiz in background while user invites members
       try {
         const quizRes = await fetch(`${API}/projects/${projectId}/quiz/generate`, { method: 'POST' });
         setQuizGenState(quizRes.ok ? 'done' : 'error');
@@ -72,7 +63,6 @@ export default function InviteTeam() {
     })();
   }, [projectId]);
 
-  // Build a unique join URL using the short code
   const joinUrl = joinCode
     ? `${window.location.origin}/join-group?code=${joinCode}`
     : `${window.location.origin}/join-group?project=${projectId}`;
@@ -90,29 +80,28 @@ export default function InviteTeam() {
 
   useEffect(() => {
     fetchMembers();
-    // Poll every 10s for new members / quiz status updates
     const interval = setInterval(fetchMembers, 10000);
     return () => clearInterval(interval);
   }, [fetchMembers]);
 
   const allDone = members.length > 0 && members.every(m => m.quiz_done);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(joinUrl).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(joinCode).catch(() => {});
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const shareMessage = `Join our Groupify project${joinCode ? ` using code: ${joinCode}` : ''}!\n\n${joinUrl}`;
-
-  const handleShareEmail = () => {
-    const subject = encodeURIComponent('Join our Groupify project!');
-    const body = encodeURIComponent(`Hey!\n\nI've created a group project on Groupify. Click the link below to join and take the quiz so we can allocate tasks fairly.\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(joinUrl).catch(() => {});
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const handleShareWhatsApp = () => {
-    const text = encodeURIComponent(`Hey! Join our Groupify project 🎓\n\n${joinUrl}${joinCode ? `\n\nJoin code: ${joinCode}` : ''}`);
+    const text = encodeURIComponent(
+      `Hey! Join our Groupify project 🎓\n\nClick to join: ${joinUrl}${joinCode ? `\n\nOr enter code: ${joinCode}` : ''}`
+    );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
@@ -120,47 +109,11 @@ export default function InviteTeam() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join our Groupify project',
-          text: `Join our Groupify project${joinCode ? ` (code: ${joinCode})` : ''}`,
+          title: `Join ${projectName || 'our Groupify project'}`,
+          text: joinCode ? `Join code: ${joinCode}` : 'Join our Groupify project',
           url: joinUrl,
         });
-      } catch { /* user cancelled */ }
-    }
-  };
-
-  const handleSendEmailInvite = async () => {
-    const email = inviteEmail.trim();
-    if (!email) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailStatus({ type: 'error', message: 'Please enter a valid email address.' });
-      return;
-    }
-    if (sentEmails.includes(email.toLowerCase())) {
-      setEmailStatus({ type: 'error', message: 'Invite already sent to this email.' });
-      return;
-    }
-
-    setSendingEmail(true);
-    setEmailStatus(null);
-
-    try {
-      const { error } = await supabase.functions.invoke('send-invite', {
-        body: { email, joinUrl, joinCode, projectName, inviterName },
-      });
-
-      if (error) throw error;
-
-      setSentEmails(prev => [...prev, email.toLowerCase()]);
-      setEmailStatus({ type: 'success', message: `Invite sent to ${email}! 🎉` });
-      setInviteEmail('');
-      setTimeout(() => setEmailStatus(null), 5000);
-    } catch (err) {
-      setEmailStatus({
-        type: 'error',
-        message: err?.message || 'Could not send invite email. Please try again.',
-      });
-    } finally {
-      setSendingEmail(false);
+      } catch { /* cancelled */ }
     }
   };
 
@@ -173,17 +126,9 @@ export default function InviteTeam() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newName.trim() }),
       });
-      if (res.ok) {
-        setNewName('');
-        fetchMembers();
-      }
+      if (res.ok) { setNewName(''); fetchMembers(); }
     } catch { /* ignore */ }
     setAdding(false);
-  };
-
-  const getStatus = (member) => {
-    if (member.quiz_done) return 'quizDone';
-    return 'quizPending';
   };
 
   return (
@@ -207,161 +152,114 @@ export default function InviteTeam() {
 
           <div className="bg-white rounded-2xl p-8" style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.06)' }}>
             <h1 className="text-xl font-extrabold mb-1" style={{ color: '#1C1829' }}>Invite Your Team</h1>
-            <p className="text-sm mb-5" style={{ color: '#6B6584' }}>
-              Share the code or link below. Each member completes a short quiz so we can allocate tasks fairly.
+            <p className="text-sm mb-6" style={{ color: '#6B6584' }}>
+              Share the code or link — teammates can join from any device.
             </p>
 
-            {/* Quiz generation status */}
+            {/* Quiz status pill */}
             {quizGenState === 'generating' && (
               <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
                 style={{ backgroundColor: '#FDF2F8', border: '1px solid #FBCFE8' }}>
-                <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: '#EC4899' }} />
-                <span className="text-sm font-medium" style={{ color: '#BE185D' }}>Generating team quiz in the background…</span>
+                <Loader2 size={13} className="animate-spin flex-shrink-0" style={{ color: '#EC4899' }} />
+                <span className="text-sm font-medium" style={{ color: '#BE185D' }}>Generating quiz in the background…</span>
               </div>
             )}
             {quizGenState === 'done' && (
               <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
                 style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-                <CheckCircle size={14} className="flex-shrink-0" style={{ color: '#16A34A' }} />
+                <CheckCircle size={13} className="flex-shrink-0" style={{ color: '#16A34A' }} />
                 <span className="text-sm font-medium" style={{ color: '#15803D' }}>Quiz ready — members can take it after joining!</span>
               </div>
             )}
 
-            {/* Big join code */}
-            {joinCode && (
-              <div className="text-center mb-6 rounded-xl py-5 px-4"
-                style={{ backgroundColor: '#F5F3FF', border: '1px solid #C4B5FD' }}>
-                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8B5CF6' }}>
-                  Join Code
-                </p>
-                <p className="text-3xl font-black tracking-widest font-mono" style={{ color: '#1C1829', letterSpacing: '0.15em' }}>
-                  {joinCode}
-                </p>
-                <p className="text-xs mt-2" style={{ color: '#6B6584' }}>
-                  Members enter this at <strong>{window.location.origin}/join-group</strong>
-                </p>
-              </div>
-            )}
+            {/* ── Two invite methods ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-            {/* Join link + share options */}
-            <div className="rounded-xl mb-6 overflow-hidden" style={{ border: '1px solid #EDE9FE' }}>
-              {/* URL bar */}
-              <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: '#F8F7FF', borderBottom: '1px solid #EDE9FE' }}>
-                <Link2 size={14} style={{ color: '#8B5CF6' }} className="flex-shrink-0" />
-                <span className="flex-1 text-sm font-mono truncate" style={{ color: '#1C1829' }}>{joinUrl}</span>
-                <button onClick={handleCopy}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+              {/* Method 1: Join Code */}
+              <div className="rounded-2xl p-5 flex flex-col items-center text-center"
+                style={{ backgroundColor: '#F5F3FF', border: '1.5px solid #C4B5FD' }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}>
+                  <QrCode size={16} color="white" />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8B5CF6' }}>Join Code</p>
+                <p className="text-2xl font-black tracking-widest font-mono mb-3"
+                  style={{ color: '#1C1829', letterSpacing: '0.15em' }}>
+                  {joinCode || '———'}
+                </p>
+                <p className="text-xs mb-4" style={{ color: '#6B6584' }}>
+                  Go to <span className="font-semibold text-purple-600">{window.location.origin}/join-group</span> and enter this code
+                </p>
+                <button
+                  onClick={handleCopyCode}
+                  disabled={!joinCode}
+                  className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl w-full justify-center transition-all disabled:opacity-40"
                   style={{
-                    backgroundColor: copied ? '#8B5CF6' : 'white',
-                    color: copied ? 'white' : '#6B6584',
-                    border: copied ? '1px solid #8B5CF6' : '1px solid #EDE9FE',
+                    backgroundColor: copiedCode ? '#8B5CF6' : 'white',
+                    color: copiedCode ? 'white' : '#8B5CF6',
+                    border: '1.5px solid #C4B5FD',
                   }}>
-                  {copied ? <Check size={11} /> : <Copy size={11} />}
-                  {copied ? 'Copied!' : 'Copy Link'}
+                  {copiedCode ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedCode ? 'Copied!' : 'Copy Code'}
                 </button>
               </div>
-              {/* Share buttons row */}
-              <div className="flex items-center gap-2 px-4 py-3 bg-white">
-                <span className="text-xs font-semibold mr-1" style={{ color: '#A09BB8' }}>Share via:</span>
-                <button onClick={handleShareEmail}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-                  style={{ backgroundColor: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#EFF6FF'; }}>
-                  <Mail size={12} />
-                  Email
-                </button>
-                <button onClick={handleShareWhatsApp}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-                  style={{ backgroundColor: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#D1FAE5'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#ECFDF5'; }}>
-                  <MessageCircle size={12} />
-                  WhatsApp
-                </button>
-                {typeof navigator !== 'undefined' && navigator.share && (
-                  <button onClick={handleNativeShare}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-                    style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6', border: '1px solid #C4B5FD' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDE9FE'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F5F3FF'; }}>
-                    <Share2 size={12} />
-                    More
-                  </button>
-                )}
-              </div>
-            </div>
 
-            {/* ── Send invite by email ── */}
-            <div className="rounded-xl p-5 mb-6" style={{ backgroundColor: '#F8F7FF', border: '1px solid #EDE9FE' }}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #2563EB, #8B5CF6)' }}>
-                  <Send size={12} color="white" />
+              {/* Method 2: Join Link */}
+              <div className="rounded-2xl p-5 flex flex-col"
+                style={{ backgroundColor: '#EFF6FF', border: '1.5px solid #BFDBFE' }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+                  <Link2 size={16} color="white" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold" style={{ color: '#1C1829' }}>Send invite by email</p>
-                  <p className="text-xs" style={{ color: '#A09BB8' }}>They will receive a beautiful email with the join link</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="email"
-                  placeholder="teammate@email.com"
-                  value={inviteEmail}
-                  onChange={e => { setInviteEmail(e.target.value); setEmailStatus(null); }}
-                  onKeyDown={e => e.key === 'Enter' && handleSendEmailInvite()}
-                  className="flex-1 px-4 py-2.5 rounded-xl border text-sm transition-all"
-                  style={{ borderColor: '#EDE9FE', color: '#1C1829', outline: 'none', backgroundColor: 'white' }}
-                  onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.1)'; }}
-                  onBlur={e => { e.target.style.borderColor = '#EDE9FE'; e.target.style.boxShadow = 'none'; }}
-                />
-                <button onClick={handleSendEmailInvite} disabled={!inviteEmail.trim()}
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40"
-                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #8B5CF6 100%)', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}>
-                  <Send size={14} />
-                  Send
-                </button>
-              </div>
-              {/* Status message */}
-              {emailStatus && (
-                <div className={`flex items-center gap-2 mt-2.5 text-xs font-semibold px-3 py-2 rounded-lg ${emailStatus.type === 'success' ? '' : ''}`}
-                  style={{
-                    backgroundColor: emailStatus.type === 'success' ? '#ECFDF5' : '#FEF2F2',
-                    color: emailStatus.type === 'success' ? '#059669' : '#DC2626',
-                    border: emailStatus.type === 'success' ? '1px solid #A7F3D0' : '1px solid #FECACA',
-                  }}>
-                  {emailStatus.type === 'success' ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
-                  <span className="flex-1">{emailStatus.message}</span>
-                  <button onClick={() => setEmailStatus(null)} className="ml-1 opacity-50 hover:opacity-100">
-                    <X size={12} />
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#2563EB' }}>Join Link</p>
+                <p className="text-xs font-mono break-all mb-3 flex-1"
+                  style={{ color: '#1C1829', lineHeight: 1.6 }}>
+                  {joinUrl}
+                </p>
+                <div className="flex gap-2 mt-auto">
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl flex-1 justify-center transition-all"
+                    style={{
+                      backgroundColor: copiedLink ? '#2563EB' : 'white',
+                      color: copiedLink ? 'white' : '#2563EB',
+                      border: '1.5px solid #BFDBFE',
+                    }}>
+                    {copiedLink ? <Check size={12} /> : <Copy size={12} />}
+                    {copiedLink ? 'Copied!' : 'Copy'}
                   </button>
+                  <button onClick={handleShareWhatsApp}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl justify-center transition-all"
+                    style={{ backgroundColor: '#ECFDF5', color: '#059669', border: '1.5px solid #A7F3D0' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#D1FAE5'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#ECFDF5'; }}>
+                    <MessageCircle size={12} />
+                    WhatsApp
+                  </button>
+                  {typeof navigator !== 'undefined' && navigator.share && (
+                    <button onClick={handleNativeShare}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl justify-center transition-all"
+                      style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6', border: '1.5px solid #C4B5FD' }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDE9FE'; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F5F3FF'; }}>
+                      <Share2 size={12} />
+                    </button>
+                  )}
                 </div>
-              )}
-              {/* Sent emails list */}
-              {sentEmails.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {sentEmails.map(e => (
-                    <span key={e} className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
-                      style={{ backgroundColor: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>
-                      <CheckCircle size={10} /> {e}
-                    </span>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Add member manually */}
             <div className="flex items-center gap-2 mb-6">
               <input
                 type="text"
-                placeholder="Add member by name…"
+                placeholder="Or add a member by name manually…"
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddMember()}
                 className="flex-1 px-4 py-2.5 rounded-xl border text-sm transition-all"
-                style={{ borderColor: '#EDE9FE', color: '#1C1829', outline: 'none' }}
-                onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px #EDE9FE'; }}
+                style={{ borderColor: '#EDE9FE', color: '#1C1829', outline: 'none', backgroundColor: 'white' }}
+                onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.08)'; }}
                 onBlur={e => { e.target.style.borderColor = '#EDE9FE'; e.target.style.boxShadow = 'none'; }}
               />
               <button onClick={handleAddMember} disabled={!newName.trim() || adding}
@@ -378,42 +276,44 @@ export default function InviteTeam() {
                 <Loader2 size={24} className="animate-spin" style={{ color: '#8B5CF6' }} />
               </div>
             ) : members.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm" style={{ color: '#A09BB8' }}>No members yet. Add members above or share the join link.</p>
+              <div className="text-center py-8 rounded-xl" style={{ backgroundColor: '#FAFAFE', border: '1px dashed #EDE9FE' }}>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                  style={{ backgroundColor: '#F5F3FF' }}>
+                  <UserPlus size={20} style={{ color: '#C4B5FD' }} />
+                </div>
+                <p className="text-sm font-semibold mb-1" style={{ color: '#1C1829' }}>No members yet</p>
+                <p className="text-xs" style={{ color: '#A09BB8' }}>Share the code or link above to get started</p>
               </div>
             ) : (
-              <div className="space-y-1 mb-5">
-                {members.map((member, idx) => {
-                  const status = getStatus(member);
-                  const isPending = status !== 'quizDone';
-                  return (
-                    <div key={member.id}
-                      className="flex items-center gap-3 py-3 px-3 rounded-xl transition-all"
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8F7FF'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                      <Avatar name={member.name} color={MEMBER_COLORS[idx % MEMBER_COLORS.length]} size="md" />
-                      <span className="flex-1 text-sm font-semibold" style={{ color: '#1C1829' }}>{member.name}</span>
-                      <StatusBadge type={status} />
-                      {isPending && (
-                        <button
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all"
-                          style={{ borderColor: '#FDE68A', color: '#D97706' }}>
-                          <Bell size={10} />
-                          Remind
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="space-y-1.5 mb-5">
+                {members.map((member, idx) => (
+                  <div key={member.id}
+                    className="flex items-center gap-3 py-3 px-3 rounded-xl transition-all"
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8F7FF'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    <Avatar name={member.name} color={MEMBER_COLORS[idx % MEMBER_COLORS.length]} size="md" />
+                    <span className="flex-1 text-sm font-semibold" style={{ color: '#1C1829' }}>{member.name}</span>
+                    <StatusBadge done={member.quiz_done} />
+                    {!member.quiz_done && (
+                      <button className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all"
+                        style={{ borderColor: '#FDE68A', color: '#D97706', backgroundColor: '#FFFBEB' }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FEF3C7'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FFFBEB'; }}>
+                        <Bell size={10} />
+                        Remind
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
             {allDone && (
               <div className="rounded-xl px-4 py-3 mb-5 flex items-center gap-2.5"
-                style={{ backgroundColor: '#F5F3FF', border: '1px solid #C4B5FD' }}>
+                style={{ background: 'linear-gradient(135deg, #F5F3FF, #FDF2F8)', border: '1px solid #C4B5FD' }}>
                 <CheckCircle size={15} style={{ color: '#8B5CF6' }} />
                 <span className="text-sm font-semibold" style={{ color: '#6D28D9' }}>
-                  All members have completed the AI quiz!
+                  All members have completed the quiz! 🎉
                 </span>
               </div>
             )}
