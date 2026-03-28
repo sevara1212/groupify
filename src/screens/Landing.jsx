@@ -81,6 +81,10 @@ export default function Landing() {
   const navigate = useNavigate();
   const [hovCTA, setHovCTA] = useState(false);
 
+  const handleCreateProject = () => {
+    navigate('/create');
+  };
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
       {/* ── Nav ── */}
@@ -96,7 +100,7 @@ export default function Landing() {
           <div className="flex items-center gap-4">
             <button onClick={() => navigate('/signin')} className="text-sm font-semibold transition-colors duration-200" style={{ color: '#6B6584' }}
               onMouseEnter={e => e.target.style.color = '#8B5CF6'} onMouseLeave={e => e.target.style.color = '#6B6584'}>Sign in</button>
-            <Button variant="filled" onClick={() => navigate('/create')} className="px-5 py-2.5">Create Project</Button>
+            <Button variant="filled" onClick={handleCreateProject} className="px-5 py-2.5">Create Project</Button>
           </div>
         </div>
       </header>
@@ -138,10 +142,10 @@ export default function Landing() {
 
             {/* CTA group */}
             <div className="flex flex-wrap justify-center gap-4 mb-16">
-              <Button variant="filled" onClick={() => navigate('/create')} className="gap-2 px-8 py-3.5 text-base">
+              <Button variant="filled" onClick={handleCreateProject} className="gap-2 px-8 py-3.5 text-base">
                 Create a Project <ArrowRight size={18} />
               </Button>
-              <Button variant="outlined" className="gap-2 px-8 py-3.5 text-base">
+              <Button variant="outlined" onClick={() => navigate('/join-group')} className="gap-2 px-8 py-3.5 text-base">
                 Join a Project
               </Button>
             </div>
@@ -212,7 +216,7 @@ export default function Landing() {
               Ready to plan smarter?
             </h2>
             <p className="text-base mb-8" style={{ color: '#6B6584' }}>Create your first project in under a minute.</p>
-            <Button variant="filled" onClick={() => navigate('/create')} className="gap-2 px-8 py-3.5 text-base">
+            <Button variant="filled" onClick={handleCreateProject} className="gap-2 px-8 py-3.5 text-base">
               Create a Project <ArrowRight size={17} />
             </Button>
           </div>

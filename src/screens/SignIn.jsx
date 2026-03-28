@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Loader2, AlertTriangle, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
@@ -15,9 +15,11 @@ const inputStyle = {
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || null;
   const { user, signIn, signUp } = useAuth();
 
-  const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
+  const [mode, setMode] = useState(redirectTo ? 'signup' : 'signin'); // 'signin' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -26,9 +28,14 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // If already signed in, try to find their project and redirect
+  // If already signed in, redirect appropriately
   useEffect(() => {
     if (user) {
+      // If we came from /create, go straight back to /create
+      if (redirectTo) {
+        navigate(redirectTo);
+        return;
+      }
       findUserProject(user);
     }
   }, [user]);
@@ -83,6 +90,12 @@ export default function SignIn() {
           setError(signUpError.message);
         } else if (data?.user?.identities?.length === 0) {
           setError('An account with this email already exists. Try signing in.');
+        } else if (data?.session) {
+          // Auto-confirmed — redirect immediately
+          if (redirectTo) {
+            navigate(redirectTo);
+          }
+          // else the useEffect will handle redirect
         } else {
           setSuccess('Account created! Check your email to confirm, then sign in.');
           setMode('signin');
@@ -124,6 +137,22 @@ export default function SignIn() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl p-8" style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.06)' }}>
+
+            {/* Context banner when redirected from create */}
+            {redirectTo === '/create' && (
+              <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
+                style={{ backgroundColor: '#F5F3FF', border: '1px solid #C4B5FD' }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+                  <User size={13} color="white" />
+                </div>
+                <p className="text-xs font-medium" style={{ color: '#6D28D9' }}>
+                  {mode === 'signup'
+                    ? 'Create an account first, then you can set up your project.'
+                    : 'Sign in to your account to create a project.'}
+                </p>
+              </div>
+            )}
 
             {/* Icon + title */}
             <div className="text-center mb-7">

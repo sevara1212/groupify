@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Minus, Plus, ArrowRight } from 'lucide-react';
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
+import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -17,6 +18,7 @@ const inputStyle = {
 export default function CreateProject() {
   const navigate = useNavigate();
   const { setProjectId } = useProject();
+  const { user, loading: authLoading } = useAuth();
   const [courseName, setCourseName] = useState('');
   const [assignmentTitle, setAssignmentTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -24,6 +26,13 @@ export default function CreateProject() {
   const [aiEnabled, setAiEnabled] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
+
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/signin?redirect=/create');
+    }
+  }, [user, authLoading, navigate]);
 
   const canContinue = courseName.trim() && assignmentTitle.trim() && dueDate && !creating;
 

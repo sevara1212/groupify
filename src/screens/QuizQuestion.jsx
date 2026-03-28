@@ -53,36 +53,72 @@ function MultiSelectRoles({ question, value = [], onChange }) {
 function ConfidenceSliders({ question, value = {}, onChange }) {
   const set = (tag, score) => onChange({ ...value, [tag]: Number(score) });
 
+  const getColor = (s) => {
+    if (s >= 8) return { main: '#7C3AED', gradient: 'linear-gradient(90deg, #8B5CF6, #7C3AED)', bg: '#F5F3FF', badge: '#6D28D9' };
+    if (s >= 6) return { main: '#8B5CF6', gradient: 'linear-gradient(90deg, #A78BFA, #8B5CF6)', bg: '#F5F3FF', badge: '#7C3AED' };
+    if (s >= 4) return { main: '#EC4899', gradient: 'linear-gradient(90deg, #F9A8D4, #EC4899)', bg: '#FDF2F8', badge: '#DB2777' };
+    if (s >= 2) return { main: '#F59E0B', gradient: 'linear-gradient(90deg, #FCD34D, #F59E0B)', bg: '#FFFBEB', badge: '#D97706' };
+    return { main: '#A09BB8', gradient: 'linear-gradient(90deg, #D8D3F0, #A09BB8)', bg: '#F5F5F5', badge: '#6B6584' };
+  };
+
+  const getLabel = (s) => {
+    if (s >= 9) return 'Expert';
+    if (s >= 7) return 'Strong';
+    if (s >= 5) return 'Good';
+    if (s >= 3) return 'Basic';
+    if (s >= 1) return 'Learning';
+    return 'None';
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {(question.options || []).map((opt) => {
         const score = value[opt.skill_tag] ?? 5;
         const pct = score * 10;
-        const col = score >= 8 ? '#8B5CF6' : score >= 5 ? '#EC4899' : '#A09BB8';
-        const label = score >= 9 ? 'Expert' : score >= 7 ? 'Strong' : score >= 5 ? 'Good' : score >= 3 ? 'Basic' : 'Learning';
+        const colors = getColor(score);
+        const label = getLabel(score);
         return (
-          <div key={opt.skill_tag}>
+          <div key={opt.skill_tag} className="rounded-xl p-4 transition-all duration-200"
+            style={{ backgroundColor: colors.bg, border: `1px solid ${colors.main}20` }}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold" style={{ color: '#1C1829' }}>{opt.label}</span>
+              <span className="text-sm font-bold" style={{ color: '#1C1829' }}>{opt.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium" style={{ color: '#A09BB8' }}>{label}</span>
-                <span className="text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0"
-                  style={{ backgroundColor: col, boxShadow: `0 2px 8px ${col}40` }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md"
+                  style={{ backgroundColor: `${colors.main}15`, color: colors.badge }}>
+                  {label}
+                </span>
+                <span className="text-sm font-black w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+                  style={{ background: colors.gradient, boxShadow: `0 3px 10px ${colors.main}35` }}>
                   {score}
                 </span>
               </div>
             </div>
-            <div className="relative">
-              <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
-                <div className="h-2 rounded-full transition-all duration-150"
-                  style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${col}, ${col}90)` }} />
+            {/* Custom styled range slider */}
+            <div className="relative flex items-center" style={{ height: 28 }}>
+              {/* Track background */}
+              <div className="absolute left-0 right-0 h-2.5 rounded-full" style={{ backgroundColor: `${colors.main}15`, top: '50%', transform: 'translateY(-50%)' }} />
+              {/* Track fill */}
+              <div className="absolute left-0 h-2.5 rounded-full transition-all duration-150"
+                style={{ width: `${pct}%`, background: colors.gradient, top: '50%', transform: 'translateY(-50%)', boxShadow: `0 2px 8px ${colors.main}30` }} />
+              {/* Thumb indicator */}
+              <div className="absolute transition-all duration-150 pointer-events-none"
+                style={{ left: `calc(${pct}% - 10px)`, top: '50%', transform: 'translateY(-50%)' }}>
+                <div className="w-5 h-5 rounded-full bg-white border-[3px] transition-all duration-150"
+                  style={{ borderColor: colors.main, boxShadow: `0 2px 8px ${colors.main}40, 0 0 0 4px ${colors.main}10` }} />
               </div>
+              {/* Invisible native range input for interaction */}
               <input
                 type="range" min={0} max={10} value={score}
                 onChange={e => set(opt.skill_tag, e.target.value)}
-                className="absolute inset-0 w-full h-2 opacity-0 cursor-pointer"
-                style={{ margin: 0 }}
+                className="absolute inset-0 w-full cursor-pointer"
+                style={{ margin: 0, opacity: 0, height: 28, zIndex: 10 }}
               />
+            </div>
+            {/* Scale labels */}
+            <div className="flex justify-between mt-1.5 px-0.5">
+              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>0</span>
+              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>5</span>
+              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>10</span>
             </div>
           </div>
         );
