@@ -51,7 +51,7 @@ const FEATURES = [
     color: '#0EA5E9',
     bg: '#E0F2FE',
     label: 'Live Progress Tracking',
-    desc: 'Real-time dashboards show contribution bars, deadline countdowns, and who's on track.',
+    desc: "Real-time dashboards show contribution bars, deadline countdowns, and who's on track.",
   },
   {
     icon: CheckCircle,
