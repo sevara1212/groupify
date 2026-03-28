@@ -24,20 +24,23 @@ function Skeleton({ className = '' }) {
 }
 
 /* ─── Circular Progress Ring ──────────────────────── */
-function ProgressRing({ value, size = 88, strokeWidth = 7 }) {
+function ProgressRing({ value, size = 88, strokeWidth = 7, lightBg = false }) {
   const r = (size - strokeWidth) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / 100) * circ;
+  const track = lightBg ? '#EDE9FE' : 'rgba(255,255,255,0.15)';
+  const stroke = lightBg ? '#8B5CF6' : 'white';
+  const fs = size <= 60 ? 'text-xs' : 'text-lg';
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={strokeWidth} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="white" strokeWidth={strokeWidth}
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth={strokeWidth}
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)' }} />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-lg font-extrabold text-white">{value}%</span>
+        <span className={`${fs} font-extrabold tabular-nums`} style={{ color: lightBg ? '#1C1829' : 'white' }}>{value}%</span>
       </div>
     </div>
   );
@@ -116,108 +119,77 @@ function QuickAction({ icon: Icon, label, desc, onClick, color, compact, classNa
   );
 }
 
-/* ─── Compact deadline chip (aligns with title row; bottom-aligned in hero) ─── */
+/* ─── Minimal deadline pill (short hero — keep tiny) ─── */
 function DeadlineSpotlight({ dueDate, rawDaysUntilDue, daysRemaining, memberCount }) {
   if (!dueDate) {
     return (
       <div
-        className="rounded-2xl px-4 py-3 w-full sm:max-w-[280px] sm:ml-auto"
+        className="rounded-lg px-2.5 py-1.5 w-full sm:w-auto sm:ml-auto"
         style={{
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
-          border: '1px solid rgba(255,255,255,0.3)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(255,255,255,0.15)',
+          border: '1px solid rgba(255,255,255,0.25)',
         }}
       >
-        <p className="text-xs font-bold text-white/90">No due date set</p>
+        <p className="text-[10px] font-bold text-white/85">No due date</p>
       </div>
     );
   }
 
   const dateObj = new Date(dueDate);
-  const longDate = dateObj.toLocaleDateString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-  const shortDate = dateObj.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const shortDate = dateObj.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
   const overdue = rawDaysUntilDue < 0;
   const dueToday = rawDaysUntilDue === 0;
   const urgent = !overdue && !dueToday && daysRemaining <= 3;
 
-  let border = '1px solid rgba(255,255,255,0.65)';
-  let bg = 'linear-gradient(145deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.98) 100%)';
+  let border = '1px solid rgba(255,255,255,0.5)';
+  let bg = 'rgba(255,255,255,0.95)';
   if (overdue) {
     border = '1px solid #fecaca';
-    bg = 'linear-gradient(145deg, #fff1f2 0%, #ffffff 100%)';
+    bg = '#fff1f2';
   } else if (dueToday) {
     border = '1px solid #fcd34d';
-    bg = 'linear-gradient(145deg, #fffbeb 0%, #ffffff 100%)';
+    bg = '#fffbeb';
   } else if (urgent) {
     border = '1px solid #fde68a';
-    bg = 'linear-gradient(145deg, #fffbeb 0%, #faf5ff 100%)';
+    bg = '#fffbeb';
   }
-
-  const headline = overdue ? 'Overdue' : dueToday ? 'Today' : String(daysRemaining);
-  const sub = overdue ? `Was ${shortDate}` : dueToday ? longDate : daysRemaining === 1 ? 'day left' : 'days left';
 
   return (
     <div
-      className="rounded-2xl px-4 py-3 w-full sm:max-w-[300px] sm:ml-auto shadow-lg"
+      className="rounded-xl pl-2 pr-3 py-1.5 w-full sm:w-auto sm:max-w-[min(100%,220px)] sm:ml-auto"
       style={{
         background: bg,
         border,
-        boxShadow: '0 10px 28px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
+        boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)',
       }}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-2">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: overdue ? 'linear-gradient(135deg,#e11d48,#f97316)' : 'linear-gradient(135deg,#6d28d9,#db2777)' }}
         >
-          <CalendarDays size={18} color="white" strokeWidth={2.2} />
+          <CalendarDays size={14} color="white" strokeWidth={2.2} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2 mb-0.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: overdue ? '#be123c' : '#6d28d9' }}>
-              Deadline
-            </span>
-            <span className="text-[10px] font-semibold tabular-nums" style={{ color: '#94a3b8' }}>{shortDate}</span>
-          </div>
-
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span
-              className={`font-black tabular-nums leading-none ${overdue || dueToday ? 'text-2xl' : 'text-3xl'}`}
-              style={{ color: overdue ? '#be123c' : dueToday ? '#b45309' : '#0f172a' }}
-            >
-              {headline}
-            </span>
-            {!overdue && !dueToday && (
-              <span className="text-xs font-bold" style={{ color: '#64748b' }}>{sub}</span>
+            {overdue && (
+              <span className="text-base font-black leading-none" style={{ color: '#be123c' }}>Overdue</span>
             )}
-            {(overdue || dueToday) && (
-              <span className="text-xs font-semibold" style={{ color: '#64748b' }}>{sub}</span>
+            {dueToday && !overdue && (
+              <span className="text-base font-black leading-none" style={{ color: '#b45309' }}>Due today</span>
+            )}
+            {!overdue && !dueToday && (
+              <>
+                <span className="text-lg font-black tabular-nums leading-none" style={{ color: '#0f172a' }}>{daysRemaining}</span>
+                <span className="text-[10px] font-bold leading-none" style={{ color: '#64748b' }}>days left</span>
+                {urgent && <AlertTriangle size={11} className="flex-shrink-0" style={{ color: '#c2410c' }} strokeWidth={2.5} />}
+              </>
             )}
           </div>
-
-          {!overdue && !dueToday && (
-            <p className="text-[11px] font-medium mt-1.5 leading-tight" style={{ color: '#64748b' }}>{longDate}</p>
-          )}
-
-          {urgent && (
-            <p className="text-[10px] font-bold mt-1.5 flex items-center gap-1" style={{ color: '#c2410c' }}>
-              <AlertTriangle size={11} strokeWidth={2.5} /> Soon
-            </p>
-          )}
-
-          {memberCount > 0 && (
-            <div className="flex items-center gap-1 mt-2 pt-2 border-t" style={{ borderColor: 'rgba(148,163,184,0.35)' }}>
-              <Users size={12} style={{ color: '#94a3b8' }} strokeWidth={2.2} />
-              <span className="text-[11px] font-bold" style={{ color: '#64748b' }}>
-                {memberCount} member{memberCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
+          <p className="text-[10px] font-medium truncate mt-0.5" style={{ color: '#64748b' }}>
+            {shortDate}
+            {memberCount > 0 ? ` · ${memberCount} members` : ''}
+          </p>
         </div>
       </div>
     </div>
@@ -707,99 +679,94 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Hero Section (compact; deadline bottom-aligned with title block) ── */}
+      {/* ── Hero: thin strip — title + tiny deadline only (stats live in main) ── */}
       <div className="w-full relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #6d28d9 42%, #9333ea 72%, #c026d3 100%)' }}>
-        <div className="absolute inset-0 pointer-events-none opacity-30"
+        style={{ background: 'linear-gradient(90deg, #5b21b6 0%, #6d28d9 50%, #7c3aed 100%)' }}>
+        <div className="absolute inset-0 pointer-events-none opacity-25"
           style={{
-            backgroundImage: 'radial-gradient(ellipse 80% 50% at 100% 0%, rgba(255,255,255,0.25) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(255,255,255,0.12) 0%, transparent 45%)',
+            backgroundImage: 'radial-gradient(ellipse 70% 80% at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 55%)',
           }}
         />
-        <div className="absolute pointer-events-none top-0 right-0 w-64 h-64 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
 
-        <div className="max-w-6xl mx-auto px-5 sm:px-6 pt-5 pb-5 sm:pt-6 sm:pb-6 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 relative z-10">
           {loading ? (
-            <div className="space-y-3">
-              <div className="h-3.5 w-24 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-              <div className="h-8 w-64 max-w-full rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
-              <div className="h-24 rounded-2xl max-w-[300px] sm:ml-auto" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="space-y-2 flex-1">
+                <div className="h-3 w-20 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                <div className="h-6 w-48 max-w-full rounded" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+              </div>
+              <div className="h-14 rounded-lg w-full sm:w-52 sm:ml-auto" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
             </div>
           ) : (
-            <>
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6">
-                <div className="flex-1 min-w-0">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-2.5"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.22)' }}>
-                    <Sparkles size={11} color="white" />
-                    <span className="text-[11px] font-bold text-white tracking-wide">{greeting}</span>
-                  </div>
-
-                  <h1 className="font-extrabold text-white mb-1 leading-tight"
-                    style={{ fontSize: 'clamp(1.25rem, 3.5vw, 1.75rem)', letterSpacing: '-0.03em' }}>
-                    {project?.assignment_title || project?.name || 'Group Project'}
-                  </h1>
-
-                  {project?.course_name && (
-                    <p className="text-sm font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                      {project.course_name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="w-full sm:w-auto sm:flex-shrink-0">
-                  <DeadlineSpotlight
-                    dueDate={project?.due_date}
-                    rawDaysUntilDue={rawDaysUntilDue}
-                    daysRemaining={daysRemaining}
-                    memberCount={members.length}
-                  />
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full mb-1"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                  <Sparkles size={10} color="white" />
+                  <span className="text-[10px] font-bold text-white/95">{greeting}</span>
+                </span>
+                <h1 className="font-extrabold text-white leading-tight truncate"
+                  style={{ fontSize: 'clamp(1.05rem, 2.8vw, 1.35rem)', letterSpacing: '-0.03em' }}>
+                  {project?.assignment_title || project?.name || 'Group Project'}
+                </h1>
+                {project?.course_name && (
+                  <p className="text-xs font-semibold truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                    {project.course_name}
+                  </p>
+                )}
               </div>
 
-              {tasks.length > 0 && (
-                <div className="mt-5 pt-5 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4 border-t border-white/15">
-                  <div
-                    className="flex-shrink-0 flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-0 rounded-2xl px-4 py-3 sm:py-4 mx-auto sm:mx-0 sm:min-w-[120px]"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.14)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.22)',
-                    }}
-                  >
-                    <ProgressRing value={overallProgress} size={72} strokeWidth={6} />
-                    <p className="text-[10px] font-extrabold sm:mt-2 tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.88)' }}>Overall</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 flex-1 min-w-0">
-                    {[
-                      { label: 'Tasks', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#34d399' },
-                      { label: 'Active', value: tasksInProgress, icon: TrendingUp, color: '#fbbf24' },
-                      { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: '#f472b6' },
-                    ].map(s => (
-                      <div
-                        key={s.label}
-                        className="flex items-center gap-2 rounded-xl px-3 py-2.5"
-                        style={{
-                          backgroundColor: 'rgba(255,255,255,0.12)',
-                          backdropFilter: 'blur(8px)',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                        }}
-                      >
-                        <s.icon size={15} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
-                        <div className="min-w-0">
-                          <p className="text-sm font-extrabold text-white leading-none tabular-nums">{s.value}</p>
-                          <p className="text-[10px] mt-0.5 font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>{s.label}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+              <div className="w-full sm:w-auto sm:flex-shrink-0 sm:max-w-[220px]">
+                <DeadlineSpotlight
+                  dueDate={project?.due_date}
+                  rawDaysUntilDue={rawDaysUntilDue}
+                  daysRemaining={daysRemaining}
+                  memberCount={members.length}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-12 pt-2 relative z-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-12 pt-4 relative z-10">
+        {!loading && tasks.length > 0 && (
+          <div
+            className="rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-stretch gap-4"
+            style={{
+              border: '1px solid #EDE9FE',
+              backgroundColor: 'white',
+              boxShadow: '0 2px 12px rgba(139,92,246,0.06)',
+            }}
+          >
+            <div
+              className="flex flex-row sm:flex-col items-center justify-center gap-2 sm:min-w-[100px] rounded-xl px-3 py-2"
+              style={{ backgroundColor: '#FAFAFF', border: '1px solid #F5F3FF' }}
+            >
+              <ProgressRing value={overallProgress} size={56} strokeWidth={5} lightBg />
+              <p className="text-[9px] font-extrabold sm:mt-1 tracking-wider uppercase" style={{ color: '#6B6584' }}>Overall</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 flex-1 min-w-0">
+              {[
+                { label: 'Tasks', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#059669' },
+                { label: 'Active', value: tasksInProgress, icon: TrendingUp, color: '#d97706' },
+                { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: '#db2777' },
+              ].map(s => (
+                <div
+                  key={s.label}
+                  className="flex items-center gap-2 rounded-xl px-2.5 py-2"
+                  style={{ backgroundColor: '#FAFAFF', border: '1px solid #F5F3FF' }}
+                >
+                  <s.icon size={14} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-extrabold leading-none tabular-nums" style={{ color: '#1C1829' }}>{s.value}</p>
+                    <p className="text-[9px] mt-0.5 font-semibold" style={{ color: '#6B7280' }}>{s.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {error && (
           <div className="bg-white rounded-2xl px-5 py-4 mb-5 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
