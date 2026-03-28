@@ -30,7 +30,7 @@ function ProgressRing({ value, size = 88, strokeWidth = 7, lightBg = false }) {
   const offset = circ - (value / 100) * circ;
   const track = lightBg ? '#EDE9FE' : 'rgba(255,255,255,0.15)';
   const stroke = lightBg ? '#8B5CF6' : 'white';
-  const fs = size <= 60 ? 'text-xs' : 'text-lg';
+  const fs = size <= 56 ? 'text-xs' : size <= 72 ? 'text-lg' : 'text-xl';
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
@@ -50,10 +50,10 @@ function ProgressRing({ value, size = 88, strokeWidth = 7, lightBg = false }) {
 function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick }) {
   return (
     <div
-      className="bg-white rounded-2xl p-5 sm:p-6 transition-all duration-200 group"
+      className="bg-white rounded-3xl p-6 sm:p-7 transition-all duration-200 group"
       style={{
         border: '1px solid #EDE9FE',
-        boxShadow: '0 1px 4px rgba(139,92,246,0.06), 0 4px 12px rgba(139,92,246,0.04)',
+        boxShadow: '0 2px 8px rgba(139,92,246,0.07), 0 8px 24px rgba(139,92,246,0.05)',
         cursor: onClick ? 'pointer' : 'default',
       }}
       onClick={onClick}
@@ -71,13 +71,13 @@ function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, o
       ) : (
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-3xl font-extrabold tabular-nums tracking-tight" style={{ color: '#1C1829' }}>{value}</p>
-            <p className="text-sm font-bold mt-1.5" style={{ color: '#4B5563' }}>{label}</p>
-            {sub && <p className="text-sm mt-1 leading-snug" style={{ color: '#6B7280' }}>{sub}</p>}
+            <p className="text-4xl font-extrabold tabular-nums tracking-tight" style={{ color: '#1C1829' }}>{value}</p>
+            <p className="text-base font-bold mt-2" style={{ color: '#4B5563' }}>{label}</p>
+            {sub && <p className="text-sm sm:text-base mt-1.5 leading-snug" style={{ color: '#6B7280' }}>{sub}</p>}
           </div>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
             style={{ backgroundColor: iconBg }}>
-            <Icon size={22} style={{ color: iconColor }} strokeWidth={2.2} />
+            <Icon size={24} style={{ color: iconColor }} strokeWidth={2.2} />
           </div>
         </div>
       )}
@@ -90,7 +90,7 @@ function QuickAction({ icon: Icon, label, desc, onClick, color, compact, classNa
   return (
     <button
       type="button"
-      className={`flex items-center gap-2 w-full text-left rounded-xl transition-all duration-200 group focus:outline-none ${compact ? 'px-2.5 py-2' : 'px-4 py-3.5 gap-3.5'} ${className}`}
+      className={`flex items-center gap-2 w-full text-left rounded-2xl transition-all duration-200 group focus:outline-none ${compact ? 'px-3 py-2.5' : 'px-4 py-3.5 gap-3.5'} ${className}`}
       style={{ backgroundColor: 'white', border: '1px solid #EDE9FE' }}
       onClick={onClick}
       onMouseEnter={e => {
@@ -104,13 +104,13 @@ function QuickAction({ icon: Icon, label, desc, onClick, color, compact, classNa
         e.currentTarget.style.transform = 'translateX(0)';
       }}
     >
-      <div className={`${compact ? 'w-8 h-8' : 'w-9 h-9'} rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
+      <div className={`${compact ? 'w-9 h-9' : 'w-9 h-9'} rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
         style={{ backgroundColor: `${color}15` }}>
-        <Icon size={compact ? 14 : 16} style={{ color }} />
+        <Icon size={compact ? 16 : 16} style={{ color }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`${compact ? 'text-xs' : 'text-sm'} font-semibold`} style={{ color: '#1C1829' }}>{label}</p>
-        <p className={`${compact ? 'text-[10px]' : 'text-xs'}`} style={{ color: '#A09BB8' }}>{desc}</p>
+        <p className={`${compact ? 'text-sm' : 'text-sm'} font-semibold`} style={{ color: '#1C1829' }}>{label}</p>
+        <p className={`${compact ? 'text-xs' : 'text-xs'}`} style={{ color: '#A09BB8' }}>{desc}</p>
       </div>
       {!compact && (
         <ChevronRight size={14} style={{ color: '#C4B5FD' }} className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -156,7 +156,7 @@ function DeadlineSpotlight({ dueDate, rawDaysUntilDue, daysRemaining, memberCoun
 
   return (
     <div
-      className="rounded-xl pl-2.5 pr-3 py-2 w-full sm:w-auto sm:max-w-[min(100%,260px)] sm:ml-auto"
+      className="rounded-2xl pl-3 pr-3.5 py-2.5 w-full sm:w-auto sm:max-w-[min(100%,290px)] sm:ml-auto"
       style={{
         background: bg,
         border,
@@ -180,13 +180,13 @@ function DeadlineSpotlight({ dueDate, rawDaysUntilDue, daysRemaining, memberCoun
             )}
             {!overdue && !dueToday && (
               <>
-                <span className="text-2xl font-black tabular-nums leading-none" style={{ color: '#0f172a' }}>{daysRemaining}</span>
-                <span className="text-xs font-bold leading-none" style={{ color: '#64748b' }}>days left</span>
+                <span className="text-3xl font-black tabular-nums leading-none" style={{ color: '#0f172a' }}>{daysRemaining}</span>
+                <span className="text-sm font-bold leading-none" style={{ color: '#64748b' }}>days left</span>
                 {urgent && <AlertTriangle size={13} className="flex-shrink-0" style={{ color: '#c2410c' }} strokeWidth={2.5} />}
               </>
             )}
           </div>
-          <p className="text-xs font-medium truncate mt-0.5" style={{ color: '#64748b' }}>
+          <p className="text-sm font-medium truncate mt-1" style={{ color: '#64748b' }}>
             {shortDate}
             {memberCount > 0 ? ` · ${memberCount} members` : ''}
           </p>
@@ -240,8 +240,8 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
   const chev = compact ? 12 : 14;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden"
-      style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+    <div className="bg-white rounded-3xl overflow-hidden"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
       <div className={`${hdr} flex items-center justify-between`}
         style={{ borderBottom: '1px solid #F5F3FF' }}>
         <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
             <Calendar size={calIcon} color="white" />
           </div>
-          <h2 className={`font-extrabold ${compact ? 'text-xs' : 'text-sm'}`} style={{ color: '#1C1829' }}>Calendar</h2>
+          <h2 className={`font-extrabold ${compact ? 'text-sm' : 'text-base'}`} style={{ color: '#1C1829' }}>Calendar</h2>
         </div>
         <div className="flex items-center gap-0.5">
           <button type="button" onClick={() => setMonthOffset(m => m - 1)}
@@ -361,8 +361,8 @@ function UpcomingDeadlines({ tasks, navigate }) {
   if (upcoming.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden"
-      style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+    <div className="bg-white rounded-3xl overflow-hidden"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
       <div className="px-4 py-2.5 flex items-center justify-between"
         style={{ borderBottom: '1px solid #F5F3FF' }}>
         <div className="flex items-center gap-2">
@@ -449,8 +449,8 @@ function FilesPanel({ projectId, navigate }) {
   const folders = [...folderOrder.filter((k) => byFolder[k]?.length), ...extraFolders];
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden"
-      style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+    <div className="bg-white rounded-3xl overflow-hidden"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
       <div className="px-5 py-4 flex items-center justify-between gap-2" style={{ borderBottom: '1px solid #F5F3FF' }}>
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -688,7 +688,7 @@ export default function Dashboard() {
           }}
         />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-5 sm:pt-5 sm:pb-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 pt-5 pb-6 sm:pt-6 sm:pb-7 relative z-10">
           {loading ? (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -710,17 +710,17 @@ export default function Dashboard() {
                     <span className="text-xs font-bold text-white">{greeting}</span>
                   </span>
                   <h1 className="font-extrabold text-white leading-tight truncate"
-                    style={{ fontSize: 'clamp(1.2rem, 3.2vw, 1.65rem)', letterSpacing: '-0.03em' }}>
+                    style={{ fontSize: 'clamp(1.35rem, 3.5vw, 1.85rem)', letterSpacing: '-0.03em' }}>
                     {project?.assignment_title || project?.name || 'Group Project'}
                   </h1>
                   {project?.course_name && (
-                    <p className="text-sm sm:text-base font-semibold truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    <p className="text-base sm:text-lg font-semibold truncate mt-1" style={{ color: 'rgba(255,255,255,0.92)' }}>
                       {project.course_name}
                     </p>
                   )}
                 </div>
 
-                <div className="w-full sm:w-auto sm:flex-shrink-0 sm:max-w-[240px]">
+                <div className="w-full sm:w-auto sm:flex-shrink-0 sm:max-w-[280px]">
                   <DeadlineSpotlight
                     dueDate={project?.due_date}
                     rawDaysUntilDue={rawDaysUntilDue}
@@ -732,21 +732,21 @@ export default function Dashboard() {
 
               {tasks.length > 0 && (
                 <div
-                  className="mt-5 pt-5 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4 border-t"
+                  className="mt-6 pt-6 flex flex-col sm:flex-row items-stretch gap-4 sm:gap-5 border-t"
                   style={{ borderColor: 'rgba(255,255,255,0.2)' }}
                 >
                   <div
-                    className="flex flex-row sm:flex-col items-center justify-center gap-2 sm:min-w-[112px] rounded-2xl px-4 py-3"
+                    className="flex flex-row sm:flex-col items-center justify-center gap-2 sm:min-w-[128px] rounded-3xl px-5 py-4"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.14)',
                       backdropFilter: 'blur(12px)',
                       border: '1px solid rgba(255,255,255,0.28)',
                     }}
                   >
-                    <ProgressRing value={overallProgress} size={68} strokeWidth={6} />
-                    <p className="text-[11px] font-extrabold sm:mt-1 tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.9)' }}>Overall</p>
+                    <ProgressRing value={overallProgress} size={76} strokeWidth={6} />
+                    <p className="text-xs font-extrabold sm:mt-1.5 tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.92)' }}>Overall</p>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 flex-1 min-w-0">
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4 flex-1 min-w-0">
                     {[
                       { label: 'Tasks', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#6ee7b7' },
                       { label: 'Active', value: tasksInProgress, icon: TrendingUp, color: '#fcd34d' },
@@ -754,17 +754,17 @@ export default function Dashboard() {
                     ].map(s => (
                       <div
                         key={s.label}
-                        className="flex items-center gap-2.5 rounded-2xl px-3 py-3 sm:py-3.5"
+                        className="flex items-center gap-3 rounded-3xl px-4 py-4 sm:py-4"
                         style={{
                           backgroundColor: 'rgba(255,255,255,0.12)',
                           backdropFilter: 'blur(10px)',
                           border: '1px solid rgba(255,255,255,0.22)',
                         }}
                       >
-                        <s.icon size={18} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
+                        <s.icon size={20} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
                         <div className="min-w-0">
-                          <p className="text-lg sm:text-xl font-extrabold text-white leading-none tabular-nums">{s.value}</p>
-                          <p className="text-xs mt-1 font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>{s.label}</p>
+                          <p className="text-xl sm:text-2xl font-extrabold text-white leading-none tabular-nums">{s.value}</p>
+                          <p className="text-sm mt-1.5 font-semibold" style={{ color: 'rgba(255,255,255,0.78)' }}>{s.label}</p>
                         </div>
                       </div>
                     ))}
@@ -776,9 +776,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-12 pt-6 relative z-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-10 pb-14 pt-7 sm:pt-8 relative z-10">
         {error && (
-          <div className="bg-white rounded-2xl px-5 py-4 mb-5 flex items-start gap-3"
+          <div className="bg-white rounded-3xl px-5 py-4 mb-6 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FEF3C7' }}>
               <AlertTriangle size={15} style={{ color: '#D97706' }} />
@@ -791,8 +791,8 @@ export default function Dashboard() {
 
         {/* Alert Banner */}
         {!loading && alerts.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 mb-5 flex items-center gap-4 relative z-20"
-            style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 20px rgba(15,23,42,0.08)' }}>
+          <div className="bg-white rounded-3xl p-5 mb-6 flex items-center gap-4 relative z-20"
+            style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.08), 0 8px 28px rgba(15,23,42,0.06)' }}>
             <div className="relative flex-shrink-0">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', boxShadow: '0 4px 12px rgba(245,158,11,0.25)' }}>
@@ -818,7 +818,7 @@ export default function Dashboard() {
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6 mb-10">
           <StatCard loading={loading}
             value={rawDaysUntilDue !== null && rawDaysUntilDue < 0 ? 'Late' : daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
             sub={rawDaysUntilDue !== null && rawDaysUntilDue < 0
@@ -842,10 +842,10 @@ export default function Dashboard() {
         </div>
 
         {/* Tasks full width, then 3-column widget grid (no skinny sidebar) */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div className="min-w-0">
-            <div className="bg-white rounded-2xl overflow-hidden"
-              style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+            <div className="bg-white rounded-3xl overflow-hidden"
+              style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.08), 0 4px 24px rgba(15,23,42,0.04)' }}>
               <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#F5F3FF]">
                 {/* Recent Tasks — left */}
                 <div className="min-w-0">
@@ -1005,10 +1005,10 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
             <div className="space-y-4 min-w-0">
-              <div className="bg-white rounded-2xl overflow-hidden"
-                style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-                <div className="px-4 py-2.5" style={{ borderBottom: '1px solid #F5F3FF' }}>
-                  <h2 className="text-xs font-extrabold" style={{ color: '#1C1829' }}>Quick actions</h2>
+              <div className="bg-white rounded-3xl overflow-hidden"
+                style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
+                <div className="px-4 py-3" style={{ borderBottom: '1px solid #F5F3FF' }}>
+                  <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Quick actions</h2>
                 </div>
                 <div className="p-2.5 grid grid-cols-2 gap-2">
                   <QuickAction compact icon={CheckCircle} label="Tasks" desc="To-dos"
@@ -1032,8 +1032,8 @@ export default function Dashboard() {
             </div>
 
             <div className="min-w-0 md:col-span-2 xl:col-span-1">
-              <div className="bg-white rounded-2xl overflow-hidden h-full"
-                style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+              <div className="bg-white rounded-3xl overflow-hidden h-full"
+                style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #F5F3FF' }}>
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Rubric Coverage</h2>

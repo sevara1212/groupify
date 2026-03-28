@@ -15,7 +15,7 @@ export default function TopNav() {
 
   return (
     <header className="bg-white sticky top-0 z-50" style={{ borderBottom: '1px solid #EDE9FE' }}>
-      <div className="max-w-5xl mx-auto px-5 flex items-center justify-between h-14">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
         {/* Wordmark */}
         <button
           onClick={() => navigate('/dashboard')}
