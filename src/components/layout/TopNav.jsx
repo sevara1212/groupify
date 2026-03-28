@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare, FolderOpen, Settings } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
+import AppearanceControls from './AppearanceControls';
 
 const tabs = [
   { label: 'Dashboard',     to: '/dashboard', icon: LayoutDashboard },
@@ -61,7 +61,7 @@ export default function TopNav() {
         </nav>
 
         <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
-          <ThemeToggle />
+          <AppearanceControls />
           <NavLink
             to="/settings"
             className="flex-shrink-0 p-2 rounded-xl transition-all"

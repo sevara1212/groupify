@@ -10,13 +10,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <script>
       (() => {
-        const storageKey = 'groupify-theme';
-        const savedTheme = window.localStorage.getItem(storageKey);
+        const savedTheme = window.localStorage.getItem('groupify-theme');
+        const savedColorMode = window.localStorage.getItem('groupify-color-mode');
+        const savedContrast = window.localStorage.getItem('groupify-contrast');
+        const savedMotion = window.localStorage.getItem('groupify-motion');
         const theme = savedTheme === 'light' || savedTheme === 'dark'
           ? savedTheme
           : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const colorMode = savedColorMode === 'accessible' ? 'accessible' : 'default';
+        const contrast = savedContrast === 'high'
+          ? 'high'
+          : savedContrast === 'standard'
+            ? 'standard'
+            : (window.matchMedia?.('(prefers-contrast: more)')?.matches ?? false) ? 'high' : 'standard';
+        const motion = savedMotion === 'reduced'
+          ? 'reduced'
+          : savedMotion === 'normal'
+            ? 'normal'
+            : window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'normal';
 
         document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.colorMode = colorMode;
+        document.documentElement.dataset.contrast = contrast;
+        document.documentElement.dataset.motion = motion;
         document.documentElement.style.colorScheme = theme;
       })();
     </script>

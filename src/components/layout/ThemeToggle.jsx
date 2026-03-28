@@ -11,7 +11,7 @@ export default function ThemeToggle({ className = '' }) {
     <button
       type="button"
       onClick={toggleTheme}
-      className={`theme-toggle flex items-center justify-center rounded-xl transition-all ${className}`.trim()}
+      className={`topbar-control theme-toggle flex items-center justify-center rounded-xl transition-all ${className}`.trim()}
       aria-label={label}
       aria-pressed={isDark}
       title={label}
