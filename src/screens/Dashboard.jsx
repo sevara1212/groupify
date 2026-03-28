@@ -83,10 +83,11 @@ function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, o
 }
 
 /* ─── Quick Action ────────────────────────────────── */
-function QuickAction({ icon: Icon, label, desc, onClick, color }) {
+function QuickAction({ icon: Icon, label, desc, onClick, color, compact }) {
   return (
     <button
-      className="flex items-center gap-3.5 w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 group focus:outline-none"
+      type="button"
+      className={`flex items-center gap-2 w-full text-left rounded-xl transition-all duration-200 group focus:outline-none ${compact ? 'px-2.5 py-2' : 'px-4 py-3.5 gap-3.5'}`}
       style={{ backgroundColor: 'white', border: '1px solid #EDE9FE' }}
       onClick={onClick}
       onMouseEnter={e => {
@@ -100,21 +101,23 @@ function QuickAction({ icon: Icon, label, desc, onClick, color }) {
         e.currentTarget.style.transform = 'translateX(0)';
       }}
     >
-      <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+      <div className={`${compact ? 'w-8 h-8' : 'w-9 h-9'} rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
         style={{ backgroundColor: `${color}15` }}>
-        <Icon size={16} style={{ color }} />
+        <Icon size={compact ? 14 : 16} style={{ color }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold" style={{ color: '#1C1829' }}>{label}</p>
-        <p className="text-xs" style={{ color: '#A09BB8' }}>{desc}</p>
+        <p className={`${compact ? 'text-xs' : 'text-sm'} font-semibold`} style={{ color: '#1C1829' }}>{label}</p>
+        <p className={`${compact ? 'text-[10px]' : 'text-xs'}`} style={{ color: '#A09BB8' }}>{desc}</p>
       </div>
-      <ChevronRight size={14} style={{ color: '#C4B5FD' }} className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
+      {!compact && (
+        <ChevronRight size={14} style={{ color: '#C4B5FD' }} className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
+      )}
     </button>
   );
 }
 
 /* ─── Deadline Calendar ───────────────────────────── */
-function DeadlineCalendar({ tasks, projectDueDate }) {
+function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
   const today = new Date();
   const [monthOffset, setMonthOffset] = useState(0);
 
@@ -148,45 +151,53 @@ function DeadlineCalendar({ tasks, projectDueDate }) {
 
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+  const ch = compact ? 'h-7' : 'h-9';
+  const fs = compact ? 'text-[10px]' : 'text-xs';
+  const hdr = compact ? 'px-3 py-2' : 'px-5 py-4';
+  const iconBox = compact ? 'w-6 h-6' : 'w-8 h-8';
+  const calIcon = compact ? 11 : 14;
+  const navBtn = compact ? 'w-6 h-6' : 'w-7 h-7';
+  const chev = compact ? 12 : 14;
+
   return (
     <div className="bg-white rounded-2xl overflow-hidden"
       style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-      <div className="px-5 py-4 flex items-center justify-between"
+      <div className={`${hdr} flex items-center justify-between`}
         style={{ borderBottom: '1px solid #F5F3FF' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+        <div className="flex items-center gap-2">
+          <div className={`${iconBox} rounded-lg flex items-center justify-center`}
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
-            <Calendar size={14} color="white" />
+            <Calendar size={calIcon} color="white" />
           </div>
-          <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Deadline Calendar</h2>
+          <h2 className={`font-extrabold ${compact ? 'text-xs' : 'text-sm'}`} style={{ color: '#1C1829' }}>Calendar</h2>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => setMonthOffset(m => m - 1)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+        <div className="flex items-center gap-0.5">
+          <button type="button" onClick={() => setMonthOffset(m => m - 1)}
+            className={`${navBtn} rounded-lg flex items-center justify-center`}
             style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
-            <ChevronLeft size={14} />
+            <ChevronLeft size={chev} />
           </button>
-          <span className="text-xs font-bold px-2" style={{ color: '#1C1829', minWidth: 120, textAlign: 'center' }}>{monthName}</span>
-          <button onClick={() => setMonthOffset(m => m + 1)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+          <span className={`font-bold px-1 ${compact ? 'text-[10px] min-w-[5.5rem]' : 'text-xs min-w-[120px]'} text-center`} style={{ color: '#1C1829' }}>{monthName}</span>
+          <button type="button" onClick={() => setMonthOffset(m => m + 1)}
+            className={`${navBtn} rounded-lg flex items-center justify-center`}
             style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
-            <ChevronRight size={14} />
+            <ChevronRight size={chev} />
           </button>
         </div>
       </div>
 
-      <div className="px-4 py-3">
+      <div className={compact ? 'px-2 py-2' : 'px-4 py-3'}>
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-            <div key={d} className="text-center text-xs font-bold py-1" style={{ color: '#A09BB8' }}>{d}</div>
+        <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+            <div key={i} className={`text-center font-bold py-0.5 ${fs}`} style={{ color: '#A09BB8' }}>{d}</div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5">
           {cells.map((cell, i) => {
-            if (!cell) return <div key={`empty-${i}`} className="h-9" />;
+            if (!cell) return <div key={`empty-${i}`} className={ch} />;
 
             const isToday = cell.dateStr === todayStr;
             const isProjectDue = cell.dateStr === projectDueKey;
@@ -213,10 +224,10 @@ function DeadlineCalendar({ tasks, projectDueDate }) {
 
             return (
               <div key={cell.dateStr}
-                className="h-9 rounded-lg flex flex-col items-center justify-center relative transition-all"
+                className={`${ch} rounded-md flex flex-col items-center justify-center relative transition-all`}
                 style={{ backgroundColor: bg }}
                 title={hasTasks ? `${dayTasks.length} task${dayTasks.length !== 1 ? 's' : ''}: ${dayTasks.map(t => t.title).join(', ')}` : isProjectDue ? 'Project due date' : ''}>
-                <span className="text-xs font-semibold" style={{ color: textColor }}>
+                <span className={`${fs} font-semibold`} style={{ color: textColor }}>
                   {cell.day}
                 </span>
                 {dotColor && (
@@ -235,23 +246,23 @@ function DeadlineCalendar({ tasks, projectDueDate }) {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px solid #F5F3FF' }}>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
-            <span className="text-xs" style={{ color: '#A09BB8' }}>Upcoming</span>
+        <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${compact ? 'mt-1.5 pt-1.5' : 'mt-3 pt-2'}`} style={{ borderTop: '1px solid #F5F3FF' }}>
+          <div className="flex items-center gap-1">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#8B5CF6' }} />
+            <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Upcoming</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#10B981' }} />
-            <span className="text-xs" style={{ color: '#A09BB8' }}>Done</span>
+          <div className="flex items-center gap-1">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#10B981' }} />
+            <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Done</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#EF4444' }} />
-            <span className="text-xs" style={{ color: '#A09BB8' }}>Overdue</span>
+          <div className="flex items-center gap-1">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#EF4444' }} />
+            <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Late</span>
           </div>
           {projectDueDate && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#EC4899' }} />
-              <span className="text-xs" style={{ color: '#A09BB8' }}>Due date</span>
+            <div className="flex items-center gap-1">
+              <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#EC4899' }} />
+              <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Project</span>
             </div>
           )}
         </div>
@@ -272,43 +283,47 @@ function UpcomingDeadlines({ tasks, navigate }) {
   return (
     <div className="bg-white rounded-2xl overflow-hidden"
       style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-      <div className="px-5 py-4 flex items-center justify-between"
+      <div className="px-4 py-2.5 flex items-center justify-between"
         style={{ borderBottom: '1px solid #F5F3FF' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #D97706, #F59E0B)' }}>
-            <Clock size={14} color="white" />
+            <Clock size={12} color="white" />
           </div>
-          <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Upcoming Deadlines</h2>
+          <h2 className="text-xs font-extrabold" style={{ color: '#1C1829' }}>Upcoming deadlines</h2>
         </div>
       </div>
-      <div className="p-4 space-y-2">
-        {upcoming.map(task => {
-          const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / 86400000);
-          const isOverdue = daysLeft < 0;
-          const isUrgent = daysLeft >= 0 && daysLeft <= 3;
-          const dateLabel = new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+      <div className="p-3 pt-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {upcoming.map(task => {
+            const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / 86400000);
+            const isOverdue = daysLeft < 0;
+            const isUrgent = daysLeft >= 0 && daysLeft <= 3;
+            const dateLabel = new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
 
-          return (
-            <div key={task.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
-              style={{ backgroundColor: isOverdue ? '#FEF2F2' : isUrgent ? '#FFFBEB' : '#F8F7FF', border: `1px solid ${isOverdue ? '#FECACA' : isUrgent ? '#FDE68A' : '#EDE9FE'}` }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: isOverdue ? '#FEE2E2' : isUrgent ? '#FEF3C7' : '#F5F3FF' }}>
-                <Calendar size={12} style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }} />
+            return (
+              <div
+                key={task.id}
+                className="snap-start flex-shrink-0 w-[min(100%,220px)] sm:w-52 rounded-xl p-2.5 flex flex-col justify-between min-h-[88px]"
+                style={{
+                  backgroundColor: isOverdue ? '#FEF2F2' : isUrgent ? '#FFFBEB' : '#F8F7FF',
+                  border: `1px solid ${isOverdue ? '#FECACA' : isUrgent ? '#FDE68A' : '#EDE9FE'}`,
+                }}
+              >
+                <p className="text-xs font-bold leading-tight line-clamp-2" style={{ color: '#1C1829' }}>{task.title}</p>
+                <div className="flex items-end justify-between gap-2 mt-2">
+                  <span className="text-[10px] font-medium truncate" style={{ color: '#6B7280' }}>{task.member_name || '—'}</span>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs font-extrabold tabular-nums leading-none" style={{ color: isOverdue ? '#B91C1C' : isUrgent ? '#C2410C' : '#5B21B6' }}>{dateLabel}</p>
+                    <p className="text-[10px] font-bold tabular-nums" style={{ color: isOverdue ? '#DC2626' : isUrgent ? '#EA580C' : '#4B5563' }}>
+                      {isOverdue ? `${Math.abs(daysLeft)}d over` : daysLeft === 0 ? 'Today' : `${daysLeft}d left`}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold truncate" style={{ color: '#1C1829' }}>{task.title}</p>
-                <p className="text-xs" style={{ color: '#A09BB8' }}>{task.member_name}</p>
-              </div>
-              <div className="text-right flex-shrink-0 min-w-[4.5rem]">
-                <p className="text-sm font-extrabold tabular-nums" style={{ color: isOverdue ? '#B91C1C' : isUrgent ? '#C2410C' : '#5B21B6' }}>{dateLabel}</p>
-                <p className="text-xs font-bold tabular-nums" style={{ color: isOverdue ? '#DC2626' : isUrgent ? '#EA580C' : '#4B5563' }}>
-                  {isOverdue ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? 'Today' : `${daysLeft}d left`}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -735,34 +750,35 @@ export default function Dashboard() {
             icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
         </div>
 
-        {/* Two-column layout — balanced 50/50 on large screens */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-          {/* Left: Tasks + Members */}
-          <div className="space-y-6 min-w-0">
-            {/* Recent Tasks */}
+        {/* Main: tasks+progress side-by-side (lg+), sidebar 5/12 */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 items-start">
+          <div className="xl:col-span-7 min-w-0">
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-              <div className="px-6 py-4 flex items-center justify-between"
-                style={{ borderBottom: '1px solid #F5F3FF' }}>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
-                    <CheckCircle size={14} color="white" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#F5F3FF]">
+                {/* Recent Tasks — left */}
+                <div className="min-w-0">
+                  <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-2"
+                    style={{ borderBottom: '1px solid #F5F3FF' }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+                        <CheckCircle size={13} color="white" />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-sm font-extrabold truncate" style={{ color: '#1C1829' }}>Recent tasks</h2>
+                        {!loading && tasks.length > 0 && (
+                          <p className="text-[11px] truncate" style={{ color: '#A09BB8' }}>{tasksDone}/{tasks.length} done</p>
+                        )}
+                      </div>
+                    </div>
+                    <button type="button" className="text-[11px] font-bold flex items-center gap-0.5 px-2.5 py-1 rounded-lg flex-shrink-0"
+                      style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
+                      onClick={() => navigate('/tasks')}>
+                      All <ChevronRight size={11} />
+                    </button>
                   </div>
-                  <div>
-                    <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Recent Tasks</h2>
-                    {!loading && tasks.length > 0 && (
-                      <p className="text-xs" style={{ color: '#A09BB8' }}>{tasksDone} of {tasks.length} complete</p>
-                    )}
-                  </div>
-                </div>
-                <button className="text-xs font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all"
-                  style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
-                  onClick={() => navigate('/tasks')}>
-                  View all <ChevronRight size={12} />
-                </button>
-              </div>
-              <div className="px-6 py-2">
+                  <div className="px-4 py-2 max-h-[280px] overflow-y-auto">
                 {loading ? (
                   <div className="space-y-3 py-3">{[0,1,2].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div>
                 ) : tasks.length === 0 ? (
@@ -783,7 +799,7 @@ export default function Dashboard() {
                       const isOverdue = daysLeft !== null && daysLeft < 0 && !isDone;
                       return (
                         <div key={task.id}
-                          className="flex items-center gap-3.5 py-3.5 transition-all duration-200"
+                          className="flex items-center gap-2.5 py-2.5 transition-all duration-200"
                           style={{ borderBottom: idx < Math.min(tasks.length, 5) - 1 ? '1px solid #F5F3FF' : 'none' }}>
                           <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: isDone ? '#ECFDF5' : isInProgress ? '#F5F3FF' : '#FAFAFA' }}>
@@ -832,90 +848,92 @@ export default function Dashboard() {
                     })}
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Member Contribution */}
-            <div className="bg-white rounded-2xl overflow-hidden"
-              style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-              <div className="px-6 py-4 flex items-center justify-between"
-                style={{ borderBottom: '1px solid #F5F3FF' }}>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-                    <Users size={14} color="white" />
                   </div>
-                  <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Team Progress</h2>
                 </div>
-                {members.length > 0 && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                    style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
-                    {members.length} member{members.length !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              <div className="px-6 py-4">
-                {loading ? (
-                  <div className="space-y-4">{[0,1,2].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
-                ) : memberContribs.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-sm" style={{ color: '#A09BB8' }}>No tasks assigned yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    {memberContribs.map(({ id, name, avg, taskCount, color }) => (
-                      <div key={id} className="flex items-center gap-3.5">
-                        <Avatar name={name} color={color} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold" style={{ color: '#1C1829' }}>{name}</span>
-                              <span className="text-xs px-2 py-0.5 rounded-md font-medium"
-                                style={{ backgroundColor: `${color}12`, color }}>
-                                {taskCount} task{taskCount !== 1 ? 's' : ''}
-                              </span>
-                            </div>
-                            <span className="text-xs font-bold tabular-nums" style={{ color }}>{avg}%</span>
-                          </div>
-                          <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
-                            <div className="h-3 rounded-full transition-all duration-700"
-                              style={{
-                                width: `${avg}%`,
-                                background: `linear-gradient(90deg,${color},${color}CC)`,
-                                boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
-                              }} />
-                          </div>
-                        </div>
+
+                {/* Team progress — right column on lg+ */}
+                <div className="min-w-0 flex flex-col border-t lg:border-t-0"
+                  style={{ borderColor: '#F5F3FF' }}>
+                  <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-2"
+                    style={{ borderBottom: '1px solid #F5F3FF' }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+                        <Users size={13} color="white" />
                       </div>
-                    ))}
+                      <h2 className="text-sm font-extrabold truncate" style={{ color: '#1C1829' }}>Team progress</h2>
+                    </div>
+                    {members.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
+                        {members.length} people
+                      </span>
+                    )}
                   </div>
-                )}
+                  <div className="px-4 py-3 max-h-[280px] overflow-y-auto">
+                    {loading ? (
+                      <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                    ) : memberContribs.length === 0 ? (
+                      <div className="py-6 text-center">
+                        <p className="text-xs" style={{ color: '#A09BB8' }}>No tasks assigned yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {memberContribs.map(({ id, name, avg, taskCount, color }) => (
+                          <div key={id} className="flex items-center gap-2.5">
+                            <Avatar name={name} color={color} size="sm" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1 mb-1">
+                                <span className="text-xs font-bold truncate" style={{ color: '#1C1829' }}>{name}</span>
+                                <span className="text-[10px] font-bold tabular-nums flex-shrink-0" style={{ color }}>{avg}%</span>
+                              </div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                                  style={{ backgroundColor: `${color}12`, color }}>
+                                  {taskCount} tasks
+                                </span>
+                              </div>
+                              <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
+                                <div className="h-2 rounded-full transition-all duration-700"
+                                  style={{
+                                    width: `${avg}%`,
+                                    background: `linear-gradient(90deg,${color},${color}CC)`,
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                                  }} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right sidebar */}
-          <div className="space-y-5 min-w-0">
-            {/* Quick Actions */}
+          {/* Right: compact widgets */}
+          <div className="xl:col-span-5 space-y-4 min-w-0">
+            {/* Quick Actions — 2×2 compact */}
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-              <div className="px-5 py-4" style={{ borderBottom: '1px solid #F5F3FF' }}>
-                <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Quick Actions</h2>
+              <div className="px-4 py-2.5" style={{ borderBottom: '1px solid #F5F3FF' }}>
+                <h2 className="text-xs font-extrabold" style={{ color: '#1C1829' }}>Quick actions</h2>
               </div>
-              <div className="p-3 space-y-2">
-                <QuickAction icon={CheckCircle} label="View Tasks" desc="Manage your to-dos"
+              <div className="p-2.5 grid grid-cols-2 gap-2">
+                <QuickAction compact icon={CheckCircle} label="Tasks" desc="To-dos"
                   color="#0D9488" onClick={() => navigate('/tasks')} />
-                <QuickAction icon={Target} label="Rubric" desc="Check coverage"
+                <QuickAction compact icon={Target} label="Rubric" desc="Coverage"
                   color="#EC4899" onClick={() => navigate('/rubric')} />
-                <QuickAction icon={Shield} label="Risk Alerts" desc={`${alerts.length} active`}
+                <QuickAction compact icon={Shield} label="Alerts" desc={`${alerts.length} active`}
                   color="#D97706" onClick={() => navigate('/risk-alerts')} />
-                <QuickAction icon={MessageSquare} label="Messages" desc="Team chat"
+                <QuickAction compact icon={MessageSquare} label="Chat" desc="Messages"
                   color="#6366F1" onClick={() => navigate('/messages')} />
               </div>
             </div>
 
-            {/* Deadline Calendar */}
-            {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} />}
+            {/* Deadline Calendar — compact */}
+            {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact />}
 
             {/* Upcoming Deadlines */}
             {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
