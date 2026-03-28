@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Loader2, ArrowRight, AlertTriangle, Sparkles, ChevronDown, ChevronUp,
   Calendar, RefreshCw, CheckCircle, ArrowLeftRight, X, Users, Clock,
-  Zap, Timer, Shield, GripVertical, LayoutGrid,
+  Zap, Shield, GripVertical, LayoutGrid,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
@@ -167,12 +167,13 @@ function ReassignModal({ task, members, currentMemberId, onReassign, onClose }) 
   );
 }
 
-/* ── Task Card ──────────────────────────────────────── */
+/* ── Task Card (compact) ─────────────────────────────── */
 function TaskCard({ task, memberColor, allMembers, currentMemberId, onReassign }) {
   const [showModal, setShowModal] = useState(false);
+  const [showNote, setShowNote] = useState(false);
   const ds = deadlineStyle(task.suggested_due_date);
   const days = daysUntil(task.suggested_due_date);
-  const daysLabel = days === null ? null : days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`;
+  const daysLabel = days === null ? null : days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? 'today' : `${days}d left`;
 
   const onDragStart = (e) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ task, fromMemberId: currentMemberId }));
@@ -184,72 +185,56 @@ function TaskCard({ task, memberColor, allMembers, currentMemberId, onReassign }
       <div
         draggable
         onDragStart={onDragStart}
-        className="rounded-2xl overflow-hidden transition-all duration-200 group cursor-grab active:cursor-grabbing"
+        className="rounded-xl overflow-hidden transition-all duration-200 group cursor-grab active:cursor-grabbing"
         style={{ backgroundColor: 'white', border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
         onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.10)'; e.currentTarget.style.borderColor = '#C4B5FD'; }}
         onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#EDE9FE'; }}>
 
-        {/* Left accent */}
         <div className="flex">
-          <div className="w-8 flex-shrink-0 flex items-start justify-center pt-4 rounded-l-2xl opacity-40 group-hover:opacity-100 transition-opacity"
-            style={{ backgroundColor: `${memberColor}12` }}>
-            <GripVertical size={16} style={{ color: memberColor }} />
+          <div className="w-6 flex-shrink-0 flex items-start justify-center pt-3 rounded-l-xl opacity-40 group-hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: `${memberColor}10` }}>
+            <GripVertical size={14} style={{ color: memberColor }} />
           </div>
-          <div className="w-1 flex-shrink-0 rounded-l-sm self-stretch" style={{ backgroundColor: memberColor }} />
-          <div className="flex-1 p-4">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <p className="text-sm font-bold flex-1 leading-snug" style={{ color: '#111827' }}>{task.title}</p>
+          <div className="w-0.5 flex-shrink-0 self-stretch" style={{ backgroundColor: memberColor }} />
+          <div className="flex-1 min-w-0 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-bold flex-1 min-w-0 leading-snug line-clamp-2" style={{ color: '#111827' }}>{task.title}</p>
               <button type="button" onClick={() => setShowModal(true)}
-                className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all flex-shrink-0"
-                style={{ backgroundColor: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#EFF6FF'; }}>
-                <ArrowLeftRight size={10} /> Assign
+                className="inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-1 rounded-lg transition-all flex-shrink-0"
+                style={{ backgroundColor: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}>
+                <ArrowLeftRight size={9} /> Assign
               </button>
             </div>
 
-            {/* Deadline badge */}
-            {task.suggested_due_date && (
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: ds.bg, border: `1px solid ${ds.border}` }}>
-                  <Calendar size={10} style={{ color: ds.color }} />
-                  <span className="text-xs font-bold" style={{ color: ds.color }}>
-                    {new Date(task.suggested_due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
-                  </span>
-                </div>
-                {daysLabel && (
-                  <span className="text-xs font-semibold" style={{ color: ds.color }}>
-                    {daysLabel}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Rationale */}
-            {task.rationale && (
-              <p className="text-xs leading-relaxed mb-2.5"
-                style={{ color: '#6B7280', borderLeft: `2px solid ${memberColor}40`, paddingLeft: 10 }}>
-                {task.rationale}
-              </p>
-            )}
-
-            {/* Tags */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              {task.suggested_due_date && (
+                <span className="text-[11px] font-bold tabular-nums" style={{ color: ds.color }}>
+                  <Calendar size={10} className="inline mr-0.5 align-text-bottom" style={{ color: ds.color }} />
+                  {new Date(task.suggested_due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                  {daysLabel ? ` · ${daysLabel}` : ''}
+                </span>
+              )}
               {task.criterion_name && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ backgroundColor: '#EDE9FE', color: '#6D28D9' }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold truncate max-w-[10rem]"
+                  style={{ backgroundColor: '#F5F3FF', color: '#6D28D9' }}>
                   {task.criterion_name}
                 </span>
               )}
-              {task.stage && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ backgroundColor: '#FDF2F8', color: '#BE185D' }}>
-                  {task.stage} phase
-                </span>
-              )}
-              <span className="text-xs font-medium" style={{ color: '#C4B5FD' }}>AI suggestion</span>
             </div>
+
+            {task.rationale && (
+              <div className="mt-1.5">
+                {!showNote ? (
+                  <button type="button" onClick={() => setShowNote(true)} className="text-[10px] font-semibold" style={{ color: '#8B5CF6' }}>
+                    + Why this task
+                  </button>
+                ) : (
+                  <p className="text-[11px] leading-snug line-clamp-3" style={{ color: '#6B7280' }}>
+                    {task.rationale}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -446,7 +431,7 @@ export default function Allocation() {
       <div className="relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #EC4899 100%)' }}>
         <div className="absolute pointer-events-none" style={{ top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-        <div className="max-w-3xl mx-auto px-6 py-8 relative flex items-start justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-6 py-6 relative flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles size={13} color="rgba(255,255,255,0.75)" />
@@ -455,8 +440,8 @@ export default function Allocation() {
             <h1 className="text-2xl font-extrabold text-white mb-1.5" style={{ letterSpacing: '-0.02em' }}>
               Your Group's Task Plan
             </h1>
-            <p className="text-sm text-white/65 max-w-lg">
-              {coverageSummary || `${totalTasks} tasks across ${allocations.length} teammate${allocations.length !== 1 ? 's' : ''}. Drag cards between columns or use Assign — then accept to save to the team.`}
+            <p className="text-sm text-white/65 max-w-2xl">
+              {coverageSummary || `${totalTasks} tasks · ${allocations.length} people. Drag between columns or Assign, then accept.`}
             </p>
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
@@ -483,7 +468,7 @@ export default function Allocation() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-5">
 
         {error && (
           <div className="rounded-2xl px-4 py-3 mb-5 flex items-center gap-3"
@@ -494,29 +479,28 @@ export default function Allocation() {
           </div>
         )}
 
-        {/* Fairness summary */}
-        {fairness && (
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl mb-4"
-            style={{ backgroundColor: fairness.is_balanced ? '#F0FDF4' : '#FEF3C7', border: `1px solid ${fairness.is_balanced ? '#BBF7D0' : '#FDE68A'}` }}>
-            <Shield size={14} style={{ color: fairness.is_balanced ? '#16A34A' : '#D97706', flexShrink: 0 }} />
-            <p className="text-xs font-medium" style={{ color: fairness.is_balanced ? '#15803D' : '#92400E' }}>
-              <strong>Fairness:</strong> {fairness.task_count_range} tasks per member · {fairness.weight_range} weight range
-              {fairness.is_balanced ? ' — well balanced ✓' : ' — consider reassigning for better balance'}
-            </p>
-          </div>
-        )}
-
-        {/* Tip */}
-        {allocations.length > 0 && (
-          <div className="flex items-center gap-3 px-5 py-4 rounded-2xl mb-6"
-            style={{ backgroundColor: '#F0FDF4', border: '1px solid #86EFAC' }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#DCFCE7' }}>
-              <LayoutGrid size={18} style={{ color: '#15803D' }} />
-            </div>
-            <p className="text-sm font-medium leading-snug" style={{ color: '#166534' }}>
-              <strong>Drag & drop</strong> tasks between people, or <strong>Assign</strong> to pick someone. Accepting the plan writes real tasks in the database — you can reassign again anytime from the dashboard or Tasks page.
-            </p>
+        {/* Compact hints */}
+        {(fairness || allocations.length > 0) && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2 sm:gap-3 mb-5">
+            {fairness && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl flex-1 min-w-0"
+                style={{ backgroundColor: fairness.is_balanced ? '#F0FDF4' : '#FEF3C7', border: `1px solid ${fairness.is_balanced ? '#BBF7D0' : '#FDE68A'}` }}>
+                <Shield size={13} className="flex-shrink-0" style={{ color: fairness.is_balanced ? '#16A34A' : '#D97706' }} />
+                <p className="text-xs font-medium truncate" style={{ color: fairness.is_balanced ? '#15803D' : '#92400E' }}>
+                  {fairness.task_count_range} tasks each · {fairness.weight_range} weight
+                  {fairness.is_balanced ? ' · balanced ✓' : ''}
+                </p>
+              </div>
+            )}
+            {allocations.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl flex-1 min-w-0"
+                style={{ backgroundColor: '#F5F3FF', border: '1px solid #E9D5FF' }}>
+                <LayoutGrid size={13} className="flex-shrink-0" style={{ color: '#7C3AED' }} />
+                <p className="text-xs font-medium" style={{ color: '#5B21B6' }}>
+                  Drag between columns or <strong>Assign</strong>. Accept saves tasks for the team.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -529,7 +513,9 @@ export default function Allocation() {
             <p className="text-sm" style={{ color: '#A09BB8' }}>Make sure all members have completed the quiz.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+          <div
+            className={`grid grid-cols-1 gap-4 mb-6 ${allocations.length <= 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 xl:grid-cols-3'}`}
+          >
             {allocations.map((member) => {
               const isExpanded = expanded[member.member_id] !== false;
               const color = member.color || MEMBER_COLORS[0];
@@ -537,7 +523,7 @@ export default function Allocation() {
               return (
                 <div
                   key={member.member_id}
-                  className="bg-white rounded-2xl overflow-hidden flex flex-col min-h-[200px] transition-all duration-200"
+                  className="bg-white rounded-2xl overflow-hidden flex flex-col min-h-[120px] transition-all duration-200"
                   style={{
                     border: `2px solid ${isDropTarget ? color : '#EDE9FE'}`,
                     boxShadow: isDropTarget
@@ -560,9 +546,9 @@ export default function Allocation() {
                     } catch { /* ignore */ }
                   }}
                 >
-                  <div className="px-4 py-3.5 flex items-center gap-3 flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${color}12, white)`, borderBottom: '1px solid #F5F3FF' }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
+                  <div className="px-3 py-2.5 flex items-center gap-2.5 flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${color}10, white)`, borderBottom: '1px solid #F5F3FF' }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
                       style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
                       {getInitials(member.member_name)}
                     </div>
@@ -585,9 +571,11 @@ export default function Allocation() {
                   </div>
 
                   {isExpanded && (
-                    <div className="px-4 pb-4 flex-1 flex flex-col">
+                    <div className="px-3 pb-3 flex-1 flex flex-col">
                       {member.skill_summary && (
-                        <p className="text-[11px] leading-relaxed mb-2 px-0.5" style={{ color: '#6B6584' }}>{member.skill_summary}</p>
+                        <p className="text-[10px] leading-snug mb-2 px-0.5 line-clamp-2" style={{ color: '#6B6580' }} title={member.skill_summary}>
+                          {member.skill_summary}
+                        </p>
                       )}
                       {member.tasks.length === 0 ? (
                         <div className="flex-1 flex items-center justify-center py-8 rounded-xl border border-dashed mt-1"
@@ -597,7 +585,7 @@ export default function Allocation() {
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-3 mt-1">
+                        <div className="space-y-2 mt-0.5">
                           {member.tasks.map((task, ti) => (
                             <TaskCard
                               key={`${taskKey(task)}-${ti}`}
