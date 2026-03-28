@@ -90,9 +90,20 @@ def get_project(project_id: str):
         )
     except Exception:
         raise HTTPException(status_code=404, detail="Project not found")
-    if not result.data:
+    row = result.data
+    if isinstance(row, list):
+        row = row[0] if row else None
+    if not row:
         raise HTTPException(status_code=404, detail="Project not found")
-    return result.data
+
+    # Older rows may lack join_code — generate and persist so invite UI and links work
+    jc = (row.get("join_code") or "").strip()
+    if not jc:
+        new_code = _generate_join_code(row.get("course_name") or "")
+        supabase.table("projects").update({"join_code": new_code}).eq("id", project_id).execute()
+        row = {**row, "join_code": new_code}
+
+    return row
 
 
 # ── Member endpoints ──────────────────────────────────────────────────────────

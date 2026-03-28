@@ -64,8 +64,8 @@ export default function InviteTeam() {
   }, [projectId]);
 
   const joinUrl = joinCode
-    ? `${window.location.origin}/join-group?code=${joinCode}`
-    : `${window.location.origin}/join-group?project=${projectId}`;
+    ? `${window.location.origin}/join-group?code=${encodeURIComponent(joinCode)}`
+    : `${window.location.origin}/join-group?project=${encodeURIComponent(projectId || '')}`;
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -188,7 +188,7 @@ export default function InviteTeam() {
                   {joinCode || '———'}
                 </p>
                 <p className="text-xs mb-4" style={{ color: '#6B6584' }}>
-                  Go to <span className="font-semibold text-purple-600">{window.location.origin}/join-group</span> and enter this code
+                  Or go to <span className="font-semibold text-purple-600">{window.location.origin}/join-group</span> and type this code
                 </p>
                 <button
                   onClick={handleCopyCode}

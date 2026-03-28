@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { ArrowRight, Users, AlertTriangle, Loader2, CheckCircle, Hash, Link2 } from 'lucide-react';
-import Button from '../components/ui/Button';
+import { ArrowRight, Users, AlertTriangle, Loader2, CheckCircle, Hash } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,8 +13,10 @@ export default function JoinGroup() {
   const { setProjectId, setCurrentMemberId, setCurrentMemberName } = useProject();
   const { user } = useAuth();
 
-  // Accept code from /join/:code, ?code=, or ?project=
-  const initialCode = routeCode || searchParams.get('code') || '';
+  const codeFromQuery = searchParams.get('code') || '';
+  const projectFromQuery = searchParams.get('project') || '';
+  // Accept code from /join/:code, ?code=, or join via ?project=<uuid>
+  const initialCode = routeCode || codeFromQuery || '';
   const [code, setCode] = useState(initialCode);
   const authName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const [name, setName] = useState('');
@@ -28,12 +29,7 @@ export default function JoinGroup() {
     if (authName && !name) setName(authName);
   }, [authName]);
 
-  // Auto-lookup if code comes from URL
-  useEffect(() => {
-    if (initialCode) lookupProject(initialCode);
-  }, []);
-
-  const lookupProject = async (joinCode) => {
+  const lookupProject = useCallback(async (joinCode) => {
     if (!joinCode?.trim()) return;
     setError('');
     setStep('loading_code');
@@ -58,7 +54,51 @@ export default function JoinGroup() {
       setError('Could not reach the server. Please try again.');
       setStep('enter_code');
     }
-  };
+  }, [setProjectId]);
+
+  const loadProjectById = useCallback(async (projectId) => {
+    if (!projectId?.trim()) return;
+    setError('');
+    setStep('loading_code');
+    try {
+      const res = await fetch(`${API}/projects/${projectId.trim()}`);
+      if (!res.ok) {
+        setError('This invite link is invalid or the project no longer exists.');
+        setStep('enter_code');
+        return;
+      }
+      const proj = await res.json();
+      setProject(proj);
+      setProjectId(proj.id);
+      if (proj.join_code) setCode(proj.join_code);
+
+      const membersRes = await fetch(`${API}/projects/${proj.id}/members`);
+      if (membersRes.ok) {
+        const data = await membersRes.json();
+        setMemberCount(data.members?.length || 0);
+      }
+      setStep('found');
+    } catch {
+      setError('Could not reach the server. Please try again.');
+      setStep('enter_code');
+    }
+  }, [setProjectId]);
+
+  const lastAutoKey = useRef('');
+  // Prefer ?code= over ?project= when both present
+  useEffect(() => {
+    const fromCode = routeCode || codeFromQuery || '';
+    const proj = projectFromQuery.trim();
+    if (!fromCode && !proj) {
+      lastAutoKey.current = '';
+      return;
+    }
+    const key = `${fromCode}|${proj}`;
+    if (lastAutoKey.current === key) return;
+    lastAutoKey.current = key;
+    if (fromCode) lookupProject(fromCode);
+    else loadProjectById(proj);
+  }, [routeCode, codeFromQuery, projectFromQuery, lookupProject, loadProjectById]);
 
   const handleJoin = async () => {
     if (!name.trim()) return;
@@ -230,12 +270,18 @@ export default function JoinGroup() {
                   </button>
 
                   <button
-                    onClick={() => { setStep('enter_code'); setProject(null); setError(''); }}
+                    type="button"
+                    onClick={() => {
+                      setStep('enter_code');
+                      setProject(null);
+                      setError('');
+                      navigate('/join-group', { replace: true });
+                    }}
                     className="w-full text-center text-xs font-semibold mt-3 py-2 transition-all"
                     style={{ color: '#A09BB8' }}
                     onMouseEnter={e => { e.currentTarget.style.color = '#8B5CF6'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = '#A09BB8'; }}>
-                    ← Use a different code
+                    ← Enter a different code instead
                   </button>
                 </div>
               </>
@@ -279,7 +325,7 @@ export default function JoinGroup() {
           {/* Help text below card */}
           {(step === 'enter_code' || step === 'loading_code') && (
             <p className="text-center text-xs mt-5" style={{ color: '#A09BB8' }}>
-              Got a link? Just click it — it'll bring you straight here with the code filled in.
+              Invite links open the project directly — you only enter your name. Codes work too if you prefer typing.
             </p>
           )}
         </div>
