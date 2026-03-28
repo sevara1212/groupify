@@ -18,17 +18,17 @@ export default function TopNav() {
         {/* Wordmark */}
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 focus:outline-none"
+          className="flex items-center gap-2.5 focus:outline-none"
         >
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}
           >
-            <span className="text-white font-black text-sm" style={{ letterSpacing: '-0.04em' }}>G</span>
+            <span className="text-white font-black" style={{ fontSize: 15, letterSpacing: '-0.04em' }}>G</span>
           </div>
           <span
-            className="font-extrabold text-base tracking-tight bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}
+            className="font-extrabold tracking-tight bg-clip-text text-transparent"
+            style={{ fontSize: 20, backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}
           >
             Groupify
           </span>

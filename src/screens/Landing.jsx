@@ -13,18 +13,14 @@ function LogoMark({ size = 40 }) {
           <stop offset="1" stopColor="#EC4899" />
         </linearGradient>
       </defs>
-      {/* Background */}
       <rect width="40" height="40" rx="12" fill="url(#lg1)" />
-      {/* Center node */}
       <circle cx="20" cy="20" r="3.5" fill="white" />
-      {/* Surrounding nodes */}
       <circle cx="20" cy="9" r="2.5" fill="rgba(255,255,255,0.85)" />
       <circle cx="29.7" cy="14.5" r="2.5" fill="rgba(255,255,255,0.85)" />
       <circle cx="29.7" cy="25.5" r="2.5" fill="rgba(255,255,255,0.85)" />
       <circle cx="20" cy="31" r="2.5" fill="rgba(255,255,255,0.85)" />
       <circle cx="10.3" cy="25.5" r="2.5" fill="rgba(255,255,255,0.85)" />
       <circle cx="10.3" cy="14.5" r="2.5" fill="rgba(255,255,255,0.85)" />
-      {/* Connector lines */}
       <line x1="20" y1="20" x2="20" y2="11.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
       <line x1="20" y1="20" x2="27.7" y2="15.7" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
       <line x1="20" y1="20" x2="27.7" y2="24.3" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
@@ -35,7 +31,7 @@ function LogoMark({ size = 40 }) {
   );
 }
 
-function LogoMarkSmall({ size = 28 }) {
+function LogoMarkSmall({ size = 36 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -89,17 +85,17 @@ export default function Landing() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
       {/* ── Nav ── */}
       <header className="w-full bg-white/90 backdrop-blur-sm sticky top-0 z-50" style={{ borderBottom: '1px solid #EDE9FE' }}>
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <LogoMarkSmall size={30} />
-            <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent"
-              style={{ backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <LogoMarkSmall size={36} />
+            <span className="font-extrabold tracking-tight bg-clip-text text-transparent"
+              style={{ fontSize: 22, backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
               Groupify
             </span>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="/signin" className="text-sm font-medium" style={{ color: '#6B6584' }}>Sign in</a>
-            <Button variant="filled" onClick={() => navigate('/create')}>Get started free</Button>
+          <div className="flex items-center gap-4">
+            <a href="/signin" className="text-sm font-semibold" style={{ color: '#6B6584' }}>Sign in</a>
+            <Button variant="filled" onClick={() => navigate('/create')} className="px-5 py-2.5">Get started free</Button>
           </div>
         </div>
       </header>
@@ -117,16 +113,16 @@ export default function Landing() {
               style={{ background: 'radial-gradient(circle, #A5F3FC 0%, transparent 65%)', filter: 'blur(40px)' }} />
           </div>
 
-          <div className="relative max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
+          <div className="relative max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-8 border"
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold mb-10 border"
               style={{ backgroundColor: '#F5F3FF', borderColor: '#C4B5FD', color: '#7C3AED' }}>
-              <Sparkles size={11} />
+              <Sparkles size={14} />
               AI-Powered Group Work · Built for university students
             </div>
 
-            <h1 className="font-extrabold leading-none tracking-tight mb-6"
-              style={{ fontSize: 'clamp(36px, 6vw, 60px)', color: '#1C1829', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+            <h1 className="font-extrabold leading-none tracking-tight mb-7"
+              style={{ fontSize: 'clamp(40px, 7vw, 68px)', color: '#1C1829', letterSpacing: '-0.03em', lineHeight: 1.08 }}>
               Plan group assignments<br />
               <span className="bg-clip-text text-transparent"
                 style={{ backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
@@ -134,27 +130,27 @@ export default function Landing() {
               </span>
             </h1>
 
-            <p className="leading-relaxed mb-10 mx-auto max-w-xl" style={{ fontSize: 18, color: '#6B6584' }}>
+            <p className="leading-relaxed mb-12 mx-auto max-w-xl" style={{ fontSize: 20, color: '#6B6584' }}>
               Upload your rubric, run a 3-minute team quiz, and get an AI-balanced
               task plan — with live progress tracking and risk detection.
             </p>
 
             {/* CTA group */}
-            <div className="flex flex-wrap justify-center gap-3 mb-14">
-              <Button variant="filled" onClick={() => navigate('/create')} className="gap-2 px-7 py-3">
-                Create a Project <ArrowRight size={16} />
+            <div className="flex flex-wrap justify-center gap-4 mb-16">
+              <Button variant="filled" onClick={() => navigate('/create')} className="gap-2 px-8 py-3.5 text-base">
+                Create a Project <ArrowRight size={18} />
               </Button>
-              <Button variant="outlined" className="gap-2 px-7 py-3">
+              <Button variant="outlined" className="gap-2 px-8 py-3.5 text-base">
                 Join a Project
               </Button>
             </div>
 
             {/* Stats row */}
-            <div className="flex justify-center gap-10 mb-4">
+            <div className="flex justify-center gap-14 mb-4">
               {STATS.map(({ n, sub }) => (
                 <div key={sub} className="text-center">
-                  <p className="font-extrabold" style={{ fontSize: 32, color: '#8B5CF6', letterSpacing: '-0.02em' }}>{n}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#A09BB8' }}>{sub}</p>
+                  <p className="font-extrabold" style={{ fontSize: 40, color: '#8B5CF6', letterSpacing: '-0.02em' }}>{n}</p>
+                  <p className="text-sm mt-1 font-medium" style={{ color: '#A09BB8' }}>{sub}</p>
                 </div>
               ))}
             </div>
@@ -162,21 +158,23 @@ export default function Landing() {
         </section>
 
         {/* ── How it works ── */}
-        <section className="max-w-5xl mx-auto w-full px-6 pb-16">
-          <p className="text-center text-xs font-bold uppercase tracking-widest mb-8" style={{ color: '#A09BB8' }}>
+        <section className="max-w-6xl mx-auto w-full px-6 pb-24">
+          <p className="text-center text-sm font-bold uppercase tracking-widest mb-12" style={{ color: '#A09BB8', letterSpacing: '0.15em' }}>
             How it works
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {HOW_IT_WORKS.map(({ step, title, desc }, i) => (
-              <div key={step} className="bg-white rounded-2xl p-6 flex items-start gap-4"
-                style={{ border: '1px solid #EDE9FE' }}>
-                <div className="w-8 h-8 rounded-xl text-xs font-black flex items-center justify-center flex-shrink-0"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {HOW_IT_WORKS.map(({ title, desc }, i) => (
+              <div key={title} className="bg-white rounded-2xl p-8 flex items-start gap-5 transition-all duration-200"
+                style={{ border: '1px solid #EDE9FE' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 30px rgba(139,92,246,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                <div className="w-11 h-11 rounded-xl text-sm font-black flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
                   {i + 1}
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold mb-1" style={{ color: '#1C1829' }}>{title}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: '#6B6584' }}>{desc}</p>
+                  <p className="text-lg font-extrabold mb-2" style={{ color: '#1C1829' }}>{title}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#6B6584' }}>{desc}</p>
                 </div>
               </div>
             ))}
@@ -184,22 +182,22 @@ export default function Landing() {
         </section>
 
         {/* ── Feature cards ── */}
-        <section className="max-w-5xl mx-auto w-full px-6 pb-20">
-          <p className="text-center text-xs font-bold uppercase tracking-widest mb-8" style={{ color: '#A09BB8' }}>
+        <section className="max-w-6xl mx-auto w-full px-6 pb-24">
+          <p className="text-center text-sm font-bold uppercase tracking-widest mb-12" style={{ color: '#A09BB8', letterSpacing: '0.15em' }}>
             Everything your group needs
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map(({ icon: Icon, color, bg, label, desc }) => (
-              <div key={label} className="bg-white rounded-2xl p-5 flex flex-col gap-3 transition-all duration-200"
+              <div key={label} className="bg-white rounded-2xl p-7 flex flex-col gap-4 transition-all duration-200"
                 style={{ border: '1px solid #EDE9FE' }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(139,92,246,0.10)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 30px rgba(139,92,246,0.10)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: bg }}>
-                  <Icon size={18} style={{ color }} strokeWidth={2} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: bg }}>
+                  <Icon size={22} style={{ color }} strokeWidth={2} />
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold mb-1" style={{ color: '#1C1829' }}>{label}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: '#6B6584' }}>{desc}</p>
+                  <p className="text-base font-extrabold mb-1.5" style={{ color: '#1C1829' }}>{label}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#6B6584' }}>{desc}</p>
                 </div>
               </div>
             ))}
@@ -207,14 +205,14 @@ export default function Landing() {
         </section>
 
         {/* ── Bottom CTA ── */}
-        <section className="max-w-5xl mx-auto w-full px-6 pb-20">
-          <div className="rounded-2xl p-10 text-center bg-white" style={{ border: '1px solid #EDE9FE' }}>
-            <h2 className="text-xl font-extrabold mb-2" style={{ color: '#1C1829', letterSpacing: '-0.02em' }}>
+        <section className="max-w-6xl mx-auto w-full px-6 pb-24">
+          <div className="rounded-3xl p-14 text-center bg-white" style={{ border: '1px solid #EDE9FE' }}>
+            <h2 className="font-extrabold mb-3" style={{ fontSize: 28, color: '#1C1829', letterSpacing: '-0.02em' }}>
               Ready to plan smarter?
             </h2>
-            <p className="text-sm mb-6" style={{ color: '#6B6584' }}>Create your first project in under a minute.</p>
-            <Button variant="filled" onClick={() => navigate('/create')} className="gap-2">
-              Get started free <ArrowRight size={15} />
+            <p className="text-base mb-8" style={{ color: '#6B6584' }}>Create your first project in under a minute.</p>
+            <Button variant="filled" onClick={() => navigate('/create')} className="gap-2 px-8 py-3.5 text-base">
+              Get started free <ArrowRight size={17} />
             </Button>
           </div>
         </section>

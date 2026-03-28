@@ -56,13 +56,13 @@ export default function InviteTeam() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
       <header className="w-full bg-white" style={{ borderBottom: '1px solid #EDE9FE' }}>
-        <div className="max-w-2xl mx-auto px-6 h-14 flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+        <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
-            <span className="text-white font-black text-sm" style={{ letterSpacing: '-0.04em' }}>G</span>
+            <span className="text-white font-black" style={{ fontSize: 15, letterSpacing: '-0.04em' }}>G</span>
           </div>
-          <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
+          <span className="font-extrabold tracking-tight bg-clip-text text-transparent"
+            style={{ fontSize: 20, backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
             Groupify
           </span>
         </div>
