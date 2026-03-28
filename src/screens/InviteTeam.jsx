@@ -120,7 +120,6 @@ export default function InviteTeam() {
   const handleSendEmailInvite = async () => {
     const email = inviteEmail.trim();
     if (!email) return;
-    // Basic validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailStatus({ type: 'error', message: 'Please enter a valid email address.' });
       return;
@@ -134,35 +133,28 @@ export default function InviteTeam() {
     setEmailStatus(null);
 
     try {
-      // Use Supabase magic link — sends an email with a link that auto-logs in
-      // and redirects to the join page with the project code
-      const redirectUrl = joinCode
-        ? `${window.location.origin}/join-group?code=${joinCode}`
-        : `${window.location.origin}/join-group?project=${projectId}`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectUrl,
-          shouldCreateUser: true,
-          data: {
-            invited_to_project: projectName,
-            invited_by: inviterName,
-          },
-        },
+      const { error } = await supabase.functions.invoke('send-invite', {
+        body: { email, joinUrl, joinCode, projectName, inviterName },
       });
 
       if (error) throw error;
 
       setSentEmails(prev => [...prev, email.toLowerCase()]);
-      setEmailStatus({ type: 'success', message: `Invite sent to ${email}! They'll get a link to join.` });
+      setEmailStatus({ type: 'success', message: `Invite sent to ${email}! 🎉` });
       setInviteEmail('');
       setTimeout(() => setEmailStatus(null), 5000);
     } catch (err) {
-      setEmailStatus({
-        type: 'error',
-        message: err.message || 'Could not send invite email.',
-      });
+      // Fallback: open default mail client
+      const projectLabel = projectName ? ` "${projectName}"` : '';
+      const subject = encodeURIComponent(`Join our Groupify project${projectLabel}!`);
+      const body = encodeURIComponent(
+        `Hey!\n\n${inviterName} has invited you to join a group project${projectLabel} on Groupify.\n\nClick the link below to join:\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`
+      );
+      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+      setSentEmails(prev => [...prev, email.toLowerCase()]);
+      setEmailStatus({ type: 'success', message: `Email opened for ${email}! Check your mail app.` });
+      setInviteEmail('');
+      setTimeout(() => setEmailStatus(null), 5000);
     } finally {
       setSendingEmail(false);
     }

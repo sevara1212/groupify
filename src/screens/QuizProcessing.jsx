@@ -23,7 +23,7 @@ export default function QuizProcessing() {
         timers.push(setTimeout(() => setRevealed(i + 1), step.delay + 200));
       }
     });
-    timers.push(setTimeout(() => navigate('/allocation'), NAVIGATE_AFTER));
+    timers.push(setTimeout(() => navigate('/waiting-room'), NAVIGATE_AFTER));
     return () => timers.forEach(clearTimeout);
   }, [navigate]);
 

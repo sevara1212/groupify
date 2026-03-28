@@ -20,10 +20,13 @@ function MultiSelectRoles({ question, value = [], onChange }) {
     else if (value.length < 2) onChange([...value, tag]);
   };
 
+  const ROLE_EMOJIS = { organiser: '🗂️', researcher: '🔍', writer: '✍️', designer: '🎨', presenter: '🎤' };
+
   return (
     <div className="grid grid-cols-2 gap-3">
       {(question.options || []).map((opt) => {
         const sel = value.includes(opt.skill_tag);
+        const emoji = ROLE_EMOJIS[opt.skill_tag?.toLowerCase()] || '⭐';
         return (
           <button
             key={opt.skill_tag}
@@ -32,8 +35,8 @@ function MultiSelectRoles({ question, value = [], onChange }) {
             style={{
               border: sel ? '2px solid #8B5CF6' : '1.5px solid #EDE9FE',
               backgroundColor: sel ? '#F5F3FF' : 'white',
-              transform: sel ? 'scale(1.02)' : 'scale(1)',
-              boxShadow: sel ? '0 4px 16px rgba(139,92,246,0.15)' : '0 1px 4px rgba(139,92,246,0.04)',
+              transform: sel ? 'scale(1.03) translateY(-1px)' : 'scale(1)',
+              boxShadow: sel ? '0 6px 20px rgba(139,92,246,0.18)' : '0 1px 4px rgba(139,92,246,0.05)',
             }}
           >
             {sel && (
@@ -42,7 +45,8 @@ function MultiSelectRoles({ question, value = [], onChange }) {
                 <Check size={10} strokeWidth={3} color="white" />
               </span>
             )}
-            <p className="text-sm font-bold pr-6" style={{ color: '#1C1829' }}>{opt.label}</p>
+            <span className="text-xl mb-2 block">{emoji}</span>
+            <p className="text-sm font-bold pr-6" style={{ color: sel ? '#6D28D9' : '#1C1829' }}>{opt.label}</p>
           </button>
         );
       })}
@@ -62,29 +66,29 @@ function ConfidenceSliders({ question, value = {}, onChange }) {
   };
 
   const getLabel = (s) => {
-    if (s >= 9) return 'Expert';
-    if (s >= 7) return 'Strong';
-    if (s >= 5) return 'Good';
-    if (s >= 3) return 'Basic';
-    if (s >= 1) return 'Learning';
+    if (s >= 9) return 'Expert 🏆';
+    if (s >= 7) return 'Strong 💪';
+    if (s >= 5) return 'Good 👍';
+    if (s >= 3) return 'Basic 📚';
+    if (s >= 1) return 'Learning 🌱';
     return 'None';
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {(question.options || []).map((opt) => {
         const score = value[opt.skill_tag] ?? 5;
         const pct = score * 10;
         const colors = getColor(score);
         const label = getLabel(score);
         return (
-          <div key={opt.skill_tag} className="rounded-xl p-4 transition-all duration-200"
-            style={{ backgroundColor: colors.bg, border: `1px solid ${colors.main}20` }}>
+          <div key={opt.skill_tag} className="rounded-2xl p-4 transition-all duration-200"
+            style={{ backgroundColor: colors.bg, border: `1.5px solid ${colors.main}25` }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold" style={{ color: '#1C1829' }}>{opt.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-md"
-                  style={{ backgroundColor: `${colors.main}15`, color: colors.badge }}>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: `${colors.main}18`, color: colors.badge }}>
                   {label}
                 </span>
                 <span className="text-sm font-black w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
@@ -93,20 +97,15 @@ function ConfidenceSliders({ question, value = {}, onChange }) {
                 </span>
               </div>
             </div>
-            {/* Custom styled range slider */}
             <div className="relative flex items-center" style={{ height: 28 }}>
-              {/* Track background */}
               <div className="absolute left-0 right-0 h-2.5 rounded-full" style={{ backgroundColor: `${colors.main}15`, top: '50%', transform: 'translateY(-50%)' }} />
-              {/* Track fill */}
               <div className="absolute left-0 h-2.5 rounded-full transition-all duration-150"
                 style={{ width: `${pct}%`, background: colors.gradient, top: '50%', transform: 'translateY(-50%)', boxShadow: `0 2px 8px ${colors.main}30` }} />
-              {/* Thumb indicator */}
               <div className="absolute transition-all duration-150 pointer-events-none"
                 style={{ left: `calc(${pct}% - 10px)`, top: '50%', transform: 'translateY(-50%)' }}>
                 <div className="w-5 h-5 rounded-full bg-white border-[3px] transition-all duration-150"
                   style={{ borderColor: colors.main, boxShadow: `0 2px 8px ${colors.main}40, 0 0 0 4px ${colors.main}10` }} />
               </div>
-              {/* Invisible native range input for interaction */}
               <input
                 type="range" min={0} max={10} value={score}
                 onChange={e => set(opt.skill_tag, e.target.value)}
@@ -114,11 +113,9 @@ function ConfidenceSliders({ question, value = {}, onChange }) {
                 style={{ margin: 0, opacity: 0, height: 28, zIndex: 10 }}
               />
             </div>
-            {/* Scale labels */}
             <div className="flex justify-between mt-1.5 px-0.5">
-              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>0</span>
-              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>5</span>
-              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>10</span>
+              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>0 · Beginner</span>
+              <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>10 · Expert</span>
             </div>
           </div>
         );
@@ -168,11 +165,13 @@ function AvailabilityGrid({ value = {}, onChange }) {
                         style={{
                           background: on ? 'linear-gradient(135deg, #8B5CF6, #EC4899)' : 'white',
                           border: on ? '2px solid #8B5CF6' : '1.5px solid #EDE9FE',
-                          boxShadow: on ? '0 2px 8px rgba(139,92,246,0.25)' : 'none',
-                          transform: on ? 'scale(1.05)' : 'scale(1)',
+                          boxShadow: on ? '0 3px 10px rgba(139,92,246,0.28)' : 'none',
+                          transform: on ? 'scale(1.08)' : 'scale(1)',
                         }}
                         aria-label={`${PERIOD_LABELS[pi]} ${DAY_LABELS[DAYS.indexOf(day)]} ${on ? 'selected' : ''}`}
-                      />
+                      >
+                        {on && <Check size={12} color="white" strokeWidth={3} style={{ margin: 'auto' }} />}
+                      </button>
                     </td>
                   );
                 })}
@@ -184,7 +183,7 @@ function AvailabilityGrid({ value = {}, onChange }) {
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center gap-4 text-xs" style={{ color: '#6B6584' }}>
           <span className="flex items-center gap-1.5">
-            <span className="w-4 h-4 rounded-md inline-block" style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }} /> Preferred
+            <span className="w-4 h-4 rounded-md inline-block" style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }} /> Selected
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-4 h-4 rounded-md inline-block" style={{ border: '1.5px solid #EDE9FE', backgroundColor: 'white' }} /> Available
@@ -192,8 +191,8 @@ function AvailabilityGrid({ value = {}, onChange }) {
         </div>
         {selectedCount > 0 && (
           <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
-            {selectedCount} slot{selectedCount !== 1 ? 's' : ''}
+            style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6', border: '1px solid #EDE9FE' }}>
+            {selectedCount} slot{selectedCount !== 1 ? 's' : ''} ✓
           </span>
         )}
       </div>
@@ -204,24 +203,34 @@ function AvailabilityGrid({ value = {}, onChange }) {
 function PreferenceRanking({ question, value = null, onChange }) {
   return (
     <div className="space-y-2.5">
-      {(question.options || []).map(opt => {
+      {(question.options || []).map((opt, i) => {
         const on = value === opt.skill_tag;
+        const gradients = [
+          'linear-gradient(135deg, #8B5CF6, #6366F1)',
+          'linear-gradient(135deg, #EC4899, #F43F5E)',
+          'linear-gradient(135deg, #0EA5E9, #06B6D4)',
+        ];
         return (
           <button
             key={opt.skill_tag}
             onClick={() => onChange(on ? null : opt.skill_tag)}
-            className="w-full text-left px-4 py-3.5 rounded-xl transition-all duration-200 focus:outline-none flex items-center gap-3"
+            className="w-full text-left px-4 py-4 rounded-2xl transition-all duration-200 focus:outline-none flex items-center gap-3"
             style={{
               border: on ? '2px solid #8B5CF6' : '1.5px solid #EDE9FE',
               backgroundColor: on ? '#F5F3FF' : 'white',
-              boxShadow: on ? '0 2px 12px rgba(139,92,246,0.12)' : 'none',
+              boxShadow: on ? '0 4px 14px rgba(139,92,246,0.14)' : 'none',
+              transform: on ? 'scale(1.01)' : 'scale(1)',
             }}
           >
-            <span className="text-sm font-medium" style={{ color: on ? '#6D28D9' : '#6B6584' }}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: on ? gradients[i % gradients.length] : '#F5F5F5' }}>
+              <span className="text-xs font-bold" style={{ color: on ? 'white' : '#A09BB8' }}>{i + 1}</span>
+            </div>
+            <span className="text-sm font-medium flex-1" style={{ color: on ? '#6D28D9' : '#1C1829' }}>
               {opt.label}
             </span>
             {on && (
-              <span className="ml-auto w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+              <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
                 <Check size={10} strokeWidth={3} color="white" />
               </span>
@@ -240,16 +249,16 @@ function TextInput({ value = '', onChange }) {
       <textarea
         value={value}
         onChange={e => e.target.value.length <= MAX && onChange(e.target.value)}
-        rows={4}
-        placeholder="Type your answer here…"
-        className="w-full px-4 py-3 rounded-xl border text-sm resize-none focus:outline-none transition-all"
-        style={{ borderColor: '#EDE9FE', color: '#1C1829', backgroundColor: 'white' }}
-        onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px #EDE9FE'; }}
+        rows={5}
+        placeholder="Type your answer here… be as specific as you like 😊"
+        className="w-full px-4 py-3.5 rounded-2xl border text-sm resize-none focus:outline-none transition-all"
+        style={{ borderColor: '#EDE9FE', color: '#1C1829', backgroundColor: 'white', lineHeight: 1.6 }}
+        onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.1)'; }}
         onBlur={e => { e.target.style.borderColor = '#EDE9FE'; e.target.style.boxShadow = 'none'; }}
       />
-      <div className="flex justify-between mt-1.5">
-        <span className="text-xs" style={{ color: '#A09BB8' }}>Be as specific as you like</span>
-        <span className="text-xs font-medium" style={{ color: value.length > MAX * 0.8 ? '#EC4899' : '#A09BB8' }}>{value.length}/{MAX}</span>
+      <div className="flex justify-between mt-2 px-1">
+        <span className="text-xs" style={{ color: '#A09BB8' }}>Share your thoughts freely</span>
+        <span className="text-xs font-semibold" style={{ color: value.length > MAX * 0.8 ? '#EC4899' : '#A09BB8' }}>{value.length}/{MAX}</span>
       </div>
     </div>
   );
@@ -258,11 +267,11 @@ function TextInput({ value = '', onChange }) {
 /* ─── Question type metadata ──────────────────────── */
 
 const TYPE_META = {
-  multi_select_roles: { icon: '🎯', label: 'Your Role', hint: 'Pick up to two.' },
-  confidence_sliders: { icon: '📊', label: 'Skill Assessment', hint: '0 = not confident · 10 = expert' },
-  availability_grid: { icon: '📅', label: 'Availability', hint: 'Tap cells to mark preferred slots.' },
-  preference_ranking: { icon: '⚡', label: 'Preference', hint: 'Choose the one that fits best.' },
-  text_input: { icon: '💬', label: 'Open Response', hint: 'Share your thoughts in your own words.' },
+  multi_select_roles:  { icon: '🎯', label: 'Your Role',        hint: 'Pick up to two that fit you best.',        bg: '#F5F3FF', accent: '#8B5CF6' },
+  confidence_sliders:  { icon: '📊', label: 'Skill Check',      hint: 'Drag the sliders to rate your confidence.', bg: '#FDF2F8', accent: '#EC4899' },
+  availability_grid:   { icon: '📅', label: 'Availability',     hint: 'Tap the cells to mark when you\'re free.',  bg: '#EFF6FF', accent: '#2563EB' },
+  preference_ranking:  { icon: '⚡', label: 'Your Preference',  hint: 'Pick the one that fits you best.',          bg: '#ECFDF5', accent: '#059669' },
+  text_input:          { icon: '💬', label: 'Open Response',    hint: 'Share your thoughts in your own words.',    bg: '#FFFBEB', accent: '#D97706' },
 };
 
 /* ─── Main Component ──────────────────────────────── */
@@ -323,14 +332,15 @@ export default function QuizQuestion() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F7FF' }}>
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)', boxShadow: '0 8px 20px rgba(139,92,246,0.30)', animation: 'pulse 1.6s ease-in-out infinite' }}>
-            <Sparkles size={22} color="white" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', boxShadow: '0 8px 24px rgba(139,92,246,0.35)', animation: 'loadPulse 1.6s ease-in-out infinite' }}>
+            <Sparkles size={26} color="white" />
           </div>
-          <p className="text-sm font-semibold" style={{ color: '#6B6584' }}>Loading quiz…</p>
-          <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.95);opacity:0.8}}`}</style>
+          <p className="text-base font-bold" style={{ color: '#6B6584' }}>Loading your quiz…</p>
+          <style>{`@keyframes loadPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.93);opacity:0.8}}`}</style>
         </div>
       </div>
     );
@@ -338,84 +348,117 @@ export default function QuizQuestion() {
 
   if (fetchError || questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: '#F8F7FF' }}>
-        <div className="text-center max-w-sm bg-white rounded-3xl p-8"
-          style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.08)' }}>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+      <div className="min-h-screen flex items-center justify-center px-6"
+        style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}>
+        <div className="text-center max-w-sm bg-white rounded-3xl p-9"
+          style={{ border: '1px solid #EDE9FE', boxShadow: '0 8px 32px rgba(139,92,246,0.10)' }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ backgroundColor: '#FEF3C7' }}>
-            <span className="text-2xl">📋</span>
+            <span className="text-3xl">📋</span>
           </div>
           <p className="text-base font-bold mb-2" style={{ color: '#1C1829' }}>Quiz not available yet</p>
-          <p className="text-sm mb-5" style={{ color: '#6B6584' }}>The project admin needs to upload the rubric first.</p>
-          <Button variant="outlined" onClick={() => navigate('/quiz')}>Go back</Button>
+          <p className="text-sm mb-6" style={{ color: '#6B6584' }}>The project admin needs to upload the rubric first so we can tailor the quiz to your assignment.</p>
+          <Button variant="outlined" onClick={() => navigate('/quiz')}>← Go back</Button>
         </div>
       </div>
     );
   }
 
-  const progress = Math.round(((index + 1) / total) * 100);
   const meta = TYPE_META[question.question_type] || TYPE_META.text_input;
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-6 py-10" style={{ backgroundColor: '#F8F7FF' }}>
-      <div className="w-full max-w-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen flex flex-col items-center px-5 py-10"
+      style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}>
+
+      {/* Background blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+        <div className="absolute rounded-full"
+          style={{ width: 350, height: 350, top: '0%', left: '-8%', background: 'radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)' }} />
+        <div className="absolute rounded-full"
+          style={{ width: 280, height: 280, bottom: '5%', right: '-6%', background: 'radial-gradient(circle, rgba(236,72,153,0.07) 0%, transparent 70%)' }} />
+      </div>
+
+      <div className="w-full max-w-xl relative" style={{ zIndex: 1 }}>
+
+        {/* Top bar: progress + skip */}
+        <div className="flex items-center justify-between mb-6 px-1">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold" style={{ color: '#1C1829' }}>Question {index + 1}/{total}</span>
+            {/* Dot indicator */}
             <div className="flex items-center gap-1.5">
               {questions.map((q, i) => (
-                <span key={q.id} className="rounded-full transition-all duration-300"
+                <span key={q.id} className="rounded-full transition-all duration-400"
                   style={{
-                    width: i === index ? 20 : 8, height: 8,
-                    background: i < index ? 'linear-gradient(135deg, #8B5CF6, #EC4899)' : i === index ? '#EC4899' : '#EDE9FE',
+                    width: i === index ? 22 : 8,
+                    height: 8,
+                    background: i < index
+                      ? 'linear-gradient(135deg, #8B5CF6, #EC4899)'
+                      : i === index
+                        ? '#EC4899'
+                        : '#D8D3F0',
                   }} />
               ))}
             </div>
-            <span className="text-sm font-bold tabular-nums" style={{ color: '#8B5CF6' }}>{progress}%</span>
+            <span className="text-xs font-bold" style={{ color: '#8B5CF6' }}>
+              {index + 1}/{total}
+            </span>
           </div>
-          <button className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
-            style={{ color: '#A09BB8', border: '1px solid #EDE9FE' }}
-            onClick={handleNext}>Skip</button>
+          <button
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
+            style={{ color: '#A09BB8', border: '1px solid #EDE9FE', backgroundColor: 'white' }}
+            onClick={handleNext}>
+            Skip →
+          </button>
         </div>
 
-        {/* Card */}
+        {/* Question card */}
         <div className="bg-white rounded-3xl overflow-hidden"
-          style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.08)' }}>
-          
-          {/* Card header */}
-          <div className="px-7 pt-7 pb-5"
-            style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FDF2F8 100%)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm">{meta.icon}</span>
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#8B5CF6' }}>{meta.label}</span>
+          style={{ border: '1px solid #EDE9FE', boxShadow: '0 8px 40px rgba(139,92,246,0.12)' }}>
+
+          {/* Question header */}
+          <div className="px-7 pt-7 pb-6"
+            style={{ background: `linear-gradient(135deg, ${meta.bg} 0%, white 100%)`, borderBottom: '1px solid #F5F3FF' }}>
+            {/* Type badge */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4"
+              style={{ backgroundColor: `${meta.accent}12`, border: `1px solid ${meta.accent}25` }}>
+              <span style={{ fontSize: 14 }}>{meta.icon}</span>
+              <span className="text-xs font-bold uppercase tracking-wide" style={{ color: meta.accent }}>{meta.label}</span>
             </div>
-            <h2 className="text-lg font-extrabold mb-1" style={{ color: '#1C1829' }}>{question.question_text}</h2>
-            <p className="text-sm" style={{ color: '#6B6584' }}>{meta.hint}</p>
+            <h2 className="text-lg font-extrabold leading-snug mb-2" style={{ color: '#1C1829' }}>
+              {question.question_text}
+            </h2>
+            <p className="text-sm font-medium" style={{ color: '#6B6584' }}>{meta.hint}</p>
           </div>
 
-          <div className="px-7 pb-7 pt-5">
+          {/* Question body */}
+          <div className="px-7 pt-6 pb-7">
             {question.question_type === 'multi_select_roles' && <MultiSelectRoles question={question} value={currentAnswer || []} onChange={setAnswer} />}
             {question.question_type === 'confidence_sliders' && <ConfidenceSliders question={question} value={currentAnswer || {}} onChange={setAnswer} />}
             {question.question_type === 'availability_grid' && <AvailabilityGrid value={currentAnswer || {}} onChange={setAnswer} />}
             {question.question_type === 'preference_ranking' && <PreferenceRanking question={question} value={currentAnswer ?? null} onChange={setAnswer} />}
             {question.question_type === 'text_input' && <TextInput value={currentAnswer || ''} onChange={setAnswer} />}
 
-            {/* Progress indicator */}
-            <div className="mt-6 mb-6">
-              <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: '#EDE9FE' }}>
-                <div className="h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #8B5CF6, #EC4899)' }} />
+            {/* Progress bar */}
+            <div className="mt-7 mb-6">
+              <div className="w-full h-2 rounded-full" style={{ backgroundColor: '#EDE9FE' }}>
+                <div className="h-2 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.round(((index + 1) / total) * 100)}%`,
+                    background: 'linear-gradient(90deg, #8B5CF6, #EC4899)',
+                    boxShadow: '0 1px 6px rgba(139,92,246,0.3)',
+                  }} />
               </div>
             </div>
 
-            <div className="flex justify-between">
+            {/* Navigation */}
+            <div className="flex justify-between items-center">
               <Button variant="outlined" onClick={handleBack} className="gap-1.5">
                 <ArrowLeft size={14} /> Back
               </Button>
-              <Button variant="filled" onClick={handleNext}
+              <Button
+                variant="filled"
+                onClick={handleNext}
                 disabled={!canAdvance && question.question_type !== 'availability_grid'}
-                className="gap-1.5 min-w-[100px] justify-center">
+                className="gap-1.5 min-w-[110px] justify-center">
                 {submitting
                   ? <Loader2 size={14} className="animate-spin" />
                   : isLast
