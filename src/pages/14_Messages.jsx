@@ -128,6 +128,19 @@ export default function Messages() {
     }
   };
 
+  if (!projectId) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#F8F7FF' }}>
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+          style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+          <MessageSquare size={24} color="white" />
+        </div>
+        <p className="text-base font-bold mb-1" style={{ color: '#1C1829' }}>No project loaded</p>
+        <p className="text-sm" style={{ color: '#A09BB8' }}>Join or create a project first to access the group chat.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-6 flex flex-col" style={{ height: 'calc(100vh - 56px)' }}>
@@ -147,9 +160,10 @@ export default function Messages() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#0D9488' }} />
-            <span className="text-xs font-medium" style={{ color: '#0D9488' }}>Live</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ backgroundColor: '#ECFDF5', border: '1px solid #6EE7B7' }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10B981' }} />
+            <span className="text-xs font-bold" style={{ color: '#10B981' }}>Live</span>
           </div>
         </div>
 
