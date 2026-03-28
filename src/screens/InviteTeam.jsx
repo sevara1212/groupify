@@ -10,6 +10,7 @@ import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from '../components/layout/ThemeToggle';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -148,6 +149,7 @@ export default function InviteTeam() {
             style={{ fontSize: 20, backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}>
             Groupify
           </span>
+          <ThemeToggle className="ml-auto" />
         </div>
       </header>
 

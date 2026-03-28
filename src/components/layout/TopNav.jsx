@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare, FolderOpen, Settings } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 const tabs = [
   { label: 'Dashboard',     to: '/dashboard', icon: LayoutDashboard },
@@ -10,11 +11,28 @@ const tabs = [
   { label: 'Messages',      to: '/messages',  icon: MessageSquare },
 ];
 
+function TabLink({ label, to, icon }) {
+  return (
+    <NavLink
+      to={to}
+      className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm transition-all whitespace-nowrap"
+      style={({ isActive }) => ({
+        color: isActive ? 'var(--c-primary)' : 'var(--c-text-muted)',
+        backgroundColor: isActive ? 'var(--c-primary-xlight)' : 'transparent',
+        fontWeight: isActive ? 600 : 500,
+      })}
+    >
+      {React.createElement(icon, { size: 14, strokeWidth: 2.2 })}
+      <span className="hidden md:block">{label}</span>
+    </NavLink>
+  );
+}
+
 export default function TopNav() {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white sticky top-0 z-50" style={{ borderBottom: '1px solid #EDE9FE' }}>
+    <header className="bg-white sticky top-0 z-50" style={{ borderBottom: '1px solid var(--c-border)' }}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
         {/* Wordmark */}
         <button
@@ -37,38 +55,25 @@ export default function TopNav() {
 
         {/* Nav tabs */}
         <nav className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0 justify-end md:justify-center">
-          {tabs.map(({ label, to, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm transition-all whitespace-nowrap"
-              style={({ isActive }) => ({
-                color: isActive ? '#8B5CF6' : '#A09BB8',
-                backgroundColor: isActive ? '#F5F3FF' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
-              })}
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-                  <span className="hidden md:block">{label}</span>
-                </>
-              )}
-            </NavLink>
+          {tabs.map((tab) => (
+            <TabLink key={tab.to} {...tab} />
           ))}
         </nav>
 
-        <NavLink
-          to="/settings"
-          className="flex-shrink-0 ml-1 p-2 rounded-xl transition-all"
-          style={({ isActive }) => ({
-            color: isActive ? '#8B5CF6' : '#A09BB8',
-            backgroundColor: isActive ? '#F5F3FF' : 'transparent',
-          })}
-          title="Settings"
-        >
-          <Settings size={18} strokeWidth={2} />
-        </NavLink>
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
+          <ThemeToggle />
+          <NavLink
+            to="/settings"
+            className="flex-shrink-0 p-2 rounded-xl transition-all"
+            style={({ isActive }) => ({
+              color: isActive ? 'var(--c-primary)' : 'var(--c-text-muted)',
+              backgroundColor: isActive ? 'var(--c-primary-xlight)' : 'transparent',
+            })}
+            title="Settings"
+          >
+            <Settings size={18} strokeWidth={2} />
+          </NavLink>
+        </div>
       </div>
     </header>
   );

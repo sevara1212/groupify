@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, BarChart2, Shield, Zap, CheckCircle, Users, Star } from 'lucide-react';
 import Button from '../components/ui/Button';
+import ThemeToggle from '../components/layout/ThemeToggle';
 
 // ── Logo mark — SVG nodes-in-circle representing a group ─────────────────────
 function LogoMark({ size = 40 }) {
@@ -98,6 +99,7 @@ export default function Landing() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <button onClick={() => navigate('/signin')} className="text-sm font-semibold transition-colors duration-200" style={{ color: '#6B6584' }}
               onMouseEnter={e => e.target.style.color = '#8B5CF6'} onMouseLeave={e => e.target.style.color = '#6B6584'}>Sign in</button>
             <Button variant="filled" onClick={handleCreateProject} className="px-5 py-2.5">Create Project</Button>

@@ -7,6 +7,7 @@ import {
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
+import ThemeToggle from '../components/layout/ThemeToggle';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 const BASE = API.replace('/api', '');
@@ -296,6 +297,7 @@ export default function UploadFiles() {
 
           {/* Server status dot */}
           <div className="ml-auto flex items-center gap-1.5">
+            <ThemeToggle />
             {serverReady === true && (
               <><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#10B981' }} />
               <span className="text-xs font-medium" style={{ color: '#10B981' }}>Server ready</span></>
