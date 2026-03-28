@@ -27,6 +27,89 @@ def _read_file(data: bytes, filename: str) -> str:
     return data.decode("utf-8", errors="replace")
 
 
+def fallback_criteria_dicts(brief_text: str) -> list:
+    """When there is no rubric file, derive workable criteria from the brief so quiz & allocation can run."""
+    excerpt = brief_text.strip()
+    if len(excerpt) > 500:
+        excerpt = excerpt[:500] + "…"
+    if not excerpt:
+        excerpt = "the group assignment"
+    return [
+        {
+            "name": "Research & sources",
+            "weight_percent": 25,
+            "description": f"Find and use relevant information. Context: {excerpt}",
+            "required_skills": ["research", "academic_writing"],
+            "task_stage": "early",
+            "suggested_tasks": ["Compile a source list", "Summarise key readings for the team"],
+        },
+        {
+            "name": "Analysis & core deliverables",
+            "weight_percent": 35,
+            "description": "Develop the main analysis or product the brief requires.",
+            "required_skills": ["data_analysis", "academic_writing"],
+            "task_stage": "mid",
+            "suggested_tasks": ["Draft the main analytical section", "Build supporting visuals or data"],
+        },
+        {
+            "name": "Design & communication",
+            "weight_percent": 20,
+            "description": "Polish structure, visuals, and clarity of outputs.",
+            "required_skills": ["design", "presenting"],
+            "task_stage": "late",
+            "suggested_tasks": ["Refine layout and visuals", "Prepare speaking notes"],
+        },
+        {
+            "name": "Team coordination",
+            "weight_percent": 20,
+            "description": "Integrate work and keep the group on schedule.",
+            "required_skills": ["project_management", "presenting"],
+            "task_stage": "mid",
+            "suggested_tasks": ["Track milestones", "Merge sections into one submission"],
+        },
+    ]
+
+
+def replace_rubric_criteria(project_id: str, criteria_list: list) -> list:
+    supabase.table("rubric_criteria").delete().eq("project_id", project_id).execute()
+    inserted = []
+    for criterion in criteria_list:
+        row = {**criterion, "project_id": project_id}
+        if "required_skills" not in row:
+            row["required_skills"] = []
+        result = supabase.table("rubric_criteria").insert(row).execute()
+        inserted.extend(result.data or [])
+    return inserted
+
+
+def ensure_rubric_criteria_for_quiz(project_id: str) -> list:
+    """Load rubric rows for a project; if none exist but a brief was saved, insert fallback criteria."""
+    result = (
+        supabase.table("rubric_criteria")
+        .select("*")
+        .eq("project_id", project_id)
+        .execute()
+    )
+    criteria = result.data or []
+    if criteria:
+        return criteria
+
+    proj = (
+        supabase.table("projects")
+        .select("assignment_brief_text")
+        .eq("id", project_id)
+        .single()
+        .execute()
+    )
+    brief = (proj.data or {}).get("assignment_brief_text") or ""
+    if not brief.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Upload the assignment brief first before generating the quiz",
+        )
+    return replace_rubric_criteria(project_id, fallback_criteria_dicts(brief))
+
+
 def extract_criteria(project_id: str, rubric_text: str, brief_text: str) -> list:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
@@ -34,13 +117,19 @@ def extract_criteria(project_id: str, rubric_text: str, brief_text: str) -> list
 
     client = anthropic.Anthropic(api_key=api_key)
 
-    prompt = f"""Analyse this university assignment rubric and brief.
+    rubric_section = (rubric_text or "").strip() or "(none provided — infer criteria only from the brief below)"
+
+    prompt = f"""Analyse this university assignment material.
 
 Assignment Brief:
 {brief_text}
 
 Marking Rubric:
-{rubric_text}
+{rubric_section}
+
+If a marking rubric is provided above, extract ALL criteria from it (use the brief for context).
+If no rubric is provided or it is empty, infer 4–6 realistic marking criteria **only from the Assignment Brief**
+(typical areas: research, analysis, writing, design, coding, presentation, project management).
 
 Extract ALL marking criteria. Return a JSON array where each object has exactly these fields:
 - name: string (criterion name)
@@ -71,18 +160,19 @@ Return ONLY the JSON array. No explanation. No markdown."""
     try:
         criteria_list = json.loads(raw)
     except json.JSONDecodeError:
+        if brief_text.strip():
+            return replace_rubric_criteria(project_id, fallback_criteria_dicts(brief_text))
         raise HTTPException(status_code=502, detail="AI returned invalid JSON. Please try again.")
 
-    # Delete existing criteria for this project before inserting fresh ones
-    supabase.table("rubric_criteria").delete().eq("project_id", project_id).execute()
+    if not criteria_list and brief_text.strip():
+        criteria_list = fallback_criteria_dicts(brief_text)
+    elif not criteria_list:
+        raise HTTPException(
+            status_code=400,
+            detail="Add an assignment brief or rubric so we can extract criteria.",
+        )
 
-    inserted = []
-    for criterion in criteria_list:
-        criterion["project_id"] = project_id
-        result = supabase.table("rubric_criteria").insert(criterion).execute()
-        inserted.extend(result.data)
-
-    return inserted
+    return replace_rubric_criteria(project_id, criteria_list)
 
 
 @router.post("/projects/{project_id}/upload")

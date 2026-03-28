@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Any
 
 from db import supabase
+from routers.rubric_extraction import ensure_rubric_criteria_for_quiz
 
 router = APIRouter()
 
@@ -84,26 +85,21 @@ Return ONLY the JSON array of 5 questions."""
 
 @router.post("/projects/{project_id}/quiz/generate")
 def generate_quiz(project_id: str):
-    result = (
-        supabase.table("rubric_criteria")
-        .select("*")
-        .eq("project_id", project_id)
-        .execute()
-    )
-    criteria = result.data
-
-    if not criteria:
-        raise HTTPException(
-            status_code=400,
-            detail="Upload rubric first before generating quiz",
-        )
+    criteria = ensure_rubric_criteria_for_quiz(project_id)
 
     # Collect unique skills across all criteria
     skills_seen: set[str] = set()
     for c in criteria:
-        for skill in c.get("required_skills", []):
+        for skill in c.get("required_skills", []) or []:
             skills_seen.add(skill)
     unique_skills = sorted(skills_seen)
+    if not unique_skills:
+        unique_skills = [
+            "academic_writing",
+            "research",
+            "project_management",
+            "presenting",
+        ]
 
     questions = generate_questions(project_id, criteria, unique_skills)
     return {"questions": questions}

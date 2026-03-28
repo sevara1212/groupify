@@ -256,11 +256,30 @@ export default function QuizQuestion() {
   const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/projects/${projectId}/quiz/questions`)
-      .then(r => r.json())
-      .then(data => setQuestions(data.questions || []))
-      .catch(() => setFetchError(true))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const r = await fetch(`${API}/projects/${projectId}/quiz/questions`);
+        const data = await r.json();
+        let qs = data.questions || [];
+        if (qs.length === 0) {
+          const gen = await fetch(`${API}/projects/${projectId}/quiz/generate`, { method: 'POST' });
+          if (gen.ok) {
+            const r2 = await fetch(`${API}/projects/${projectId}/quiz/questions`);
+            const d2 = await r2.json();
+            qs = d2.questions || [];
+          }
+        }
+        if (!cancelled) setQuestions(qs);
+      } catch {
+        if (!cancelled) setFetchError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [projectId]);
 
   const question = questions[index];
@@ -325,7 +344,7 @@ export default function QuizQuestion() {
             <span className="text-3xl">📋</span>
           </div>
           <p className="text-base font-bold mb-2" style={{ color: '#1C1829' }}>Quiz not available yet</p>
-          <p className="text-sm mb-6" style={{ color: '#6B6584' }}>The project admin needs to upload the rubric first.</p>
+          <p className="text-sm mb-6" style={{ color: '#6B6584' }}>Ask your project admin to upload the assignment brief. The quiz generates from that — try again in a few seconds.</p>
           <Button variant="outlined" onClick={() => navigate('/quiz')}>← Go back</Button>
         </div>
       </div>
