@@ -134,21 +134,34 @@ export default function InviteTeam() {
     setEmailStatus(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: { email, joinUrl, joinCode, projectName, inviterName },
+      // Use Supabase magic link — sends an email with a link that auto-logs in
+      // and redirects to the join page with the project code
+      const redirectUrl = joinCode
+        ? `${window.location.origin}/join-group?code=${joinCode}`
+        : `${window.location.origin}/join-group?project=${projectId}`;
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectUrl,
+          shouldCreateUser: true,
+          data: {
+            invited_to_project: projectName,
+            invited_by: inviterName,
+          },
+        },
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
       setSentEmails(prev => [...prev, email.toLowerCase()]);
-      setEmailStatus({ type: 'success', message: `Invite sent to ${email}!` });
+      setEmailStatus({ type: 'success', message: `Invite sent to ${email}! They'll get a link to join.` });
       setInviteEmail('');
-      setTimeout(() => setEmailStatus(null), 4000);
+      setTimeout(() => setEmailStatus(null), 5000);
     } catch (err) {
       setEmailStatus({
         type: 'error',
-        message: err.message || 'Could not send email. Make sure Resend is configured.',
+        message: err.message || 'Could not send invite email.',
       });
     } finally {
       setSendingEmail(false);

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { ArrowRight, Users, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
+import { ArrowRight, Users, AlertTriangle, Loader2, CheckCircle, Mail } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
+import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -11,14 +12,24 @@ export default function JoinGroup() {
   const [searchParams] = useSearchParams();
   const { code: routeCode } = useParams(); // supports /join/:code
   const { setProjectId, setCurrentMemberId, setCurrentMemberName } = useProject();
+  const { user } = useAuth();
 
   const initialCode = routeCode || searchParams.get('code') || '';
   const [code, setCode] = useState(initialCode);
+  // Pre-fill name from auth user if available
+  const authName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const [name, setName] = useState('');
   const [step, setStep] = useState('enter_code'); // enter_code | found | joining | joined | error
   const [project, setProject] = useState(null);
   const [error, setError] = useState('');
   const [memberCount, setMemberCount] = useState(0);
+
+  // Pre-fill name from auth when available
+  useEffect(() => {
+    if (authName && !name) {
+      setName(authName);
+    }
+  }, [authName]);
 
   // If code is in URL, auto-lookup
   useEffect(() => {
@@ -137,6 +148,17 @@ export default function JoinGroup() {
             {/* Step: Found — enter name */}
             {step === 'found' && project && (
               <>
+                {/* Signed-in banner when arriving via magic link */}
+                {user && (
+                  <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-4"
+                    style={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0' }}>
+                    <Mail size={14} style={{ color: '#059669' }} />
+                    <p className="text-xs font-medium" style={{ color: '#059669' }}>
+                      Signed in as <strong>{user.email}</strong>
+                    </p>
+                  </div>
+                )}
+
                 <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: '#F5F3FF', border: '1px solid #C4B5FD' }}>
                   <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#8B5CF6' }}>
                     {project.course_name || 'Project'}
