@@ -155,17 +155,10 @@ export default function InviteTeam() {
       setInviteEmail('');
       setTimeout(() => setEmailStatus(null), 5000);
     } catch (err) {
-      // Fallback: open default mail client
-      const projectLabel = projectName ? ` "${projectName}"` : '';
-      const subject = encodeURIComponent(`Join our Groupify project${projectLabel}!`);
-      const body = encodeURIComponent(
-        `Hey!\n\n${inviterName} has invited you to join a group project${projectLabel} on Groupify.\n\nClick the link below to join:\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`
-      );
-      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
-      setSentEmails(prev => [...prev, email.toLowerCase()]);
-      setEmailStatus({ type: 'success', message: `Email opened for ${email}! Check your mail app.` });
-      setInviteEmail('');
-      setTimeout(() => setEmailStatus(null), 5000);
+      setEmailStatus({
+        type: 'error',
+        message: err?.message || 'Could not send invite email. Please try again.',
+      });
     } finally {
       setSendingEmail(false);
     }
