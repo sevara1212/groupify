@@ -4,7 +4,7 @@ import {
   AlertTriangle, CheckCircle, Calendar, CalendarDays, Loader2, Clock,
   Sparkles, ArrowRight, TrendingUp, Users, Target, ChevronRight,
   CircleCheck, Circle, Timer, Bell, MessageSquare, Shield,
-  FolderOpen, FileText, ChevronLeft, ArrowLeftRight, ExternalLink, X, Link2, Upload,
+  FolderOpen, FileText, ChevronLeft, ArrowLeftRight, ExternalLink, X, Link2, Upload, Settings,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabase';
@@ -83,11 +83,11 @@ function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, o
 }
 
 /* ─── Quick Action ────────────────────────────────── */
-function QuickAction({ icon: Icon, label, desc, onClick, color, compact }) {
+function QuickAction({ icon: Icon, label, desc, onClick, color, compact, className = '' }) {
   return (
     <button
       type="button"
-      className={`flex items-center gap-2 w-full text-left rounded-xl transition-all duration-200 group focus:outline-none ${compact ? 'px-2.5 py-2' : 'px-4 py-3.5 gap-3.5'}`}
+      className={`flex items-center gap-2 w-full text-left rounded-xl transition-all duration-200 group focus:outline-none ${compact ? 'px-2.5 py-2' : 'px-4 py-3.5 gap-3.5'} ${className}`}
       style={{ backgroundColor: 'white', border: '1px solid #EDE9FE' }}
       onClick={onClick}
       onMouseEnter={e => {
@@ -1042,6 +1042,8 @@ export default function Dashboard() {
                     color="#D97706" onClick={() => navigate('/risk-alerts')} />
                   <QuickAction compact icon={MessageSquare} label="Chat" desc="Messages"
                     color="#6366F1" onClick={() => navigate('/messages')} />
+                  <QuickAction compact icon={Settings} label="Settings" desc="This device"
+                    color="#64748B" onClick={() => navigate('/settings')} className="col-span-2" />
                 </div>
               </div>
               {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact />}

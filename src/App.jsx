@@ -47,9 +47,10 @@ import Rubric from './pages/13_Rubric';
 import Messages from './pages/14_Messages';
 import Profile from './pages/15_Profile';
 import ProjectFiles from './pages/16_ProjectFiles';
+import SettingsPage from './pages/17_Settings';
 
 // Routes that show the persistent TopNav (screens 11–15)
-const NAV_ROUTES = ['/dashboard', '/tasks', '/rubric', '/messages', '/profile', '/risk-alerts', '/rebalance', '/files'];
+const NAV_ROUTES = ['/dashboard', '/tasks', '/rubric', '/messages', '/profile', '/risk-alerts', '/rebalance', '/files', '/settings'];
 
 function Layout() {
   const location = useLocation();
@@ -89,6 +90,7 @@ function Layout() {
         <Route path="/messages" element={<Messages />} />
         <Route path="/files" element={<ProjectFiles />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </>
   );

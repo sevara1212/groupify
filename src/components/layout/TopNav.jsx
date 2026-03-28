@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare, FolderOpen, Settings } from 'lucide-react';
 
 const tabs = [
   { label: 'Dashboard',     to: '/dashboard', icon: LayoutDashboard },
@@ -36,7 +36,7 @@ export default function TopNav() {
         </button>
 
         {/* Nav tabs */}
-        <nav className="flex items-center gap-0.5 overflow-x-auto">
+        <nav className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0 justify-end md:justify-center">
           {tabs.map(({ label, to, icon: Icon }) => (
             <NavLink
               key={to}
@@ -57,6 +57,18 @@ export default function TopNav() {
             </NavLink>
           ))}
         </nav>
+
+        <NavLink
+          to="/settings"
+          className="flex-shrink-0 ml-1 p-2 rounded-xl transition-all"
+          style={({ isActive }) => ({
+            color: isActive ? '#8B5CF6' : '#A09BB8',
+            backgroundColor: isActive ? '#F5F3FF' : 'transparent',
+          })}
+          title="Settings"
+        >
+          <Settings size={18} strokeWidth={2} />
+        </NavLink>
       </div>
     </header>
   );
