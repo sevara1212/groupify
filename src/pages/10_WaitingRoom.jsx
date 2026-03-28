@@ -17,7 +17,7 @@ const WAITING_MESSAGES = [
 
 export default function WaitingRoom() {
   const navigate = useNavigate();
-  const { projectId } = useProject();
+  const { projectId, currentMemberId } = useProject();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [allDone, setAllDone] = useState(false);
@@ -200,13 +200,15 @@ export default function WaitingRoom() {
               <div className="space-y-2.5 mb-4">
                 {members.map((member, idx) => {
                   const isDone = member.quiz_done;
+                  const isYou = currentMemberId && member.id === currentMemberId;
                   const color = MEMBER_COLORS[idx % MEMBER_COLORS.length];
                   return (
                     <div key={member.id}
                       className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-500"
                       style={{
-                        backgroundColor: isDone ? '#F0FDF4' : '#FAFAFF',
-                        border: `1px solid ${isDone ? '#BBF7D0' : '#EDE9FE'}`,
+                        backgroundColor: isDone ? '#F0FDF4' : isYou ? '#F5F3FF' : '#FAFAFF',
+                        border: `1px solid ${isDone ? '#BBF7D0' : isYou ? '#C4B5FD' : '#EDE9FE'}`,
+                        boxShadow: isYou ? '0 0 0 2px rgba(139,92,246,0.12)' : undefined,
                       }}>
                       {/* Avatar */}
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
@@ -222,8 +224,16 @@ export default function WaitingRoom() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate" style={{ color: '#1C1829' }}>{member.name}</p>
-                        <p className="text-xs font-medium" style={{ color: isDone ? '#059669' : '#A09BB8' }}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-bold truncate" style={{ color: '#1C1829' }}>{member.name}</p>
+                          {isYou && (
+                            <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md flex-shrink-0"
+                              style={{ backgroundColor: '#EDE9FE', color: '#6D28D9', border: '1px solid #C4B5FD' }}>
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs font-medium mt-0.5" style={{ color: isDone ? '#059669' : '#A09BB8' }}>
                           {isDone ? '✓ Quiz completed' : 'Taking the quiz…'}
                         </p>
                       </div>
