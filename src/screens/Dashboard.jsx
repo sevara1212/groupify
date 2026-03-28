@@ -820,7 +820,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 sm:px-10 lg:px-14 xl:px-16 pb-14 pt-7 sm:pt-8 relative z-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-10 pb-14 pt-7 sm:pt-8 relative z-10">
         {error && (
           <div className="bg-white rounded-3xl px-5 py-4 mb-6 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
