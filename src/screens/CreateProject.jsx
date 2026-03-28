@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Minus, Plus, ArrowRight } from 'lucide-react';
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Button from '../components/ui/Button';
+import { useProject } from '../context/ProjectContext';
+
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
 const inputStyle = {
   borderColor: '#EDE9FE',
@@ -13,13 +16,42 @@ const inputStyle = {
 
 export default function CreateProject() {
   const navigate = useNavigate();
+  const { setProjectId } = useProject();
   const [courseName, setCourseName] = useState('');
   const [assignmentTitle, setAssignmentTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [groupSize, setGroupSize] = useState(4);
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState(null);
 
-  const canContinue = courseName.trim() && assignmentTitle.trim() && dueDate;
+  const canContinue = courseName.trim() && assignmentTitle.trim() && dueDate && !creating;
+
+  const handleCreate = async () => {
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API}/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: assignmentTitle.trim(),
+          course_name: courseName.trim(),
+          assignment_title: assignmentTitle.trim(),
+          due_date: dueDate,
+          group_size: groupSize,
+          ai_enabled: aiEnabled,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to create project');
+      const project = await res.json();
+      setProjectId(project.id);
+      navigate('/upload');
+    } catch (err) {
+      setError('Could not create project. Please try again.');
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
@@ -152,9 +184,13 @@ export default function CreateProject() {
               </div>
             </div>
 
+            {error && (
+              <p className="text-sm mt-4 text-red-500 font-medium">{error}</p>
+            )}
+
             <div className="mt-8 flex justify-end">
-              <Button variant="filled" disabled={!canContinue} onClick={() => navigate('/upload')} className="gap-2">
-                Continue <ArrowRight size={15} />
+              <Button variant="filled" disabled={!canContinue} onClick={handleCreate} className="gap-2">
+                {creating ? 'Creating…' : 'Continue'} {!creating && <ArrowRight size={15} />}
               </Button>
             </div>
           </div>

@@ -1,7 +1,9 @@
 import os
+import traceback
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from routers import projects, rubric_extraction, quiz_generation, allocation, risks
 
@@ -19,6 +21,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Catch-all exception handler so 500 errors still get CORS headers
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+    )
+
 
 app.include_router(projects.router, prefix="/api")
 app.include_router(rubric_extraction.router, prefix="/api")

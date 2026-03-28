@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Upload, CheckCircle, ArrowRight, AlertTriangle, Loader2, X, FileText, Type } from 'lucide-react';
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Button from '../components/ui/Button';
+import { useProject } from '../context/ProjectContext';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
-const PROJECT_ID = 'wzhlzyzfmydqkolbhpbj';
 
 // ── Unified upload/paste section ──────────────────────────────────────────────
 function UploadSection({ label, required, file, onFileSelect, onFileClear, text, onTextChange, disabled }) {
@@ -155,6 +155,7 @@ function StatusRow({ icon: Icon, color, text, spin = false }) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function UploadFiles() {
   const navigate = useNavigate();
+  const { projectId: PROJECT_ID } = useProject();
 
   const [briefFile, setBriefFile] = useState(null);
   const [briefText, setBriefText] = useState('');
