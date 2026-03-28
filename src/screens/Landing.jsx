@@ -94,8 +94,9 @@ export default function Landing() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="/signin" className="text-sm font-semibold" style={{ color: '#6B6584' }}>Sign in</a>
-            <Button variant="filled" onClick={() => navigate('/create')} className="px-5 py-2.5">Get started free</Button>
+            <button onClick={() => navigate('/signin')} className="text-sm font-semibold transition-colors duration-200" style={{ color: '#6B6584' }}
+              onMouseEnter={e => e.target.style.color = '#8B5CF6'} onMouseLeave={e => e.target.style.color = '#6B6584'}>Sign in</button>
+            <Button variant="filled" onClick={() => navigate('/create')} className="px-5 py-2.5">Create Project</Button>
           </div>
         </div>
       </header>
@@ -212,7 +213,7 @@ export default function Landing() {
             </h2>
             <p className="text-base mb-8" style={{ color: '#6B6584' }}>Create your first project in under a minute.</p>
             <Button variant="filled" onClick={() => navigate('/create')} className="gap-2 px-8 py-3.5 text-base">
-              Get started free <ArrowRight size={17} />
+              Create a Project <ArrowRight size={17} />
             </Button>
           </div>
         </section>

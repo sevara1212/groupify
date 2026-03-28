@@ -13,6 +13,7 @@ import InviteTeam from './screens/InviteTeam';
 import QuizIntro from './screens/QuizIntro';
 import QuizQuestion from './screens/QuizQuestion';
 import QuizProcessing from './screens/QuizProcessing';
+import SignIn from './screens/SignIn';
 
 import Splash from './pages/01_Splash';
 import Onboarding from './pages/02_Onboarding';
@@ -43,6 +44,7 @@ function Layout() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="/signin" element={<SignIn />} />
         <Route path="/create" element={<CreateProject />} />
         <Route path="/upload" element={<UploadFiles />} />
         <Route path="/invite" element={<InviteTeam />} />
