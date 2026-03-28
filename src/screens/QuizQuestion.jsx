@@ -11,14 +11,6 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const PERIOD_LABELS = ['Morning', 'Afternoon', 'Evening'];
 const PERIOD_ICONS = ['☀️', '🌤️', '🌙'];
 
-const TYPE_META = {
-  multi_select_roles:  { icon: '🎭', label: 'Your Role',       hint: 'Pick up to two that feel like you.',         color: '#7C3AED' },
-  confidence_sliders:  { icon: '📊', label: 'Skill Check',     hint: 'Drag to show how confident you are (0–10).', color: '#2563EB' },
-  availability_grid:   { icon: '📅', label: 'Availability',    hint: 'Tap the slots that work for you.',           color: '#059669' },
-  preference_ranking:  { icon: '⚡', label: 'Your Preference', hint: 'Pick the one that fits best.',               color: '#D97706' },
-  text_input:          { icon: '💬', label: 'Your Thoughts',   hint: 'Just type whatever comes to mind.',          color: '#DB2777' },
-};
-
 /* ── Answer components ──────────────────────────────────────────────── */
 
 function MultiSelectRoles({ question, value = [], onChange }) {
