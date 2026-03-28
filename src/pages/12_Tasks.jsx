@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   CheckCircle, Calendar, Loader2, Users, Target,
   Circle, Timer, ChevronDown, Sparkles, Filter,
-  TrendingUp, Clock, ArrowUpRight, MoreVertical,
+  TrendingUp, Clock, ArrowUpRight, X, AlertTriangle,
+  ChevronRight, ChevronLeft,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
@@ -10,9 +11,9 @@ const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'local
 const MEMBER_COLORS = ['#8B5CF6', '#EC4899', '#D97706', '#0EA5E9', '#0D9488', '#6366F1'];
 
 const STATUS_CONFIG = {
-  todo:        { label: 'Not Started', icon: Circle,      color: '#6B7280', bg: '#F9FAFB', border: '#E5E7EB', dot: '#9CA3AF',  ring: '#E5E7EB',  gradient: 'linear-gradient(135deg,#6B7280,#9CA3AF)' },
-  in_progress: { label: 'In Progress', icon: Timer,       color: '#8B5CF6', bg: '#F5F3FF', border: '#C4B5FD', dot: '#8B5CF6',  ring: '#C4B5FD',  gradient: 'linear-gradient(135deg,#8B5CF6,#7C3AED)' },
-  done:        { label: 'Done',        icon: CheckCircle, color: '#10B981', bg: '#ECFDF5', border: '#6EE7B7', dot: '#10B981',  ring: '#6EE7B7',  gradient: 'linear-gradient(135deg,#10B981,#059669)' },
+  todo:        { label: 'Not Started', icon: Circle,      color: '#6B7280', bg: '#F9FAFB', border: '#E5E7EB', dot: '#9CA3AF',  gradient: 'linear-gradient(135deg,#6B7280,#9CA3AF)' },
+  in_progress: { label: 'In Progress', icon: Timer,       color: '#8B5CF6', bg: '#F5F3FF', border: '#C4B5FD', dot: '#8B5CF6',  gradient: 'linear-gradient(135deg,#8B5CF6,#7C3AED)' },
+  done:        { label: 'Done',        icon: CheckCircle, color: '#10B981', bg: '#ECFDF5', border: '#6EE7B7', dot: '#10B981',  gradient: 'linear-gradient(135deg,#10B981,#059669)' },
 };
 
 const STATUS_CYCLE = { todo: 'in_progress', in_progress: 'done', done: 'todo' };
@@ -30,6 +31,65 @@ function Skeleton({ w = '100%', h = 16, r = 8 }) {
       backgroundSize: '200% 100%',
       animation: 'shimmer 1.5s infinite',
     }} />
+  );
+}
+
+/* ─── Deadline Timeline ───────────────────────────── */
+function DeadlineTimeline({ tasks }) {
+  const upcoming = tasks
+    .filter(t => t.due_date && t.status !== 'done')
+    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+    .slice(0, 6);
+
+  if (upcoming.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden mb-5"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+      <div className="px-5 py-3 flex items-center gap-2.5" style={{ borderBottom: '1px solid #F5F3FF' }}>
+        <Clock size={13} style={{ color: '#8B5CF6' }} />
+        <span className="text-xs font-extrabold" style={{ color: '#1C1829' }}>Upcoming Deadlines</span>
+      </div>
+      <div className="px-5 py-4">
+        <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {upcoming.map(task => {
+            const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / 86400000);
+            const isOverdue = daysLeft < 0;
+            const isUrgent = daysLeft >= 0 && daysLeft <= 3;
+            const isInProgress = task.status === 'in_progress';
+
+            return (
+              <div key={task.id} className="flex-shrink-0 w-44 rounded-xl p-3 transition-all"
+                style={{
+                  backgroundColor: isOverdue ? '#FEF2F2' : isUrgent ? '#FFFBEB' : '#F8F7FF',
+                  border: `1px solid ${isOverdue ? '#FECACA' : isUrgent ? '#FDE68A' : '#EDE9FE'}`,
+                }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Calendar size={10} style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }} />
+                  <span className="text-xs font-bold" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }}>
+                    {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                  </span>
+                  <span className="text-xs font-semibold ml-auto" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#A09BB8' }}>
+                    {isOverdue ? `${Math.abs(daysLeft)}d late` : daysLeft === 0 ? 'Today' : `${daysLeft}d`}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold truncate mb-1" style={{ color: '#1C1829' }}>{task.title}</p>
+                {task.member_name && (
+                  <p className="text-xs truncate" style={{ color: '#A09BB8' }}>{task.member_name}</p>
+                )}
+                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
+                  <div className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${task.progress_percent || 0}%`,
+                      backgroundColor: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6',
+                    }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -62,158 +122,144 @@ function StatusPill({ status, onChange, disabled }) {
   );
 }
 
-/* ─── Task Row ───────────────────────────────────── */
-function TaskRow({ task, memberColor, onUpdate, isLast }) {
-  const [updating, setUpdating] = useState(false);
+/* ─── Task Detail Modal ─────────────────────────────── */
+function TaskDetailModal({ task, memberColor, onUpdate, onClose }) {
   const [localStatus, setLocalStatus] = useState(task.status || 'todo');
-  const [expanded, setExpanded] = useState(false);
   const [localProgress, setLocalProgress] = useState(task.progress_percent || 0);
+  const [saving, setSaving] = useState(false);
 
   const cfg = STATUS_CONFIG[localStatus] || STATUS_CONFIG.todo;
-  const overdue = localStatus !== 'done' && task.due_date && new Date(task.due_date) < new Date();
   const daysLeft = task.due_date ? Math.ceil((new Date(task.due_date) - new Date()) / 86400000) : null;
+  const isOverdue = daysLeft !== null && daysLeft < 0 && localStatus !== 'done';
+
+  const handleSave = async (updates) => {
+    setSaving(true);
+    try { await onUpdate(task.id, updates); } catch {}
+    setSaving(false);
+  };
 
   const handleStatusChange = async (newStatus) => {
-    const prev = localStatus;
     setLocalStatus(newStatus);
+    const newProgress = newStatus === 'done' ? 100 : newStatus === 'todo' ? 0 : localProgress;
     if (newStatus === 'done') setLocalProgress(100);
     if (newStatus === 'todo') setLocalProgress(0);
-    setUpdating(true);
-    const newProgress = newStatus === 'done' ? 100 : newStatus === 'todo' ? 0 : localProgress;
-    try {
-      await onUpdate(task.id, { status: newStatus, progress_percent: newProgress });
-    } catch {
-      setLocalStatus(prev); // revert on error
-    } finally {
-      setUpdating(false);
-    }
+    await handleSave({ status: newStatus, progress_percent: newProgress });
   };
 
   const handleProgress = async (val) => {
     setLocalProgress(val);
-    try { await onUpdate(task.id, { progress_percent: val }); } catch {}
+    await handleSave({ progress_percent: val });
   };
 
   return (
-    <div
-      className="transition-all duration-200"
-      style={{ borderBottom: isLast ? 'none' : '1px solid #F3F4F6' }}
-    >
-      {/* Main row */}
-      <div
-        className="flex items-center gap-4 px-5 py-3.5 transition-all duration-150 cursor-pointer"
-        style={{ backgroundColor: expanded ? '#FAFAFF' : 'transparent' }}
-        onMouseEnter={e => { if (!expanded) e.currentTarget.style.backgroundColor = '#FAFAFF'; }}
-        onMouseLeave={e => { if (!expanded) e.currentTarget.style.backgroundColor = 'transparent'; }}
-        onClick={() => setExpanded(v => !v)}
-      >
-        {/* Status dot */}
-        <div className="flex-shrink-0 w-3 h-3 rounded-full transition-all duration-300"
-          style={{
-            backgroundColor: cfg.dot,
-            boxShadow: localStatus !== 'todo' ? `0 0 0 3px ${cfg.dot}22` : 'none',
-          }} />
-
-        {/* Title + tag */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold leading-snug"
-            style={{
-              color: localStatus === 'done' ? '#9CA3AF' : '#111827',
-              textDecoration: localStatus === 'done' ? 'line-through' : 'none',
-            }}>
-            {task.title}
-          </p>
-          {task.criterion_name && (
-            <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-md"
-              style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
-              {task.criterion_name}
-            </span>
-          )}
-        </div>
-
-        {/* Member avatar */}
-        {task.member_name && (
-          <div className="flex items-center gap-2 flex-shrink-0 hidden sm:flex">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white"
-              style={{ backgroundColor: memberColor || '#8B5CF6', fontSize: 9, fontWeight: 800 }}>
-              {getInitials(task.member_name)}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-5"
+      style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Header with accent */}
+        <div className="relative px-6 pt-6 pb-4"
+          style={{ borderBottom: '1px solid #F5F3FF', background: 'linear-gradient(135deg, #F5F3FF, #FDF2F8)' }}>
+          <div className="absolute top-0 left-0 w-full h-1" style={{ background: memberColor || '#8B5CF6' }} />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#8B5CF6' }}>Task Details</p>
+              <h2 className="text-base font-extrabold" style={{ color: '#1C1829' }}>{task.title}</h2>
             </div>
-            <span className="text-xs font-medium" style={{ color: '#6B7280' }}>{task.member_name}</span>
+            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'white', color: '#8B5CF6', border: '1px solid #EDE9FE' }}>
+              <X size={14} />
+            </button>
           </div>
-        )}
-
-        {/* Due date */}
-        {task.due_date && (
-          <div className="flex items-center gap-1 flex-shrink-0 hidden sm:flex"
-            style={{ color: overdue ? '#EF4444' : daysLeft !== null && daysLeft <= 3 ? '#F59E0B' : '#9CA3AF' }}>
-            <Calendar size={11} />
-            <span className="text-xs font-medium">
-              {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
-            </span>
-          </div>
-        )}
-
-        {/* Status pill */}
-        <div onClick={e => e.stopPropagation()}>
-          <StatusPill status={localStatus} onChange={handleStatusChange} disabled={updating} />
         </div>
 
-        {/* Expand chevron */}
-        <ChevronDown size={14} style={{ color: '#C4B5FD', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
-      </div>
-
-      {/* Expanded detail */}
-      {expanded && (
-        <div className="px-5 pb-4 pt-1"
-          style={{ backgroundColor: '#FAFAFF', borderTop: '1px solid #F5F3FF' }}>
-          <div className="flex items-center gap-2 flex-wrap mb-3">
+        <div className="px-6 py-5 space-y-5">
+          {/* Info rows */}
+          <div className="grid grid-cols-2 gap-3">
             {task.member_name && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl sm:hidden"
-                style={{ backgroundColor: '#F5F3FF', border: '1px solid #EDE9FE' }}>
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white"
-                  style={{ backgroundColor: memberColor || '#8B5CF6', fontSize: 8, fontWeight: 800 }}>
-                  {getInitials(task.member_name)}
+              <div className="rounded-xl p-3" style={{ backgroundColor: '#F8F7FF', border: '1px solid #EDE9FE' }}>
+                <p className="text-xs font-bold mb-1" style={{ color: '#A09BB8' }}>Assigned to</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: memberColor || '#8B5CF6', fontSize: 8 }}>
+                    {getInitials(task.member_name)}
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: '#1C1829' }}>{task.member_name}</span>
                 </div>
-                <span className="text-xs font-semibold" style={{ color: '#6B7280' }}>{task.member_name}</span>
               </div>
             )}
             {task.due_date && (
-              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl sm:hidden"
-                style={{ backgroundColor: overdue ? '#FEF2F2' : '#F9FAFB', border: `1px solid ${overdue ? '#FECACA' : '#E5E7EB'}` }}>
-                <Calendar size={10} style={{ color: overdue ? '#EF4444' : '#9CA3AF' }} />
-                <span className="text-xs font-medium" style={{ color: overdue ? '#EF4444' : '#6B7280' }}>
-                  {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
+              <div className="rounded-xl p-3"
+                style={{ backgroundColor: isOverdue ? '#FEF2F2' : '#F8F7FF', border: `1px solid ${isOverdue ? '#FECACA' : '#EDE9FE'}` }}>
+                <p className="text-xs font-bold mb-1" style={{ color: '#A09BB8' }}>Deadline</p>
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={12} style={{ color: isOverdue ? '#EF4444' : '#8B5CF6' }} />
+                  <span className="text-sm font-semibold" style={{ color: isOverdue ? '#EF4444' : '#1C1829' }}>
+                    {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                {daysLeft !== null && (
+                  <p className="text-xs mt-1 font-medium" style={{ color: isOverdue ? '#EF4444' : daysLeft <= 3 ? '#D97706' : '#A09BB8' }}>
+                    {isOverdue ? `${Math.abs(daysLeft)} days overdue` : daysLeft === 0 ? 'Due today!' : `${daysLeft} days left`}
+                  </p>
+                )}
               </div>
             )}
           </div>
 
-          {/* Progress slider */}
+          {/* Criterion */}
+          {task.criterion_name && (
+            <div className="flex items-center gap-2">
+              <Target size={12} style={{ color: '#EC4899' }} />
+              <span className="text-xs font-semibold" style={{ color: '#6B6584' }}>Rubric: </span>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: '#FDF2F8', color: '#BE185D' }}>
+                {task.criterion_name}
+              </span>
+            </div>
+          )}
+
+          {/* Status */}
+          <div>
+            <p className="text-xs font-bold mb-2" style={{ color: '#6B7280' }}>Status</p>
+            <div className="flex gap-2">
+              {Object.entries(STATUS_CONFIG).map(([key, c]) => {
+                const isActive = localStatus === key;
+                const SIcon = c.icon;
+                return (
+                  <button key={key} onClick={() => handleStatusChange(key)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-1 justify-center"
+                    style={{
+                      backgroundColor: isActive ? c.bg : 'white',
+                      border: `1.5px solid ${isActive ? c.border : '#EDE9FE'}`,
+                      color: isActive ? c.color : '#9CA3AF',
+                      boxShadow: isActive ? `0 2px 8px ${c.dot}20` : 'none',
+                    }}>
+                    <SIcon size={12} strokeWidth={2.5} />
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Progress */}
           {localStatus !== 'done' && (
-            <div className="p-3 rounded-xl" style={{ backgroundColor: 'white', border: '1px solid #EDE9FE' }}>
-              <div className="flex items-center justify-between mb-2">
+            <div className="p-4 rounded-xl" style={{ backgroundColor: '#F8F7FF', border: '1px solid #EDE9FE' }}>
+              <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold" style={{ color: '#6B7280' }}>Progress</span>
-                <span className="text-xs font-extrabold" style={{ color: '#8B5CF6' }}>{localProgress}%</span>
+                <span className="text-sm font-extrabold" style={{ color: '#8B5CF6' }}>{localProgress}%</span>
               </div>
-              <div className="relative h-2 rounded-full mb-2" style={{ backgroundColor: '#EDE9FE' }}>
-                <div className="h-2 rounded-full transition-all duration-300"
+              <div className="relative h-3 rounded-full mb-3" style={{ backgroundColor: '#EDE9FE' }}>
+                <div className="h-3 rounded-full transition-all duration-300"
                   style={{ width: `${localProgress}%`, background: 'linear-gradient(90deg, #8B5CF6, #EC4899)' }} />
               </div>
-              <input
-                type="range" min="0" max="100" step="10"
-                value={localProgress}
-                onChange={e => handleProgress(parseInt(e.target.value))}
-                className="w-full accent-purple-500 opacity-0 absolute"
-                style={{ marginTop: -18, cursor: 'pointer' }}
-                onClick={e => e.stopPropagation()}
-              />
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-1">
                 {[0, 25, 50, 75, 100].map(v => (
-                  <button key={v} onClick={e => { e.stopPropagation(); handleProgress(v); }}
-                    className="text-xs font-semibold px-2 py-0.5 rounded-md transition-all"
+                  <button key={v} onClick={() => handleProgress(v)}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex-1"
                     style={{
-                      backgroundColor: localProgress === v ? '#8B5CF6' : '#F5F3FF',
+                      backgroundColor: localProgress === v ? '#8B5CF6' : 'white',
                       color: localProgress === v ? 'white' : '#A09BB8',
+                      border: `1px solid ${localProgress === v ? '#8B5CF6' : '#EDE9FE'}`,
                     }}>
                     {v}%
                   </button>
@@ -223,15 +269,121 @@ function TaskRow({ task, memberColor, onUpdate, isLast }) {
           )}
 
           {localStatus === 'done' && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
               style={{ backgroundColor: '#ECFDF5', border: '1px solid #6EE7B7' }}>
-              <CheckCircle size={14} style={{ color: '#10B981' }} />
-              <span className="text-xs font-semibold" style={{ color: '#10B981' }}>Task completed! 🎉</span>
+              <CheckCircle size={16} style={{ color: '#10B981' }} />
+              <span className="text-sm font-semibold" style={{ color: '#10B981' }}>Task completed! 🎉</span>
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
+  );
+}
+
+/* ─── Task Row ───────────────────────────────────── */
+function TaskRow({ task, memberColor, onUpdate, isLast }) {
+  const [updating, setUpdating] = useState(false);
+  const [localStatus, setLocalStatus] = useState(task.status || 'todo');
+  const [showDetail, setShowDetail] = useState(false);
+
+  const cfg = STATUS_CONFIG[localStatus] || STATUS_CONFIG.todo;
+  const overdue = localStatus !== 'done' && task.due_date && new Date(task.due_date) < new Date();
+  const daysLeft = task.due_date ? Math.ceil((new Date(task.due_date) - new Date()) / 86400000) : null;
+
+  const handleStatusChange = async (newStatus) => {
+    const prev = localStatus;
+    setLocalStatus(newStatus);
+    setUpdating(true);
+    const newProgress = newStatus === 'done' ? 100 : newStatus === 'todo' ? 0 : (task.progress_percent || 0);
+    try {
+      await onUpdate(task.id, { status: newStatus, progress_percent: newProgress });
+    } catch {
+      setLocalStatus(prev);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="transition-all duration-200" style={{ borderBottom: isLast ? 'none' : '1px solid #F3F4F6' }}>
+        <div className="flex items-center gap-4 px-5 py-3.5 transition-all duration-150"
+          style={{ backgroundColor: 'transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FAFAFF'; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
+
+          {/* Status dot */}
+          <div className="flex-shrink-0 w-3 h-3 rounded-full transition-all duration-300"
+            style={{ backgroundColor: cfg.dot, boxShadow: localStatus !== 'todo' ? `0 0 0 3px ${cfg.dot}22` : 'none' }} />
+
+          {/* Title + tag - clickable for details */}
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setShowDetail(true)}>
+            <p className="text-sm font-semibold leading-snug"
+              style={{
+                color: localStatus === 'done' ? '#9CA3AF' : '#111827',
+                textDecoration: localStatus === 'done' ? 'line-through' : 'none',
+              }}>
+              {task.title}
+            </p>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              {task.criterion_name && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-md"
+                  style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
+                  {task.criterion_name}
+                </span>
+              )}
+              {task.due_date && (
+                <span className="text-xs font-medium flex items-center gap-1"
+                  style={{ color: overdue ? '#EF4444' : daysLeft !== null && daysLeft <= 3 ? '#D97706' : '#A09BB8' }}>
+                  <Calendar size={9} />
+                  {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                  {overdue ? ' (overdue)' : daysLeft === 0 ? ' (today)' : daysLeft !== null && daysLeft <= 3 ? ` (${daysLeft}d)` : ''}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Member avatar */}
+          {task.member_name && (
+            <div className="flex items-center gap-2 flex-shrink-0 hidden sm:flex">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: memberColor || '#8B5CF6', fontSize: 9, fontWeight: 800 }}>
+                {getInitials(task.member_name)}
+              </div>
+              <span className="text-xs font-medium" style={{ color: '#6B7280' }}>{task.member_name}</span>
+            </div>
+          )}
+
+          {/* Progress bar mini */}
+          {localStatus === 'in_progress' && (
+            <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0 w-20">
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
+                <div className="h-1.5 rounded-full" style={{ width: `${task.progress_percent || 0}%`, backgroundColor: '#8B5CF6' }} />
+              </div>
+              <span className="text-xs font-bold w-8 text-right" style={{ color: '#8B5CF6' }}>{task.progress_percent || 0}%</span>
+            </div>
+          )}
+
+          {/* Status pill */}
+          <div onClick={e => e.stopPropagation()}>
+            <StatusPill status={localStatus} onChange={handleStatusChange} disabled={updating} />
+          </div>
+        </div>
+      </div>
+
+      {showDetail && (
+        <TaskDetailModal
+          task={{ ...task, status: localStatus }}
+          memberColor={memberColor}
+          onUpdate={async (id, updates) => {
+            await onUpdate(id, updates);
+            if (updates.status) setLocalStatus(updates.status);
+          }}
+          onClose={() => setShowDetail(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -243,12 +395,9 @@ function StatusSection({ column, tasks, memberColorMap, onUpdate, collapsed, onT
   return (
     <div className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
       style={{ border: `1px solid ${cfg.border}`, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-      {/* Section header */}
-      <button
-        className="w-full flex items-center gap-3 px-5 py-4 transition-all"
+      <button className="w-full flex items-center gap-3 px-5 py-4 transition-all"
         style={{ backgroundColor: cfg.bg }}
-        onClick={onToggle}
-      >
+        onClick={onToggle}>
         <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: cfg.gradient }}>
           <column.icon size={12} color="white" strokeWidth={2.5} />
@@ -264,17 +413,11 @@ function StatusSection({ column, tasks, memberColorMap, onUpdate, collapsed, onT
         )}
       </button>
 
-      {/* Task rows */}
       {!collapsed && tasks.length > 0 && (
         <div>
           {tasks.map((task, idx) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              memberColor={memberColorMap[task.member_id]}
-              onUpdate={onUpdate}
-              isLast={idx === tasks.length - 1}
-            />
+            <TaskRow key={task.id} task={task} memberColor={memberColorMap[task.member_id]}
+              onUpdate={onUpdate} isLast={idx === tasks.length - 1} />
           ))}
         </div>
       )}
@@ -323,15 +466,12 @@ export default function Tasks() {
   }, [projectId]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
-
-  // Poll every 15s so all members see updates
   useEffect(() => {
     const id = setInterval(fetchTasks, 15000);
     return () => clearInterval(id);
   }, [fetchTasks]);
 
   const handleUpdateTask = async (taskId, updates) => {
-    // Optimistic update
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
     try {
       await fetch(`${API}/projects/${projectId}/tasks/${taskId}`, {
@@ -353,17 +493,17 @@ export default function Tasks() {
   const doneCount = tasks.filter(t => t.status === 'done').length;
   const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
 
+  // Count overdue tasks
+  const overdueCount = tasks.filter(t => t.due_date && t.status !== 'done' && new Date(t.due_date) < new Date()).length;
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
 
       {/* ── Hero Header ── */}
       <div className="relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #EC4899 100%)' }}>
-        {/* Decorative shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10"
           style={{ background: 'white', transform: 'translate(30%, -50%)' }} />
-        <div className="absolute bottom-0 left-20 w-40 h-40 rounded-full opacity-10"
-          style={{ background: 'white', transform: 'translate(-20%, 50%)' }} />
 
         <div className="max-w-5xl mx-auto px-6 py-7 relative">
           <div className="flex items-end justify-between gap-4">
@@ -378,10 +518,9 @@ export default function Tasks() {
               <h1 className="text-2xl font-extrabold text-white" style={{ letterSpacing: '-0.02em' }}>
                 {loading ? 'Loading…' : `${doneCount} of ${tasks.length} tasks done`}
               </h1>
-              <p className="text-white/60 text-sm mt-1">Click any task to expand · Click status pill to update</p>
+              <p className="text-white/60 text-sm mt-1">Click any task to see details · Click status pill to update</p>
             </div>
 
-            {/* Progress arc */}
             {!loading && tasks.length > 0 && (
               <div className="flex-shrink-0">
                 <div className="relative flex flex-col items-center justify-center w-20 h-20">
@@ -391,8 +530,7 @@ export default function Tasks() {
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 32}`}
                       strokeDashoffset={`${2 * Math.PI * 32 * (1 - pct / 100)}`}
-                      style={{ transition: 'stroke-dashoffset 1s ease' }}
-                    />
+                      style={{ transition: 'stroke-dashoffset 1s ease' }} />
                   </svg>
                   <span className="text-white font-extrabold text-lg z-10">{pct}%</span>
                 </div>
@@ -400,13 +538,13 @@ export default function Tasks() {
             )}
           </div>
 
-          {/* Mini stat pills */}
           {!loading && tasks.length > 0 && (
             <div className="flex gap-2 mt-4 flex-wrap">
               {[
                 { label: `${todoTasks.length} not started`, color: 'rgba(255,255,255,0.15)' },
                 { label: `${inProgressTasks.length} in progress`, color: 'rgba(139,92,246,0.4)' },
                 { label: `${doneTasks.length} done`, color: 'rgba(16,185,129,0.35)' },
+                ...(overdueCount > 0 ? [{ label: `${overdueCount} overdue`, color: 'rgba(239,68,68,0.4)' }] : []),
               ].map(p => (
                 <span key={p.label} className="text-xs font-semibold text-white px-3 py-1 rounded-full"
                   style={{ backgroundColor: p.color, backdropFilter: 'blur(8px)' }}>
@@ -419,6 +557,9 @@ export default function Tasks() {
       </div>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-6">
+
+        {/* Deadline timeline */}
+        {!loading && <DeadlineTimeline tasks={filtered} />}
 
         {/* Member filter */}
         {members.length > 1 && (
@@ -456,8 +597,7 @@ export default function Tasks() {
         {loading ? (
           <div className="space-y-3">
             {[0,1,2].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-5 space-y-3"
-                style={{ border: '1px solid #EDE9FE' }}>
+              <div key={i} className="bg-white rounded-2xl p-5 space-y-3" style={{ border: '1px solid #EDE9FE' }}>
                 <Skeleton w="60%" h={16} />
                 <Skeleton w="30%" h={12} />
               </div>
@@ -475,19 +615,14 @@ export default function Tasks() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3 reveal">
+          <div className="space-y-3">
             {COLUMNS.map(col => {
               const colTasks = col.key === 'todo' ? todoTasks : col.key === 'in_progress' ? inProgressTasks : doneTasks;
               return (
-                <StatusSection
-                  key={col.key}
-                  column={col}
-                  tasks={colTasks}
-                  memberColorMap={memberColorMap}
+                <StatusSection key={col.key} column={col} tasks={colTasks} memberColorMap={memberColorMap}
                   onUpdate={handleUpdateTask}
                   collapsed={collapsed[col.key]}
-                  onToggle={() => setCollapsed(p => ({ ...p, [col.key]: !p[col.key] }))}
-                />
+                  onToggle={() => setCollapsed(p => ({ ...p, [col.key]: !p[col.key] }))} />
               );
             })}
 
@@ -499,9 +634,13 @@ export default function Tasks() {
                   style={{ borderBottom: '1px solid #F5F3FF', backgroundColor: '#FAFAFF' }}>
                   <Users size={14} style={{ color: '#8B5CF6' }} />
                   <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Team Progress</h2>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full ml-auto"
+                    style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
+                    {members.length} member{members.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {members.map((m, idx) => {
+                  {members.map(m => {
                     const mt = tasks.filter(t => t.member_id === m.id);
                     const done = mt.filter(t => t.status === 'done').length;
                     const inProg = mt.filter(t => t.status === 'in_progress').length;

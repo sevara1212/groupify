@@ -5,7 +5,7 @@ import {
   Sparkles, ArrowRight, TrendingUp, Users, Target, ChevronRight,
   CircleCheck, Circle, Timer, Bell, MessageSquare, Shield,
   FolderOpen, Upload, FileText, File, Image, X,
-  Archive,
+  Archive, ChevronLeft,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import ProgressBar from '../components/ui/ProgressBar';
@@ -40,7 +40,7 @@ function ProgressRing({ value, size = 88, strokeWidth = 7 }) {
 }
 
 /* ─── Stat Card ───────────────────────────────────── */
-function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick, accent }) {
+function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick }) {
   return (
     <div
       className="bg-white rounded-2xl p-5 transition-all duration-200 group"
@@ -109,6 +109,207 @@ function QuickAction({ icon: Icon, label, desc, onClick, color }) {
   );
 }
 
+/* ─── Deadline Calendar ───────────────────────────── */
+function DeadlineCalendar({ tasks, projectDueDate }) {
+  const today = new Date();
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const monthName = viewDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Mon=0
+
+  // Build a map of date string → tasks
+  const dateTaskMap = {};
+  tasks.forEach(t => {
+    const d = t.due_date;
+    if (!d) return;
+    const key = d.slice(0, 10);
+    if (!dateTaskMap[key]) dateTaskMap[key] = [];
+    dateTaskMap[key].push(t);
+  });
+
+  const projectDueKey = projectDueDate ? projectDueDate.slice(0, 10) : null;
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    cells.push({ day: d, dateStr });
+  }
+
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+      <div className="px-5 py-4 flex items-center justify-between"
+        style={{ borderBottom: '1px solid #F5F3FF' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+            <Calendar size={14} color="white" />
+          </div>
+          <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Deadline Calendar</h2>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setMonthOffset(m => m - 1)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
+            <ChevronLeft size={14} />
+          </button>
+          <span className="text-xs font-bold px-2" style={{ color: '#1C1829', minWidth: 120, textAlign: 'center' }}>{monthName}</span>
+          <button onClick={() => setMonthOffset(m => m + 1)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-3">
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+            <div key={d} className="text-center text-xs font-bold py-1" style={{ color: '#A09BB8' }}>{d}</div>
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((cell, i) => {
+            if (!cell) return <div key={`empty-${i}`} className="h-9" />;
+
+            const isToday = cell.dateStr === todayStr;
+            const isProjectDue = cell.dateStr === projectDueKey;
+            const dayTasks = dateTaskMap[cell.dateStr] || [];
+            const hasTasks = dayTasks.length > 0;
+            const allDone = hasTasks && dayTasks.every(t => t.status === 'done');
+            const isPast = cell.dateStr < todayStr;
+            const hasOverdue = hasTasks && isPast && !allDone;
+
+            let bg = 'transparent';
+            let textColor = '#1C1829';
+            let dotColor = null;
+
+            if (isToday) { bg = '#8B5CF6'; textColor = 'white'; }
+            else if (isProjectDue) { bg = '#FDF2F8'; textColor = '#BE185D'; }
+            else if (hasOverdue) { bg = '#FEF2F2'; textColor = '#EF4444'; }
+            else if (isPast) { textColor = '#D1D5DB'; }
+
+            if (hasTasks && !isToday) {
+              if (allDone) dotColor = '#10B981';
+              else if (hasOverdue) dotColor = '#EF4444';
+              else dotColor = '#8B5CF6';
+            }
+
+            return (
+              <div key={cell.dateStr}
+                className="h-9 rounded-lg flex flex-col items-center justify-center relative transition-all"
+                style={{ backgroundColor: bg }}
+                title={hasTasks ? `${dayTasks.length} task${dayTasks.length !== 1 ? 's' : ''}: ${dayTasks.map(t => t.title).join(', ')}` : isProjectDue ? 'Project due date' : ''}>
+                <span className="text-xs font-semibold" style={{ color: textColor }}>
+                  {cell.day}
+                </span>
+                {dotColor && (
+                  <div className="flex gap-0.5 absolute bottom-0.5">
+                    {dayTasks.slice(0, 3).map((_, di) => (
+                      <div key={di} className="w-1 h-1 rounded-full" style={{ backgroundColor: dotColor }} />
+                    ))}
+                  </div>
+                )}
+                {isProjectDue && !isToday && (
+                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: '#EC4899' }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px solid #F5F3FF' }}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
+            <span className="text-xs" style={{ color: '#A09BB8' }}>Upcoming</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#10B981' }} />
+            <span className="text-xs" style={{ color: '#A09BB8' }}>Done</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#EF4444' }} />
+            <span className="text-xs" style={{ color: '#A09BB8' }}>Overdue</span>
+          </div>
+          {projectDueDate && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#EC4899' }} />
+              <span className="text-xs" style={{ color: '#A09BB8' }}>Due date</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Upcoming Deadlines ──────────────────────────── */
+function UpcomingDeadlines({ tasks, navigate }) {
+  const upcoming = tasks
+    .filter(t => t.due_date && t.status !== 'done')
+    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+    .slice(0, 5);
+
+  if (upcoming.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+      <div className="px-5 py-4 flex items-center justify-between"
+        style={{ borderBottom: '1px solid #F5F3FF' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #D97706, #F59E0B)' }}>
+            <Clock size={14} color="white" />
+          </div>
+          <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Upcoming Deadlines</h2>
+        </div>
+      </div>
+      <div className="p-4 space-y-2">
+        {upcoming.map(task => {
+          const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / 86400000);
+          const isOverdue = daysLeft < 0;
+          const isUrgent = daysLeft >= 0 && daysLeft <= 3;
+          const dateLabel = new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+
+          return (
+            <div key={task.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
+              style={{ backgroundColor: isOverdue ? '#FEF2F2' : isUrgent ? '#FFFBEB' : '#F8F7FF', border: `1px solid ${isOverdue ? '#FECACA' : isUrgent ? '#FDE68A' : '#EDE9FE'}` }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: isOverdue ? '#FEE2E2' : isUrgent ? '#FEF3C7' : '#F5F3FF' }}>
+                <Calendar size={12} style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold truncate" style={{ color: '#1C1829' }}>{task.title}</p>
+                <p className="text-xs" style={{ color: '#A09BB8' }}>{task.member_name}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs font-bold" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }}>{dateLabel}</p>
+                <p className="text-xs font-medium" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#A09BB8' }}>
+                  {isOverdue ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? 'Today!' : `${daysLeft}d left`}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ─── File type helpers ───────────────────────────── */
 function getFileIcon(name) {
   const ext = name.split('.').pop()?.toLowerCase();
@@ -136,33 +337,19 @@ function FilesPanel() {
   const addFiles = (incoming) => {
     const newFiles = Array.from(incoming).map(f => ({
       id: Math.random().toString(36).slice(2),
-      name: f.name,
-      size: f.size,
-      type: f.type,
-      addedAt: new Date(),
-      file: f,
+      name: f.name, size: f.size, type: f.type, addedAt: new Date(), file: f,
     }));
     setUploading(true);
-    setTimeout(() => {
-      setFiles(prev => [...prev, ...newFiles]);
-      setUploading(false);
-    }, 800);
+    setTimeout(() => { setFiles(prev => [...prev, ...newFiles]); setUploading(false); }, 800);
   };
 
   const removeFile = (id) => setFiles(prev => prev.filter(f => f.id !== id));
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
-  };
+  const handleDrop = (e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files); };
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden"
       style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-      {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between"
-        style={{ borderBottom: '1px solid #F5F3FF' }}>
+      <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #F5F3FF' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #D97706, #F59E0B)' }}>
@@ -170,76 +357,50 @@ function FilesPanel() {
           </div>
           <div>
             <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Project Files</h2>
-            {files.length > 0 && (
-              <p className="text-xs" style={{ color: '#A09BB8' }}>{files.length} file{files.length !== 1 ? 's' : ''}</p>
-            )}
+            {files.length > 0 && <p className="text-xs" style={{ color: '#A09BB8' }}>{files.length} file{files.length !== 1 ? 's' : ''}</p>}
           </div>
         </div>
-        <button
-          onClick={() => inputRef.current?.click()}
+        <button onClick={() => inputRef.current?.click()}
           className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
           style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A' }}
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FDE68A'; }}
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FEF3C7'; }}>
-          <Upload size={11} />
-          Upload
+          <Upload size={11} /> Upload
         </button>
         <input ref={inputRef} type="file" multiple className="hidden"
           onChange={e => e.target.files?.length && addFiles(e.target.files)} />
       </div>
-
       <div className="p-4">
-        {/* Drop zone */}
-        <div
-          onDragOver={e => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
+        <div onDragOver={e => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           className="rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center py-5 transition-all duration-200 mb-3"
-          style={{
-            borderColor: dragging ? '#D97706' : '#EDE9FE',
-            backgroundColor: dragging ? '#FFFBEB' : '#FAFAFE',
-          }}>
-          {uploading ? (
-            <Loader2 size={20} className="animate-spin mb-2" style={{ color: '#D97706' }} />
-          ) : (
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2"
-              style={{ backgroundColor: dragging ? '#FEF3C7' : '#F5F3FF' }}>
-              <Upload size={16} style={{ color: dragging ? '#D97706' : '#C4B5FD' }} />
-            </div>
-          )}
+          style={{ borderColor: dragging ? '#D97706' : '#EDE9FE', backgroundColor: dragging ? '#FFFBEB' : '#FAFAFE' }}>
+          {uploading ? <Loader2 size={20} className="animate-spin mb-2" style={{ color: '#D97706' }} />
+            : <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: dragging ? '#FEF3C7' : '#F5F3FF' }}>
+                <Upload size={16} style={{ color: dragging ? '#D97706' : '#C4B5FD' }} />
+              </div>}
           <p className="text-xs font-semibold" style={{ color: dragging ? '#D97706' : '#6B6584' }}>
-            {uploading ? 'Uploading…' : dragging ? 'Drop to upload' : 'Drag & drop or click to upload'}
+            {uploading ? 'Uploading…' : dragging ? 'Drop to upload' : 'Drag & drop or click'}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: '#A09BB8' }}>PDF, DOCX, images, and more</p>
         </div>
-
-        {/* File list */}
         {files.length === 0 ? (
-          <div className="text-center py-3">
-            <p className="text-xs" style={{ color: '#A09BB8' }}>No files yet — upload your rubric, notes, or references</p>
-          </div>
+          <p className="text-xs text-center py-3" style={{ color: '#A09BB8' }}>No files yet</p>
         ) : (
           <div className="space-y-1.5">
             {files.map(f => {
               const { Icon, color, bg } = getFileIcon(f.name);
               return (
-                <div key={f.id}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl group transition-all duration-150"
-                  style={{ backgroundColor: '#FAFAFE', border: '1px solid #F5F3FF' }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F5F3FF'; e.currentTarget.style.borderColor = '#EDE9FE'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FAFAFE'; e.currentTarget.style.borderColor = '#F5F3FF'; }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: bg }}>
+                <div key={f.id} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl group transition-all"
+                  style={{ backgroundColor: '#FAFAFE', border: '1px solid #F5F3FF' }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
                     <Icon size={14} style={{ color }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: '#1C1829' }}>{f.name}</p>
                     <p className="text-xs" style={{ color: '#A09BB8' }}>{formatBytes(f.size)}</p>
                   </div>
-                  <button
-                    onClick={() => removeFile(f.id)}
-                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-all duration-150"
+                  <button onClick={() => removeFile(f.id)}
+                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
                     style={{ backgroundColor: '#FEF2F2' }}>
                     <X size={11} style={{ color: '#EF4444' }} />
                   </button>
@@ -264,29 +425,33 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [criteria, setCriteria] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchAll = useCallback(async () => {
     setError(null);
     try {
-      const [projRes, tasksRes, rubricRes, risksRes] = await Promise.all([
+      const [projRes, tasksRes, rubricRes, risksRes, membersRes] = await Promise.all([
         fetch(`${API}/projects/${projectId}`),
         fetch(`${API}/projects/${projectId}/tasks`),
         fetch(`${API}/projects/${projectId}/rubric`),
         fetch(`${API}/projects/${projectId}/risks`),
+        fetch(`${API}/projects/${projectId}/members`),
       ]);
       if (!projRes.ok) throw new Error();
-      const [projData, tasksData, rubricData, risksData] = await Promise.all([
+      const [projData, tasksData, rubricData, risksData, membersData] = await Promise.all([
         projRes.json(),
         tasksRes.ok ? tasksRes.json() : { tasks: [] },
         rubricRes.ok ? rubricRes.json() : { criteria: [] },
         risksRes.ok ? risksRes.json() : { alerts: [] },
+        membersRes.ok ? membersRes.json() : { members: [] },
       ]);
       setProject(projData);
       setTasks(tasksData.tasks || []);
       setCriteria(rubricData.criteria || []);
       setAlerts((risksData.alerts || []).filter(a => !a.dismissed));
+      setMembers(membersData.members || []);
     } catch { setError('Could not load dashboard data.'); }
     finally { setLoading(false); }
   }, [projectId]);
@@ -362,27 +527,19 @@ export default function Dashboard() {
       {/* ── Hero Section ── */}
       <div className="w-full relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 45%, #EC4899 100%)' }}>
-        {/* Decorative blobs */}
         <div className="absolute pointer-events-none" style={{ top: '-60px', right: '-60px', width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: '-40px', left: '10%', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-        <div className="absolute pointer-events-none inset-0" style={{
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-        }} />
 
         <div className="max-w-5xl mx-auto px-6 pt-8 pb-16 relative">
           {loading ? (
             <div className="space-y-3">
               <div className="h-4 w-28 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
               <div className="h-8 w-72 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
-              <div className="h-4 w-44 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
             </div>
           ) : (
             <>
-              {/* Top row: greeting + ring */}
               <div className="flex items-start justify-between gap-6 mb-6">
                 <div className="flex-1 min-w-0">
-                  {/* Greeting badge */}
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-3"
                     style={{ backgroundColor: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                     <Sparkles size={10} color="white" />
@@ -400,11 +557,10 @@ export default function Dashboard() {
                     </p>
                   )}
 
-                  {/* Date pills */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {project?.due_date && (
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.18)' }}>
+                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
                         <Calendar size={11} color="rgba(255,255,255,0.85)" />
                         <span className="text-xs font-bold text-white">
                           Due {new Date(project.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -413,17 +569,25 @@ export default function Dashboard() {
                     )}
                     {daysRemaining !== null && (
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                        style={{ backgroundColor: daysRemaining <= 3 ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.14)', backdropFilter: 'blur(8px)', border: `1px solid ${daysRemaining <= 3 ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.18)'}` }}>
+                        style={{ backgroundColor: daysRemaining <= 3 ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.14)', border: `1px solid ${daysRemaining <= 3 ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.18)'}` }}>
                         <Clock size={11} color="rgba(255,255,255,0.85)" />
                         <span className="text-xs font-bold text-white">
                           {daysRemaining === 0 ? '⚠️ Due today!' : `${daysRemaining}d left`}
                         </span>
                       </div>
                     )}
+                    {members.length > 0 && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
+                        <Users size={11} color="rgba(255,255,255,0.85)" />
+                        <span className="text-xs font-bold text-white">
+                          {members.length} member{members.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Ring progress */}
                 {tasks.length > 0 && (
                   <div className="flex-shrink-0 flex flex-col items-center rounded-2xl px-5 py-4"
                     style={{ backgroundColor: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.2)' }}>
@@ -433,7 +597,6 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Mini stat strip inside hero */}
               {tasks.length > 0 && (
                 <div className="grid grid-cols-3 gap-3">
                   {[
@@ -458,7 +621,6 @@ export default function Dashboard() {
       </div>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 pb-12 -mt-8">
-        {/* Error */}
         {error && (
           <div className="bg-white rounded-2xl px-5 py-4 mb-5 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
@@ -467,12 +629,11 @@ export default function Dashboard() {
             </div>
             <p className="text-sm font-medium flex-1 pt-1" style={{ color: '#92400E' }}>{error}</p>
             <button className="text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all"
-              style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}
-              onClick={fetchAll}>Retry</button>
+              style={{ backgroundColor: '#FEF3C7', color: '#D97706' }} onClick={fetchAll}>Retry</button>
           </div>
         )}
 
-        {/* ── Alert Banner ── */}
+        {/* Alert Banner */}
         {!loading && alerts.length > 0 && (
           <div className="bg-white rounded-2xl p-4 mb-5 flex items-center gap-4"
             style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.06)' }}>
@@ -487,26 +648,21 @@ export default function Dashboard() {
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate" style={{ color: '#1C1829' }}>
-                {alerts[0].message}
-              </p>
+              <p className="text-sm font-semibold truncate" style={{ color: '#1C1829' }}>{alerts[0].message}</p>
               <p className="text-xs mt-0.5" style={{ color: '#A09BB8' }}>
                 {alerts.length === 1 ? '1 alert needs attention' : `${alerts.length} alerts need attention`}
               </p>
             </div>
-            <button
-              onClick={() => navigate('/risk-alerts')}
+            <button onClick={() => navigate('/risk-alerts')}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: 'white', boxShadow: '0 2px 8px rgba(139,92,246,0.25)' }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.35)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(139,92,246,0.25)'; }}>
+              style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: 'white', boxShadow: '0 2px 8px rgba(139,92,246,0.25)' }}>
               View <ArrowRight size={12} />
             </button>
           </div>
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 -mt-3 stagger-children reveal animate-fade-up">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 -mt-3">
           <StatCard loading={loading}
             value={daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
             sub={daysRemaining !== null && daysRemaining <= 3 ? '⚠️ Due soon!' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : undefined)}
@@ -522,13 +678,13 @@ export default function Dashboard() {
             icon={Target} iconColor="#EC4899" iconBg="#FDF2F8"
             onClick={() => navigate('/rubric')} />
           <StatCard loading={loading}
-            value={memberContribs.length || '—'} label="Team Members"
-            sub={memberContribs.length > 0 ? 'Active contributors' : 'Join via code'}
+            value={members.length || '—'} label="Team Members"
+            sub={members.length > 0 ? `${members.filter(m => m.quiz_done).length} quiz done` : 'Join via code'}
             icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
         </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 reveal">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Tasks + Members */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Tasks */}
@@ -550,9 +706,7 @@ export default function Dashboard() {
                 </div>
                 <button className="text-xs font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all"
                   style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
-                  onClick={() => navigate('/tasks')}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDE9FE'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F5F3FF'; }}>
+                  onClick={() => navigate('/tasks')}>
                   View all <ChevronRight size={12} />
                 </button>
               </div>
@@ -573,26 +727,32 @@ export default function Dashboard() {
                     {tasks.slice(0, 5).map((task, idx) => {
                       const isDone = task.status === 'done';
                       const isInProgress = task.status === 'in_progress';
+                      const daysLeft = task.due_date ? Math.ceil((new Date(task.due_date) - new Date()) / 86400000) : null;
+                      const isOverdue = daysLeft !== null && daysLeft < 0 && !isDone;
                       return (
                         <div key={task.id}
                           className="flex items-center gap-3.5 py-3.5 transition-all duration-200"
                           style={{ borderBottom: idx < Math.min(tasks.length, 5) - 1 ? '1px solid #F5F3FF' : 'none' }}>
                           <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: isDone ? '#ECFDF5' : isInProgress ? '#F5F3FF' : '#FAFAFA' }}>
-                            {isDone
-                              ? <CircleCheck size={14} style={{ color: '#0D9488' }} />
-                              : isInProgress
-                                ? <Timer size={14} style={{ color: '#8B5CF6' }} />
-                                : <Circle size={14} style={{ color: '#D8D3F0' }} />}
+                            {isDone ? <CircleCheck size={14} style={{ color: '#0D9488' }} />
+                              : isInProgress ? <Timer size={14} style={{ color: '#8B5CF6' }} />
+                              : <Circle size={14} style={{ color: '#D8D3F0' }} />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium block truncate"
                               style={{ color: isDone ? '#A09BB8' : '#1C1829', textDecoration: isDone ? 'line-through' : 'none' }}>
                               {task.title}
                             </span>
-                            {task.member_name && (
-                              <span className="text-xs" style={{ color: '#A09BB8' }}>{task.member_name}</span>
-                            )}
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {task.member_name && <span className="text-xs" style={{ color: '#A09BB8' }}>{task.member_name}</span>}
+                              {task.due_date && (
+                                <span className="text-xs font-medium" style={{ color: isOverdue ? '#EF4444' : daysLeft !== null && daysLeft <= 3 ? '#D97706' : '#C4B5FD' }}>
+                                  · {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                                  {isOverdue ? ' (overdue)' : daysLeft === 0 ? ' (today)' : ''}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-md"
@@ -601,10 +761,6 @@ export default function Dashboard() {
                                 color: isDone ? '#0D9488' : isInProgress ? '#8B5CF6' : '#A09BB8',
                               }}>
                               {isDone ? 'Done' : isInProgress ? 'Active' : 'Todo'}
-                            </span>
-                            <span className="text-xs font-bold tabular-nums w-8 text-right"
-                              style={{ color: isDone ? '#0D9488' : '#8B5CF6' }}>
-                              {task.progress_percent ?? 0}%
                             </span>
                           </div>
                         </div>
@@ -627,10 +783,10 @@ export default function Dashboard() {
                   </div>
                   <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Team Progress</h2>
                 </div>
-                {memberContribs.length > 0 && (
+                {members.length > 0 && (
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
                     style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
-                    {memberContribs.length} member{memberContribs.length !== 1 ? 's' : ''}
+                    {members.length} member{members.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>
@@ -690,6 +846,12 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Deadline Calendar */}
+            {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} />}
+
+            {/* Upcoming Deadlines */}
+            {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
+
             {/* Files Panel */}
             <FilesPanel />
 
@@ -722,11 +884,9 @@ export default function Dashboard() {
                         <div key={c.id} className="flex items-center gap-2.5">
                           <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: isCovered ? '#ECFDF5' : isIP ? '#F5F3FF' : '#FAFAFA' }}>
-                            {isCovered
-                              ? <CircleCheck size={12} style={{ color: '#0D9488' }} />
-                              : isIP
-                                ? <TrendingUp size={12} style={{ color: '#8B5CF6' }} />
-                                : <Circle size={12} style={{ color: '#D8D3F0' }} />}
+                            {isCovered ? <CircleCheck size={12} style={{ color: '#0D9488' }} />
+                              : isIP ? <TrendingUp size={12} style={{ color: '#8B5CF6' }} />
+                              : <Circle size={12} style={{ color: '#D8D3F0' }} />}
                           </div>
                           <span className="text-xs font-medium flex-1 truncate"
                             style={{ color: isCovered ? '#0D9488' : '#1C1829' }}>

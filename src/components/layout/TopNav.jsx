@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare, FolderOpen } from 'lucide-react';
 
 const tabs = [
-  { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-  { label: 'Tasks',     to: '/tasks',     icon: CheckSquare },
-  { label: 'Rubric',   to: '/rubric',    icon: BookOpen },
-  { label: 'Messages', to: '/messages',  icon: MessageSquare },
+  { label: 'Dashboard',     to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Tasks',         to: '/tasks',     icon: CheckSquare },
+  { label: 'Rubric',        to: '/rubric',    icon: BookOpen },
+  { label: 'Project Files', to: '/files',     icon: FolderOpen },
+  { label: 'Messages',      to: '/messages',  icon: MessageSquare },
 ];
 
 export default function TopNav() {
@@ -18,7 +19,7 @@ export default function TopNav() {
         {/* Wordmark */}
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2.5 focus:outline-none"
+          className="flex items-center gap-2.5 focus:outline-none flex-shrink-0"
         >
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -27,7 +28,7 @@ export default function TopNav() {
             <span className="text-white font-black" style={{ fontSize: 15, letterSpacing: '-0.04em' }}>G</span>
           </div>
           <span
-            className="font-extrabold tracking-tight bg-clip-text text-transparent"
+            className="font-extrabold tracking-tight bg-clip-text text-transparent hidden sm:block"
             style={{ fontSize: 20, backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}
           >
             Groupify
@@ -35,12 +36,12 @@ export default function TopNav() {
         </button>
 
         {/* Nav tabs */}
-        <nav className="flex items-center gap-0.5">
+        <nav className="flex items-center gap-0.5 overflow-x-auto">
           {tabs.map(({ label, to, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm transition-all whitespace-nowrap"
               style={({ isActive }) => ({
                 color: isActive ? '#8B5CF6' : '#A09BB8',
                 backgroundColor: isActive ? '#F5F3FF' : 'transparent',
@@ -50,7 +51,7 @@ export default function TopNav() {
               {({ isActive }) => (
                 <>
                   <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{label}</span>
+                  <span className="hidden md:block">{label}</span>
                 </>
               )}
             </NavLink>
