@@ -229,27 +229,45 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false, large = fals
   const gridGap = useLarge ? 'gap-1 sm:gap-1.5' : 'gap-0.5';
 
   return (
-    <div className="bg-white rounded-3xl overflow-hidden"
-      style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
-      <div className={`${hdr} flex items-center justify-between`}
-        style={{ borderBottom: '1px solid #F5F3FF' }}>
-        <div className="flex items-center gap-2.5">
-          <div className={`${iconBox} rounded-xl flex items-center justify-center`}
+    <div
+      className="bg-white rounded-3xl"
+      style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}
+    >
+      <div
+        className={`${hdr} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0`}
+        style={{ borderBottom: '1px solid #F5F3FF' }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`${iconBox} rounded-xl flex items-center justify-center flex-shrink-0`}
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
             <Calendar size={calIcon} color="white" />
           </div>
-          <h2 className={`font-extrabold ${compact ? 'text-sm' : useLarge ? 'text-lg sm:text-xl' : 'text-base'}`} style={{ color: '#1C1829' }}>Calendar</h2>
+          <h2 className={`font-extrabold truncate ${compact ? 'text-sm' : useLarge ? 'text-lg sm:text-xl' : 'text-base'}`} style={{ color: '#1C1829' }}>Calendar</h2>
         </div>
-        <div className="flex items-center gap-1">
-          <button type="button" onClick={() => setMonthOffset(m => m - 1)}
-            className={`${navBtn} rounded-xl flex items-center justify-center`}
-            style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
+        {/* Month nav: both arrows always visible (narrow columns were clipping the forward btn with overflow-hidden + wide month label) */}
+        <div className="flex items-center justify-center sm:justify-end gap-1 flex-shrink-0 w-full sm:w-auto">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => setMonthOffset((m) => m - 1)}
+            className={`${navBtn} rounded-xl flex items-center justify-center flex-shrink-0`}
+            style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
+          >
             <ChevronLeft size={chev} />
           </button>
-          <span className={`font-bold px-1 ${compact ? 'text-[10px] min-w-[5.5rem]' : useLarge ? 'text-sm sm:text-base min-w-[10rem] sm:min-w-[11rem]' : 'text-xs min-w-[120px]'} text-center`} style={{ color: '#1C1829' }}>{monthName}</span>
-          <button type="button" onClick={() => setMonthOffset(m => m + 1)}
-            className={`${navBtn} rounded-xl flex items-center justify-center`}
-            style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
+          <span
+            className={`font-bold px-2 min-w-0 text-center ${compact ? 'text-[10px] max-w-[7rem]' : useLarge ? 'text-sm sm:text-base max-w-[11rem] sm:max-w-[13rem]' : 'text-xs max-w-[10rem]'}`}
+            style={{ color: '#1C1829' }}
+          >
+            {monthName}
+          </span>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => setMonthOffset((m) => m + 1)}
+            className={`${navBtn} rounded-xl flex items-center justify-center flex-shrink-0`}
+            style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
+          >
             <ChevronRight size={chev} />
           </button>
         </div>
@@ -802,7 +820,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-10 pb-14 pt-7 sm:pt-8 relative z-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 sm:px-10 lg:px-14 xl:px-16 pb-14 pt-7 sm:pt-8 relative z-10">
         {error && (
           <div className="bg-white rounded-3xl px-5 py-4 mb-6 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
