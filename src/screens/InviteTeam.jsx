@@ -44,6 +44,11 @@ export default function InviteTeam() {
   const [quizGenState, setQuizGenState] = useState('generating');
 
   useEffect(() => {
+    if (!projectId) return;
+    try {
+      sessionStorage.setItem(`groupify_quiz_gen_${projectId}`, '1');
+    } catch { /* ignore */ }
+
     (async () => {
       try {
         const res = await fetch(`${API}/projects/${projectId}`);

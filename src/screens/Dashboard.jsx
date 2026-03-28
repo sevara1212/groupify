@@ -23,61 +23,65 @@ function Skeleton({ className = '' }) {
   return <div className={`skeleton ${className}`} />;
 }
 
-/* ─── Circular Progress Ring ──────────────────────── */
-function ProgressRing({ value, size = 88, strokeWidth = 7, lightBg = false }) {
-  const r = (size - strokeWidth) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (value / 100) * circ;
-  const track = lightBg ? '#EDE9FE' : 'rgba(255,255,255,0.15)';
-  const stroke = lightBg ? '#8B5CF6' : 'white';
-  const fs = size <= 56 ? 'text-xs' : size <= 72 ? 'text-lg' : 'text-xl';
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={strokeWidth} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth={strokeWidth}
-          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)' }} />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`${fs} font-extrabold tabular-nums`} style={{ color: lightBg ? '#1C1829' : 'white' }}>{value}%</span>
-      </div>
-    </div>
-  );
-}
-
 /* ─── Stat Card ───────────────────────────────────── */
-function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick }) {
-  return (
-    <div
-      className="bg-white rounded-3xl p-6 sm:p-7 transition-all duration-200 group"
-      style={{
+function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick, variant = 'default' }) {
+  const hero = variant === 'hero';
+  const boxStyle = hero
+    ? {
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255,255,255,0.22)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        cursor: onClick ? 'pointer' : 'default',
+      }
+    : {
         border: '1px solid #EDE9FE',
         boxShadow: '0 2px 8px rgba(139,92,246,0.07), 0 8px 24px rgba(139,92,246,0.05)',
         cursor: onClick ? 'pointer' : 'default',
-      }}
+      };
+  return (
+    <div
+      className={`${hero ? '' : 'bg-white'} rounded-2xl sm:rounded-3xl transition-all duration-200 group ${hero ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}
+      style={boxStyle}
       onClick={onClick}
       onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(139,92,246,0.12)';
+        e.currentTarget.style.boxShadow = hero
+          ? '0 8px 24px rgba(0,0,0,0.12)'
+          : '0 8px 24px rgba(139,92,246,0.12)';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 1px 4px rgba(139,92,246,0.06), 0 4px 12px rgba(139,92,246,0.04)';
+        e.currentTarget.style.boxShadow = hero
+          ? '0 2px 12px rgba(0,0,0,0.08)'
+          : '0 1px 4px rgba(139,92,246,0.06), 0 4px 12px rgba(139,92,246,0.04)';
       }}
     >
       {loading ? (
-        <><Skeleton className="h-10 w-20 mb-2" /><Skeleton className="h-4 w-24" /></>
+        hero ? (
+          <><div className="h-8 w-16 mb-2 rounded skeleton-light" /><div className="h-3 w-24 rounded skeleton-light" /></>
+        ) : (
+          <><Skeleton className="h-10 w-20 mb-2" /><Skeleton className="h-4 w-24" /></>
+        )
       ) : (
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-4xl font-extrabold tabular-nums tracking-tight" style={{ color: '#1C1829' }}>{value}</p>
-            <p className="text-base font-bold mt-2" style={{ color: '#4B5563' }}>{label}</p>
-            {sub && <p className="text-sm sm:text-base mt-1.5 leading-snug" style={{ color: '#6B7280' }}>{sub}</p>}
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="min-w-0">
+            <p
+              className={`font-extrabold tabular-nums tracking-tight leading-none ${hero ? 'text-2xl sm:text-3xl' : 'text-4xl'}`}
+              style={{ color: hero ? '#fff' : '#1C1829' }}
+            >
+              {value}
+            </p>
+            <p className={`font-bold mt-1.5 ${hero ? 'text-xs sm:text-sm' : 'text-base mt-2'}`} style={{ color: hero ? 'rgba(255,255,255,0.88)' : '#4B5563' }}>{label}</p>
+            {sub && (
+              <p className={`mt-1 leading-snug ${hero ? 'text-[11px] sm:text-xs' : 'text-sm sm:text-base mt-1.5'}`} style={{ color: hero ? 'rgba(255,255,255,0.72)' : '#6B7280' }}>{sub}</p>
+            )}
           </div>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
-            style={{ backgroundColor: iconBg }}>
-            <Icon size={24} style={{ color: iconColor }} strokeWidth={2.2} />
+          <div
+            className={`${hero ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-14 h-14'} rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
+            style={{ backgroundColor: hero ? 'rgba(255,255,255,0.2)' : iconBg }}
+          >
+            <Icon size={hero ? 20 : 24} style={{ color: hero ? '#fff' : iconColor }} strokeWidth={2.2} />
           </div>
         </div>
       )}
@@ -197,7 +201,8 @@ function DeadlineSpotlight({ dueDate, rawDaysUntilDue, daysRemaining, memberCoun
 }
 
 /* ─── Deadline Calendar ───────────────────────────── */
-function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
+function DeadlineCalendar({ tasks, projectDueDate, compact = false, large = false }) {
+  const useLarge = large && !compact;
   const today = new Date();
   const [monthOffset, setMonthOffset] = useState(0);
 
@@ -231,51 +236,52 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
 
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  const ch = compact ? 'h-7' : 'h-9';
-  const fs = compact ? 'text-[10px]' : 'text-xs';
-  const hdr = compact ? 'px-3 py-2' : 'px-5 py-4';
-  const iconBox = compact ? 'w-6 h-6' : 'w-8 h-8';
-  const calIcon = compact ? 11 : 14;
-  const navBtn = compact ? 'w-6 h-6' : 'w-7 h-7';
-  const chev = compact ? 12 : 14;
+  const ch = compact ? 'h-7' : useLarge ? 'min-h-[2.75rem] sm:min-h-[3.25rem]' : 'h-9';
+  const fs = compact ? 'text-[10px]' : useLarge ? 'text-sm sm:text-base' : 'text-xs';
+  const hdr = compact ? 'px-3 py-2' : useLarge ? 'px-5 sm:px-6 py-4 sm:py-5' : 'px-5 py-4';
+  const iconBox = compact ? 'w-6 h-6' : useLarge ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-8 h-8';
+  const calIcon = compact ? 11 : useLarge ? 18 : 14;
+  const navBtn = compact ? 'w-6 h-6' : useLarge ? 'w-9 h-9 sm:w-10 sm:h-10' : 'w-7 h-7';
+  const chev = compact ? 12 : useLarge ? 18 : 14;
+  const gridGap = useLarge ? 'gap-1 sm:gap-1.5' : 'gap-0.5';
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden"
       style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
       <div className={`${hdr} flex items-center justify-between`}
         style={{ borderBottom: '1px solid #F5F3FF' }}>
-        <div className="flex items-center gap-2">
-          <div className={`${iconBox} rounded-lg flex items-center justify-center`}
+        <div className="flex items-center gap-2.5">
+          <div className={`${iconBox} rounded-xl flex items-center justify-center`}
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
             <Calendar size={calIcon} color="white" />
           </div>
-          <h2 className={`font-extrabold ${compact ? 'text-sm' : 'text-base'}`} style={{ color: '#1C1829' }}>Calendar</h2>
+          <h2 className={`font-extrabold ${compact ? 'text-sm' : useLarge ? 'text-lg sm:text-xl' : 'text-base'}`} style={{ color: '#1C1829' }}>Calendar</h2>
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           <button type="button" onClick={() => setMonthOffset(m => m - 1)}
-            className={`${navBtn} rounded-lg flex items-center justify-center`}
+            className={`${navBtn} rounded-xl flex items-center justify-center`}
             style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
             <ChevronLeft size={chev} />
           </button>
-          <span className={`font-bold px-1 ${compact ? 'text-[10px] min-w-[5.5rem]' : 'text-xs min-w-[120px]'} text-center`} style={{ color: '#1C1829' }}>{monthName}</span>
+          <span className={`font-bold px-1 ${compact ? 'text-[10px] min-w-[5.5rem]' : useLarge ? 'text-sm sm:text-base min-w-[10rem] sm:min-w-[11rem]' : 'text-xs min-w-[120px]'} text-center`} style={{ color: '#1C1829' }}>{monthName}</span>
           <button type="button" onClick={() => setMonthOffset(m => m + 1)}
-            className={`${navBtn} rounded-lg flex items-center justify-center`}
+            className={`${navBtn} rounded-xl flex items-center justify-center`}
             style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}>
             <ChevronRight size={chev} />
           </button>
         </div>
       </div>
 
-      <div className={compact ? 'px-2 py-2' : 'px-4 py-3'}>
+      <div className={compact ? 'px-2 py-2' : useLarge ? 'px-4 sm:px-6 py-4 sm:py-5' : 'px-4 py-3'}>
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+        <div className={`grid grid-cols-7 ${gridGap} mb-1`}>
           {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-            <div key={i} className={`text-center font-bold py-0.5 ${fs}`} style={{ color: '#A09BB8' }}>{d}</div>
+            <div key={i} className={`text-center font-bold py-1 ${useLarge ? 'text-xs sm:text-sm' : fs}`} style={{ color: '#A09BB8' }}>{d}</div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-0.5">
+        <div className={`grid grid-cols-7 ${gridGap}`}>
           {cells.map((cell, i) => {
             if (!cell) return <div key={`empty-${i}`} className={ch} />;
 
@@ -304,21 +310,21 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
 
             return (
               <div key={cell.dateStr}
-                className={`${ch} rounded-md flex flex-col items-center justify-center relative transition-all`}
+                className={`${ch} rounded-lg flex flex-col items-center justify-center relative transition-all`}
                 style={{ backgroundColor: bg }}
                 title={hasTasks ? `${dayTasks.length} task${dayTasks.length !== 1 ? 's' : ''}: ${dayTasks.map(t => t.title).join(', ')}` : isProjectDue ? 'Project due date' : ''}>
                 <span className={`${fs} font-semibold`} style={{ color: textColor }}>
                   {cell.day}
                 </span>
                 {dotColor && (
-                  <div className="flex gap-0.5 absolute bottom-0.5">
+                  <div className={`flex gap-0.5 absolute ${useLarge ? 'bottom-1' : 'bottom-0.5'}`}>
                     {dayTasks.slice(0, 3).map((_, di) => (
-                      <div key={di} className="w-1 h-1 rounded-full" style={{ backgroundColor: dotColor }} />
+                      <div key={di} className={`${useLarge ? 'w-1.5 h-1.5' : 'w-1 h-1'} rounded-full`} style={{ backgroundColor: dotColor }} />
                     ))}
                   </div>
                 )}
                 {isProjectDue && !isToday && (
-                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: '#EC4899' }} />
+                  <div className={`absolute -top-0.5 -right-0.5 ${useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'} rounded-full`} style={{ backgroundColor: '#EC4899' }} />
                 )}
               </div>
             );
@@ -326,23 +332,23 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false }) {
         </div>
 
         {/* Legend */}
-        <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${compact ? 'mt-1.5 pt-1.5' : 'mt-3 pt-2'}`} style={{ borderTop: '1px solid #F5F3FF' }}>
-          <div className="flex items-center gap-1">
-            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#8B5CF6' }} />
-            <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Upcoming</span>
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 ${compact ? 'mt-1.5 pt-1.5' : useLarge ? 'mt-4 pt-3' : 'mt-3 pt-2'}`} style={{ borderTop: '1px solid #F5F3FF' }}>
+          <div className="flex items-center gap-1.5">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#8B5CF6' }} />
+            <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Upcoming</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#10B981' }} />
-            <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Done</span>
+          <div className="flex items-center gap-1.5">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#10B981' }} />
+            <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Done</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#EF4444' }} />
-            <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Late</span>
+          <div className="flex items-center gap-1.5">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#EF4444' }} />
+            <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Late</span>
           </div>
           {projectDueDate && (
-            <div className="flex items-center gap-1">
-              <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#EC4899' }} />
-              <span className={compact ? 'text-[9px]' : 'text-xs'} style={{ color: '#A09BB8' }}>Project</span>
+            <div className="flex items-center gap-1.5">
+              <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#EC4899' }} />
+              <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Project</span>
             </div>
           )}
         </div>
@@ -644,7 +650,6 @@ export default function Dashboard() {
   const tasksInProgress = tasks.filter(t => t.status === 'in_progress').length;
   const coveredCriteria = criteria.filter(c => c.coverage_status === 'covered').length;
   const rubricCoverage = criteria.length ? Math.round((coveredCriteria / criteria.length) * 100) : 0;
-  const overallProgress = tasks.length ? Math.round(tasks.reduce((s, t) => s + (t.progress_percent || 0), 0) / tasks.length) : 0;
 
   const memberMap = {};
   tasks.forEach(t => {
@@ -679,7 +684,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Hero: purple through title + deadline + glass stats row (Overall / Tasks / Active / Rubric) ── */}
+      {/* ── Hero: taller purple band + left accent (ends above quick-actions / alerts row visually) ── */}
       <div className="w-full relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #6d28d9 40%, #7c3aed 75%, #9333ea 100%)' }}>
         <div className="absolute inset-0 pointer-events-none opacity-30"
@@ -687,8 +692,16 @@ export default function Dashboard() {
             backgroundImage: 'radial-gradient(ellipse 80% 60% at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 50%)',
           }}
         />
+        {/* Left accent: full hero height; main content (incl. orange Alerts) sits below this band */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 z-[1] pointer-events-none rounded-r-sm"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 70%, transparent 100%)',
+            boxShadow: '2px 0 12px rgba(91,33,182,0.25)',
+          }}
+        />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 pt-5 pb-6 sm:pt-6 sm:pb-7 relative z-10">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 pt-5 pb-10 sm:pt-6 sm:pb-12 relative z-10">
           {loading ? (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -698,7 +711,11 @@ export default function Dashboard() {
                 </div>
                 <div className="h-16 rounded-xl w-full sm:w-56 sm:ml-auto" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
               </div>
-              <div className="h-24 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="h-[92px] sm:h-[100px] rounded-2xl skeleton-light" />
+                ))}
+              </div>
             </div>
           ) : (
             <>
@@ -730,47 +747,31 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {tasks.length > 0 && (
-                <div
-                  className="mt-6 pt-6 flex flex-col sm:flex-row items-stretch gap-4 sm:gap-5 border-t"
-                  style={{ borderColor: 'rgba(255,255,255,0.2)' }}
-                >
-                  <div
-                    className="flex flex-row sm:flex-col items-center justify-center gap-2 sm:min-w-[128px] rounded-3xl px-5 py-4"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.14)',
-                      backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255,255,255,0.28)',
-                    }}
-                  >
-                    <ProgressRing value={overallProgress} size={76} strokeWidth={6} />
-                    <p className="text-xs font-extrabold sm:mt-1.5 tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.92)' }}>Overall</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 sm:gap-4 flex-1 min-w-0">
-                    {[
-                      { label: 'Tasks', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#6ee7b7' },
-                      { label: 'Active', value: tasksInProgress, icon: TrendingUp, color: '#fcd34d' },
-                      { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: '#f9a8d4' },
-                    ].map(s => (
-                      <div
-                        key={s.label}
-                        className="flex items-center gap-3 rounded-3xl px-4 py-4 sm:py-4"
-                        style={{
-                          backgroundColor: 'rgba(255,255,255,0.12)',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(255,255,255,0.22)',
-                        }}
-                      >
-                        <s.icon size={20} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
-                        <div className="min-w-0">
-                          <p className="text-xl sm:text-2xl font-extrabold text-white leading-none tabular-nums">{s.value}</p>
-                          <p className="text-sm mt-1.5 font-semibold" style={{ color: 'rgba(255,255,255,0.78)' }}>{s.label}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div
+                className="mt-6 pt-6 border-t grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+                style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+              >
+                <StatCard variant="hero" loading={false}
+                  value={rawDaysUntilDue !== null && rawDaysUntilDue < 0 ? 'Late' : daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
+                  sub={rawDaysUntilDue !== null && rawDaysUntilDue < 0
+                    ? `Was ${new Date(project?.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
+                    : daysRemaining !== null && daysRemaining <= 3 ? 'Due soon' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : undefined)}
+                  icon={Clock} iconColor="#8B5CF6" iconBg="#F5F3FF" />
+                <StatCard variant="hero" loading={false}
+                  value={`${tasksDone}/${tasks.length}`} label="Tasks Done"
+                  sub={tasksInProgress > 0 ? `${tasksInProgress} in progress` : 'Tap to manage'}
+                  icon={CheckCircle} iconColor="#0D9488" iconBg="#ECFDF5"
+                  onClick={() => navigate('/tasks')} />
+                <StatCard variant="hero" loading={false}
+                  value={`${rubricCoverage}%`} label="Rubric Covered"
+                  sub={criteria.length > 0 ? `${coveredCriteria} of ${criteria.length} criteria` : undefined}
+                  icon={Target} iconColor="#EC4899" iconBg="#FDF2F8"
+                  onClick={() => navigate('/rubric')} />
+                <StatCard variant="hero" loading={false}
+                  value={members.length || '—'} label="Team Members"
+                  sub={members.length > 0 ? `${members.filter(m => m.quiz_done).length} quiz done` : 'Join via code'}
+                  icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
+              </div>
             </>
           )}
         </div>
@@ -789,7 +790,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Alert Banner */}
+        {/* Alert banner — directly above Recent tasks */}
         {!loading && alerts.length > 0 && (
           <div className="bg-white rounded-3xl p-5 mb-6 flex items-center gap-4 relative z-20"
             style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.08), 0 8px 28px rgba(15,23,42,0.06)' }}>
@@ -817,59 +818,33 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6 mb-10">
-          <StatCard loading={loading}
-            value={rawDaysUntilDue !== null && rawDaysUntilDue < 0 ? 'Late' : daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
-            sub={rawDaysUntilDue !== null && rawDaysUntilDue < 0
-              ? `Was ${new Date(project.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
-              : daysRemaining !== null && daysRemaining <= 3 ? '⚠️ Due soon!' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : undefined)}
-            icon={Clock} iconColor="#8B5CF6" iconBg="#F5F3FF" />
-          <StatCard loading={loading}
-            value={`${tasksDone}/${tasks.length}`} label="Tasks Done"
-            sub={tasksInProgress > 0 ? `${tasksInProgress} in progress` : 'Tap to manage'}
-            icon={CheckCircle} iconColor="#0D9488" iconBg="#ECFDF5"
-            onClick={() => navigate('/tasks')} />
-          <StatCard loading={loading}
-            value={`${rubricCoverage}%`} label="Rubric Covered"
-            sub={criteria.length > 0 ? `${coveredCriteria} of ${criteria.length} criteria` : undefined}
-            icon={Target} iconColor="#EC4899" iconBg="#FDF2F8"
-            onClick={() => navigate('/rubric')} />
-          <StatCard loading={loading}
-            value={members.length || '—'} label="Team Members"
-            sub={members.length > 0 ? `${members.filter(m => m.quiz_done).length} quiz done` : 'Join via code'}
-            icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
-        </div>
-
         {/* Tasks full width, then 3-column widget grid (no skinny sidebar) */}
         <div className="space-y-8">
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-5">
+            {/* Block 1 — Recent tasks (full width) */}
             <div className="bg-white rounded-3xl overflow-hidden"
               style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.08), 0 4px 24px rgba(15,23,42,0.04)' }}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#F5F3FF]">
-                {/* Recent Tasks — left */}
-                <div className="min-w-0">
-                  <div className="px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2"
-                    style={{ borderBottom: '1px solid #F5F3FF' }}>
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
-                        <CheckCircle size={16} color="white" strokeWidth={2.2} />
-                      </div>
-                      <div className="min-w-0">
-                        <h2 className="text-base sm:text-lg font-extrabold truncate" style={{ color: '#1C1829' }}>Recent tasks</h2>
-                        {!loading && tasks.length > 0 && (
-                          <p className="text-sm truncate font-medium" style={{ color: '#6B7280' }}>{tasksDone}/{tasks.length} done</p>
-                        )}
-                      </div>
-                    </div>
-                    <button type="button" className="text-sm font-bold flex items-center gap-0.5 px-3 py-1.5 rounded-xl flex-shrink-0"
-                      style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
-                      onClick={() => navigate('/tasks')}>
-                      All <ChevronRight size={14} />
-                    </button>
+              <div className="px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2"
+                style={{ borderBottom: '1px solid #F5F3FF' }}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+                    <CheckCircle size={16} color="white" strokeWidth={2.2} />
                   </div>
-                  <div className="px-4 py-3 max-h-[320px] overflow-y-auto">
+                  <div className="min-w-0">
+                    <h2 className="text-base sm:text-lg font-extrabold truncate" style={{ color: '#1C1829' }}>Recent tasks</h2>
+                    {!loading && tasks.length > 0 && (
+                      <p className="text-sm truncate font-medium" style={{ color: '#6B7280' }}>{tasksDone}/{tasks.length} done</p>
+                    )}
+                  </div>
+                </div>
+                <button type="button" className="text-sm font-bold flex items-center gap-0.5 px-3 py-1.5 rounded-xl flex-shrink-0"
+                  style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
+                  onClick={() => navigate('/tasks')}>
+                  All <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="px-4 py-3 max-h-[320px] overflow-y-auto">
                 {loading ? (
                   <div className="space-y-3 py-3">{[0,1,2].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div>
                 ) : tasks.length === 0 ? (
@@ -939,66 +914,64 @@ export default function Dashboard() {
                     })}
                   </div>
                 )}
-                  </div>
-                </div>
+              </div>
+            </div>
 
-                {/* Team progress — right column on lg+ */}
-                <div className="min-w-0 flex flex-col border-t lg:border-t-0"
-                  style={{ borderColor: '#F5F3FF' }}>
-                  <div className="px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2"
-                    style={{ borderBottom: '1px solid #F5F3FF' }}>
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-                        <Users size={16} color="white" strokeWidth={2.2} />
-                      </div>
-                      <h2 className="text-base sm:text-lg font-extrabold truncate" style={{ color: '#1C1829' }}>Team progress</h2>
-                    </div>
-                    {members.length > 0 && (
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
-                        {members.length} people
-                      </span>
-                    )}
+            {/* Block 2 — Team progress (full width, progress bars below Recent tasks) */}
+            <div className="bg-white rounded-3xl overflow-hidden"
+              style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.08), 0 4px 24px rgba(15,23,42,0.04)' }}>
+              <div className="px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2"
+                style={{ borderBottom: '1px solid #F5F3FF' }}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+                    <Users size={16} color="white" strokeWidth={2.2} />
                   </div>
-                  <div className="px-4 py-3.5 max-h-[320px] overflow-y-auto">
-                    {loading ? (
-                      <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
-                    ) : memberContribs.length === 0 ? (
-                      <div className="py-6 text-center">
-                        <p className="text-xs" style={{ color: '#A09BB8' }}>No tasks assigned yet.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {memberContribs.map(({ id, name, avg, taskCount, color }) => (
-                          <div key={id} className="flex items-center gap-3">
-                            <Avatar name={name} color={color} size="sm" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-sm font-bold truncate" style={{ color: '#1C1829' }}>{name}</span>
-                                <span className="text-sm font-extrabold tabular-nums flex-shrink-0" style={{ color }}>{avg}%</span>
-                              </div>
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-xs px-2 py-0.5 rounded-lg font-semibold"
-                                  style={{ backgroundColor: `${color}12`, color }}>
-                                  {taskCount} tasks
-                                </span>
-                              </div>
-                              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
-                                <div className="h-2.5 rounded-full transition-all duration-700"
-                                  style={{
-                                    width: `${avg}%`,
-                                    background: `linear-gradient(90deg,${color},${color}CC)`,
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                  }} />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <h2 className="text-base sm:text-lg font-extrabold truncate" style={{ color: '#1C1829' }}>Team progress</h2>
                 </div>
+                {members.length > 0 && (
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
+                    {members.length} people
+                  </span>
+                )}
+              </div>
+              <div className="px-4 py-3.5 sm:px-5 max-h-[360px] overflow-y-auto">
+                {loading ? (
+                  <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                ) : memberContribs.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <p className="text-xs" style={{ color: '#A09BB8' }}>No tasks assigned yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {memberContribs.map(({ id, name, avg, taskCount, color }) => (
+                      <div key={id} className="flex items-center gap-3">
+                        <Avatar name={name} color={color} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-sm font-bold truncate" style={{ color: '#1C1829' }}>{name}</span>
+                            <span className="text-sm font-extrabold tabular-nums flex-shrink-0" style={{ color }}>{avg}%</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs px-2 py-0.5 rounded-lg font-semibold"
+                              style={{ backgroundColor: `${color}12`, color }}>
+                              {taskCount} tasks
+                            </span>
+                          </div>
+                          <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
+                            <div className="h-2.5 rounded-full transition-all duration-700"
+                              style={{
+                                width: `${avg}%`,
+                                background: `linear-gradient(90deg,${color},${color}CC)`,
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                              }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1023,12 +996,20 @@ export default function Dashboard() {
                     color="#64748B" onClick={() => navigate('/settings')} className="col-span-2" />
                 </div>
               </div>
-              {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact />}
             </div>
 
             <div className="space-y-4 min-w-0">
               {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
               <FilesPanel projectId={projectId} navigate={navigate} />
+              {loading ? (
+                <div className="bg-white rounded-3xl overflow-hidden p-5 sm:p-6"
+                  style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07)' }}>
+                  <Skeleton className="h-9 w-44 mb-5" />
+                  <Skeleton className="h-[340px] w-full rounded-2xl" />
+                </div>
+              ) : (
+                <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact={false} large />
+              )}
             </div>
 
             <div className="min-w-0 md:col-span-2 xl:col-span-1">
@@ -1153,6 +1134,7 @@ export default function Dashboard() {
       <style>{`
         @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
         .skeleton{background:linear-gradient(90deg,#EDE9FE 25%,#F5F3FF 50%,#EDE9FE 75%);background-size:200% 100%;border-radius:8px;animation:shimmer 1.5s infinite}
+        .skeleton-light{background:linear-gradient(90deg,rgba(255,255,255,0.12) 25%,rgba(255,255,255,0.22) 50%,rgba(255,255,255,0.12) 75%);background-size:200% 100%;border-radius:12px;animation:shimmer 1.5s infinite}
         @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
       `}</style>
     </div>

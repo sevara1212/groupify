@@ -37,35 +37,67 @@ def fallback_criteria_dicts(brief_text: str) -> list:
     return [
         {
             "name": "Research & sources",
-            "weight_percent": 25,
-            "description": f"Find and use relevant information. Context: {excerpt}",
+            "weight_percent": 13,
+            "description": f"Find credible sources and map the topic. Context: {excerpt}",
             "required_skills": ["research", "academic_writing"],
             "task_stage": "early",
-            "suggested_tasks": ["Compile a source list", "Summarise key readings for the team"],
+            "suggested_tasks": ["Compile an annotated source list", "Flag gaps the brief must address"],
         },
         {
-            "name": "Analysis & core deliverables",
-            "weight_percent": 35,
-            "description": "Develop the main analysis or product the brief requires.",
+            "name": "Scope & requirements",
+            "weight_percent": 11,
+            "description": "Interpret the brief: deliverables, constraints, and success criteria.",
+            "required_skills": ["project_management", "academic_writing"],
+            "task_stage": "early",
+            "suggested_tasks": ["Write a one-page scope summary", "List must-haves vs nice-to-haves"],
+        },
+        {
+            "name": "Core analysis / argument",
+            "weight_percent": 15,
+            "description": "Develop the main reasoning, findings, or thesis the assignment asks for.",
             "required_skills": ["data_analysis", "academic_writing"],
             "task_stage": "mid",
-            "suggested_tasks": ["Draft the main analytical section", "Build supporting visuals or data"],
+            "suggested_tasks": ["Draft the central analytical section", "Peer-review logic and evidence"],
         },
         {
-            "name": "Design & communication",
-            "weight_percent": 20,
-            "description": "Polish structure, visuals, and clarity of outputs.",
-            "required_skills": ["design", "presenting"],
-            "task_stage": "late",
-            "suggested_tasks": ["Refine layout and visuals", "Prepare speaking notes"],
-        },
-        {
-            "name": "Team coordination",
-            "weight_percent": 20,
-            "description": "Integrate work and keep the group on schedule.",
-            "required_skills": ["project_management", "presenting"],
+            "name": "Methods / data / implementation",
+            "weight_percent": 13,
+            "description": "Methods, datasets, experiments, or code as required by the brief.",
+            "required_skills": ["coding", "data_analysis"],
             "task_stage": "mid",
-            "suggested_tasks": ["Track milestones", "Merge sections into one submission"],
+            "suggested_tasks": ["Document method or repo README", "Validate outputs against brief"],
+        },
+        {
+            "name": "Design & visuals",
+            "weight_percent": 12,
+            "description": "Figures, UI, slides, or layout that support the deliverable.",
+            "required_skills": ["design", "presenting"],
+            "task_stage": "mid",
+            "suggested_tasks": ["Produce draft figures or mockups", "Unify visual style across sections"],
+        },
+        {
+            "name": "Writing & referencing",
+            "weight_percent": 12,
+            "description": "Structure, clarity, tone, and correct citations.",
+            "required_skills": ["academic_writing", "research"],
+            "task_stage": "late",
+            "suggested_tasks": ["Edit for flow and word limit", "Run a citation pass"],
+        },
+        {
+            "name": "Presentation or demo",
+            "weight_percent": 12,
+            "description": "Oral defence, demo, poster, or pitch if the brief includes it.",
+            "required_skills": ["presenting", "design"],
+            "task_stage": "late",
+            "suggested_tasks": ["Build slide deck or poster", "Rehearse Q&A"],
+        },
+        {
+            "name": "Integration & submission",
+            "weight_percent": 12,
+            "description": "Merge parts, check formatting, and submit on time.",
+            "required_skills": ["project_management", "presenting"],
+            "task_stage": "late",
+            "suggested_tasks": ["Final merge and file naming", "Submission checklist run-through"],
         },
     ]
 
@@ -128,8 +160,8 @@ Marking Rubric:
 {rubric_section}
 
 If a marking rubric is provided above, extract ALL criteria from it (use the brief for context).
-If no rubric is provided or it is empty, infer 4–6 realistic marking criteria **only from the Assignment Brief**
-(typical areas: research, analysis, writing, design, coding, presentation, project management).
+If no rubric is provided or it is empty, infer **7–9** marking criteria (aim for **about 8**) **only from the Assignment Brief**.
+Keep each `name` and `description` short (one or two sentences). Cover a sensible spread: research, scope, analysis, methods/data/code, design, writing, presentation, integration — only what fits the brief.
 
 Extract ALL marking criteria. Return a JSON array where each object has exactly these fields:
 - name: string (criterion name)

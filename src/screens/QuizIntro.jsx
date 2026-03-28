@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useProject } from '../context/ProjectContext';
+
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
 const STEPS = [
   { emoji: '🎭', title: 'Your group role', desc: 'organiser, writer, researcher…' },
@@ -10,6 +13,12 @@ const STEPS = [
 
 export default function QuizIntro() {
   const navigate = useNavigate();
+  const { projectId } = useProject();
+
+  useEffect(() => {
+    if (!projectId) return;
+    fetch(`${API}/projects/${projectId}/quiz/questions`, { cache: 'no-store' }).catch(() => {});
+  }, [projectId]);
 
   return (
     <div

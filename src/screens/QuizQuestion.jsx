@@ -263,9 +263,20 @@ function TextInput({ value = '', onChange }) {
 const GENERATE_TIMEOUT_MS = 120_000;
 const POLL_MAX_MS = 90_000;
 const POLL_INTERVAL_MS = 1000;
+/** Invite Team page already kicked POST /quiz/generate — wait for rows before starting a second expensive run */
+const GRACE_POLL_INTERVAL_MS = 700;
+const GRACE_NO_HINT_MS = 12_000;
+const GRACE_HINT_MS = 75_000;
 
-async function fetchQuestionList(projectId) {
-  const r = await fetch(`${API}/projects/${projectId}/quiz/questions`);
+function quizGenHintKey(projectId) {
+  return `groupify_quiz_gen_${projectId}`;
+}
+
+async function fetchQuestionList(projectId, signal) {
+  const r = await fetch(`${API}/projects/${projectId}/quiz/questions`, {
+    cache: 'no-store',
+    signal,
+  });
   if (!r.ok) throw new Error(`questions ${r.status}`);
   const data = await r.json();
   return data.questions || [];
@@ -284,6 +295,7 @@ export default function QuizQuestion() {
 
   useEffect(() => {
     let cancelled = false;
+    const acFetch = new AbortController();
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -299,11 +311,36 @@ export default function QuizQuestion() {
       setAnswers({});
 
       try {
-        let qs = await fetchQuestionList(projectId);
+        let qs = await fetchQuestionList(projectId, acFetch.signal);
         if (cancelled) return;
 
         if (qs.length === 0) {
           setLoadStatus('generating');
+
+          let graceMs = GRACE_NO_HINT_MS;
+          try {
+            if (sessionStorage.getItem(quizGenHintKey(projectId)) === '1') {
+              graceMs = GRACE_HINT_MS;
+            }
+          } catch { /* ignore */ }
+
+          const graceEnd = Date.now() + graceMs;
+          while (Date.now() < graceEnd && !cancelled) {
+            await sleep(GRACE_POLL_INTERVAL_MS);
+            qs = await fetchQuestionList(projectId, acFetch.signal);
+            if (qs.length > 0) break;
+          }
+
+          if (cancelled) return;
+          if (qs.length > 0) {
+            try {
+              sessionStorage.removeItem(quizGenHintKey(projectId));
+            } catch { /* ignore */ }
+            setQuestions(qs);
+            setLoadStatus('ready');
+            return;
+          }
+
           let genOk = false;
           for (let attempt = 0; attempt < 3; attempt++) {
             if (attempt > 0) await sleep(1500 * attempt);
@@ -333,16 +370,23 @@ export default function QuizQuestion() {
             return;
           }
 
+          try {
+            sessionStorage.removeItem(quizGenHintKey(projectId));
+          } catch { /* ignore */ }
+
           const pollEnd = Date.now() + POLL_MAX_MS;
           while (Date.now() < pollEnd && !cancelled) {
             await sleep(POLL_INTERVAL_MS);
-            qs = await fetchQuestionList(projectId);
+            qs = await fetchQuestionList(projectId, acFetch.signal);
             if (qs.length > 0) break;
           }
         }
 
         if (cancelled) return;
         if (qs.length > 0) {
+          try {
+            sessionStorage.removeItem(quizGenHintKey(projectId));
+          } catch { /* ignore */ }
           setQuestions(qs);
           setLoadStatus('ready');
         } else {
@@ -353,7 +397,10 @@ export default function QuizQuestion() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      acFetch.abort();
+    };
   }, [projectId, retryToken]);
 
   const question = questions[index];
