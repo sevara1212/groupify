@@ -3,6 +3,7 @@
 -- ============================================================
 
 -- 0. Drop everything in reverse dependency order
+drop table if exists messages      cascade;
 drop table if exists risk_alerts   cascade;
 drop table if exists quiz_answers  cascade;
 drop table if exists tasks         cascade;
@@ -115,6 +116,18 @@ create table risk_alerts (
 );
 
 -- ──────────────────────────────────────────────────────────────
+-- 8. messages (group chat)
+-- ──────────────────────────────────────────────────────────────
+create table messages (
+  id           uuid primary key default gen_random_uuid(),
+  project_id   uuid not null references projects(id) on delete cascade,
+  member_id    uuid references members(id) on delete set null,
+  author_name  text not null,
+  text         text not null,
+  created_at   timestamptz default now()
+);
+
+-- ──────────────────────────────────────────────────────────────
 -- Indexes
 -- ──────────────────────────────────────────────────────────────
 create index idx_members_project      on members(project_id);
@@ -127,6 +140,8 @@ create index idx_tasks_member         on tasks(member_id);
 create index idx_alerts_project       on risk_alerts(project_id);
 create index idx_alerts_undismissed   on risk_alerts(project_id, dismissed) where dismissed = false;
 create index idx_projects_join_code   on projects(join_code);
+create index idx_messages_project     on messages(project_id);
+create index idx_messages_created     on messages(project_id, created_at);
 
 -- ──────────────────────────────────────────────────────────────
 -- Row-Level Security (permissive for anon key)
@@ -138,6 +153,7 @@ alter table quiz_questions  enable row level security;
 alter table quiz_answers    enable row level security;
 alter table tasks           enable row level security;
 alter table risk_alerts     enable row level security;
+alter table messages        enable row level security;
 
 create policy "Allow all on projects"        on projects        for all using (true) with check (true);
 create policy "Allow all on members"         on members         for all using (true) with check (true);
