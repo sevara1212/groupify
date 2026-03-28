@@ -21,7 +21,7 @@ serve(async (req) => {
       )
     }
 
-    const { email, joinUrl, joinCode, projectName } = await req.json()
+    const { email, joinUrl, joinCode, projectName, inviterName } = await req.json()
 
     if (!email || !joinUrl) {
       return new Response(
@@ -30,39 +30,165 @@ serve(async (req) => {
       )
     }
 
+    const displayProject = projectName || 'a group project'
+    const displayInviter = inviterName || 'Your teammate'
+
     const htmlContent = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-block; width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #8B5CF6, #EC4899); line-height: 48px; text-align: center;">
-            <span style="color: white; font-weight: 900; font-size: 22px;">G</span>
-          </div>
-          <h1 style="margin: 16px 0 4px; font-size: 22px; color: #1C1829;">You're invited to Groupify!</h1>
-          <p style="color: #6B6584; font-size: 14px; margin: 0;">Join ${projectName ? `<strong>${projectName}</strong>` : 'a group project'} and start collaborating.</p>
-        </div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #F8F7FF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F8F7FF; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width: 520px; width: 100%;">
 
-        ${joinCode ? `
-        <div style="text-align: center; background: #F5F3FF; border: 1px solid #C4B5FD; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-          <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8B5CF6; margin: 0 0 8px;">Join Code</p>
-          <p style="font-size: 28px; font-weight: 900; font-family: monospace; color: #1C1829; letter-spacing: 4px; margin: 0;">${joinCode}</p>
-        </div>
-        ` : ''}
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 32px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #8B5CF6, #EC4899); text-align: center; vertical-align: middle;">
+                    <span style="color: white; font-weight: 900; font-size: 20px; line-height: 40px;">G</span>
+                  </td>
+                  <td style="padding-left: 10px;">
+                    <span style="font-weight: 800; font-size: 20px; color: #8B5CF6;">Groupify</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-        <div style="text-align: center; margin-bottom: 24px;">
-          <a href="${joinUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 14px;">
-            Join Project →
-          </a>
-        </div>
+          <!-- Main card -->
+          <tr>
+            <td style="background: white; border-radius: 16px; border: 1px solid #EDE9FE; box-shadow: 0 4px 24px rgba(139,92,246,0.06); overflow: hidden;">
 
-        <p style="color: #A09BB8; font-size: 12px; text-align: center;">
-          Or paste this link in your browser:<br/>
-          <a href="${joinUrl}" style="color: #8B5CF6; word-break: break-all;">${joinUrl}</a>
-        </p>
+              <!-- Header gradient -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #8B5CF6, #EC4899); padding: 32px 32px 24px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); letter-spacing: 0.5px;">YOU'RE INVITED TO JOIN</p>
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: white; line-height: 1.3;">${displayProject}</h1>
+                  </td>
+                </tr>
+              </table>
 
-        <hr style="border: none; border-top: 1px solid #EDE9FE; margin: 24px 0;" />
-        <p style="color: #C4B5FD; font-size: 11px; text-align: center;">
-          Sent via Groupify · Smart group project management
-        </p>
-      </div>
+              <!-- Body -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 28px 32px 8px;">
+                    <!-- Inviter info -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                      <tr>
+                        <td style="width: 36px; height: 36px; border-radius: 10px; background: #F5F3FF; text-align: center; vertical-align: middle;">
+                          <span style="font-size: 16px; line-height: 36px;">👋</span>
+                        </td>
+                        <td style="padding-left: 12px;">
+                          <p style="margin: 0; font-size: 14px; color: #1C1829;">
+                            <strong>${displayInviter}</strong> <span style="color: #6B6584;">invited you to collaborate on Groupify</span>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #6B6584;">
+                      You've been invited to join a group project. Click the button below to join the team and take a quick quiz so tasks can be allocated fairly.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              ${joinCode ? `
+              <!-- Join code -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 0 32px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background: #F5F3FF; border: 1px solid #C4B5FD; border-radius: 12px;">
+                      <tr>
+                        <td style="padding: 18px; text-align: center;">
+                          <p style="margin: 0 0 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #8B5CF6;">Join Code</p>
+                          <p style="margin: 0; font-size: 32px; font-weight: 900; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #1C1829; letter-spacing: 6px;">${joinCode}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 4px 32px 24px; text-align: center;">
+                    <a href="${joinUrl}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(139,92,246,0.3);">
+                      Join the Project →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback link -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 0 32px 24px; text-align: center;">
+                    <p style="margin: 0; font-size: 12px; color: #A09BB8; line-height: 1.5;">
+                      Or copy this link into your browser:<br/>
+                      <a href="${joinUrl}" style="color: #8B5CF6; word-break: break-all; text-decoration: none;">${joinUrl}</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Steps info -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 0 32px 28px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background: #FAFAFE; border-radius: 10px; border: 1px solid #EDE9FE;">
+                      <tr>
+                        <td style="padding: 16px;">
+                          <p style="margin: 0 0 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8B5CF6;">What happens next</p>
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding-bottom: 6px; vertical-align: top; width: 24px;"><span style="font-size: 12px;">1️⃣</span></td>
+                              <td style="padding-bottom: 6px; font-size: 13px; color: #6B6584;">Click the link to join the project</td>
+                            </tr>
+                            <tr>
+                              <td style="padding-bottom: 6px; vertical-align: top; width: 24px;"><span style="font-size: 12px;">2️⃣</span></td>
+                              <td style="padding-bottom: 6px; font-size: 13px; color: #6B6584;">Take a 3-minute skills & availability quiz</td>
+                            </tr>
+                            <tr>
+                              <td style="vertical-align: top; width: 24px;"><span style="font-size: 12px;">3️⃣</span></td>
+                              <td style="font-size: 13px; color: #6B6584;">AI allocates tasks fairly based on everyone's strengths</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top: 24px; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #C4B5FD;">
+                Sent via <strong>Groupify</strong> · Smart group project management
+              </p>
+              <p style="margin: 4px 0 0; font-size: 11px; color: #D8D3F0;">
+                You received this because ${displayInviter} invited you to their project.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `
 
     const res = await fetch('https://api.resend.com/emails', {
@@ -74,7 +200,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'Groupify <onboarding@resend.dev>',
         to: [email],
-        subject: `You're invited to join ${projectName || 'a Groupify project'}!`,
+        subject: `${displayInviter} invited you to join "${displayProject}" on Groupify`,
         html: htmlContent,
       }),
     })

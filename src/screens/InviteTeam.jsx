@@ -5,6 +5,7 @@ import StepProgressBar from '../components/ui/StepProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
@@ -32,6 +33,8 @@ function StatusBadge({ type }) {
 export default function InviteTeam() {
   const navigate = useNavigate();
   const { projectId } = useProject();
+  const { user } = useAuth();
+  const inviterName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your teammate';
   const [copied, setCopied] = useState(false);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +135,7 @@ export default function InviteTeam() {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: { email, joinUrl, joinCode, projectName },
+        body: { email, joinUrl, joinCode, projectName, inviterName },
       });
 
       if (error) throw error;
