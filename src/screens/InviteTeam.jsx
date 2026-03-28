@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2, Share2, MessageCircle, Link2, Check } from 'lucide-react';
+import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2, Share2, MessageCircle, Link2, Check, Send, AlertTriangle, X } from 'lucide-react';
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
+import { supabase } from '../lib/supabase';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -37,8 +38,13 @@ export default function InviteTeam() {
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: '' }
+  const [sentEmails, setSentEmails] = useState([]);
 
-  // Fetch project to get join code
+  // Fetch project to get join code + name
   useEffect(() => {
     (async () => {
       try {
@@ -46,6 +52,7 @@ export default function InviteTeam() {
         if (res.ok) {
           const proj = await res.json();
           setJoinCode(proj.join_code || '');
+          setProjectName(proj.assignment_title || proj.name || '');
         }
       } catch { /* ignore */ }
     })();
@@ -104,6 +111,44 @@ export default function InviteTeam() {
           url: joinUrl,
         });
       } catch { /* user cancelled */ }
+    }
+  };
+
+  const handleSendEmailInvite = async () => {
+    const email = inviteEmail.trim();
+    if (!email) return;
+    // Basic validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailStatus({ type: 'error', message: 'Please enter a valid email address.' });
+      return;
+    }
+    if (sentEmails.includes(email.toLowerCase())) {
+      setEmailStatus({ type: 'error', message: 'Invite already sent to this email.' });
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailStatus(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-invite', {
+        body: { email, joinUrl, joinCode, projectName },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setSentEmails(prev => [...prev, email.toLowerCase()]);
+      setEmailStatus({ type: 'success', message: `Invite sent to ${email}!` });
+      setInviteEmail('');
+      setTimeout(() => setEmailStatus(null), 4000);
+    } catch (err) {
+      setEmailStatus({
+        type: 'error',
+        message: err.message || 'Could not send email. Make sure Resend is configured.',
+      });
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -217,6 +262,66 @@ export default function InviteTeam() {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* ── Send invite by email ── */}
+            <div className="rounded-xl p-5 mb-6" style={{ backgroundColor: '#F8F7FF', border: '1px solid #EDE9FE' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #2563EB, #8B5CF6)' }}>
+                  <Send size={12} color="white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#1C1829' }}>Send invite by email</p>
+                  <p className="text-xs" style={{ color: '#A09BB8' }}>They will receive a beautiful email with the join link</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="email"
+                  placeholder="teammate@email.com"
+                  value={inviteEmail}
+                  onChange={e => { setInviteEmail(e.target.value); setEmailStatus(null); }}
+                  onKeyDown={e => e.key === 'Enter' && handleSendEmailInvite()}
+                  className="flex-1 px-4 py-2.5 rounded-xl border text-sm transition-all"
+                  style={{ borderColor: '#EDE9FE', color: '#1C1829', outline: 'none', backgroundColor: 'white' }}
+                  onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.1)'; }}
+                  onBlur={e => { e.target.style.borderColor = '#EDE9FE'; e.target.style.boxShadow = 'none'; }}
+                  disabled={sendingEmail}
+                />
+                <button onClick={handleSendEmailInvite} disabled={!inviteEmail.trim() || sendingEmail}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40"
+                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #8B5CF6 100%)', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}>
+                  {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  {sendingEmail ? 'Sending…' : 'Send'}
+                </button>
+              </div>
+              {/* Status message */}
+              {emailStatus && (
+                <div className={`flex items-center gap-2 mt-2.5 text-xs font-semibold px-3 py-2 rounded-lg ${emailStatus.type === 'success' ? '' : ''}`}
+                  style={{
+                    backgroundColor: emailStatus.type === 'success' ? '#ECFDF5' : '#FEF2F2',
+                    color: emailStatus.type === 'success' ? '#059669' : '#DC2626',
+                    border: emailStatus.type === 'success' ? '1px solid #A7F3D0' : '1px solid #FECACA',
+                  }}>
+                  {emailStatus.type === 'success' ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
+                  <span className="flex-1">{emailStatus.message}</span>
+                  <button onClick={() => setEmailStatus(null)} className="ml-1 opacity-50 hover:opacity-100">
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+              {/* Sent emails list */}
+              {sentEmails.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {sentEmails.map(e => (
+                    <span key={e} className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>
+                      <CheckCircle size={10} /> {e}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Add member manually */}
