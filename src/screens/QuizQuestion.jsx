@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
@@ -21,18 +21,33 @@ const TYPE_META = {
 };
 
 function MultiSelectRoles({ question, value = [], onChange }) {
-  const toggle = (tag) => {
-    if (value.includes(tag)) onChange(value.filter(t => t !== tag));
-    else if (value.length < 2) onChange([...value, tag]);
+  const options = question.options || [];
+  // Store selection as option indices so duplicate/missing skill_tag from AI cannot tie two cards together
+  const selectedIndices = useMemo(() => {
+    if (!Array.isArray(value) || value.length === 0) return [];
+    if (value.every((v) => typeof v === 'number')) {
+      return value.filter((i) => i >= 0 && i < options.length);
+    }
+    // Legacy: array of skill_tag strings
+    return value
+      .map((tag) => options.findIndex((o) => o.skill_tag === tag))
+      .filter((i) => i >= 0);
+  }, [value, options]);
+
+  const toggle = (idx) => {
+    let next = [...selectedIndices];
+    if (next.includes(idx)) next = next.filter((i) => i !== idx);
+    else if (next.length < 2) next = [...next, idx].sort((a, b) => a - b);
+    onChange(next);
   };
   const ROLE_EMOJIS = { organiser: '🗂️', researcher: '🔍', writer: '✍️', designer: '🎨', presenter: '🎤' };
   return (
     <div className="grid grid-cols-2 gap-3">
-      {(question.options || []).map((opt) => {
-        const sel = value.includes(opt.skill_tag);
+      {options.map((opt, idx) => {
+        const sel = selectedIndices.includes(idx);
         const emoji = ROLE_EMOJIS[opt.skill_tag?.toLowerCase()] || '⭐';
         return (
-          <button key={opt.skill_tag} onClick={() => toggle(opt.skill_tag)}
+          <button type="button" key={`role-${question.id}-${idx}`} onClick={() => toggle(idx)}
             className="relative text-left rounded-2xl p-4 transition-all duration-200 focus:outline-none"
             style={{
               border: sel ? '2px solid #8B5CF6' : '1.5px solid #EDE9FE',

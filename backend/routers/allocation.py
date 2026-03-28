@@ -45,7 +45,15 @@ def _build_skill_profile(member: dict, answers: list, questions: list) -> dict:
                     pass
 
         elif qtype == "multi_select_roles" and isinstance(value, list):
-            preferred_roles = value
+            opts = q.get("options") or []
+            preferred_roles = []
+            for item in value:
+                if isinstance(item, int) and 0 <= item < len(opts):
+                    t = opts[item].get("skill_tag")
+                    if t:
+                        preferred_roles.append(t)
+                elif isinstance(item, str):
+                    preferred_roles.append(item)
 
         elif qtype == "availability_grid" and isinstance(value, dict):
             availability_slots = [slot for slot, avail in value.items() if avail]
