@@ -122,21 +122,28 @@ def _initial_rationale(profile: dict, criterion: dict, score: float) -> str:
 def _polish_rationales(raw: list[str]) -> list[str]:
     if not raw:
         return []
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return raw  # Gracefully fall back to unpolished rationales
+
+    client = anthropic.Anthropic(api_key=api_key)
     prompt = (
         "Rewrite each rationale below as one friendly sentence under 20 words. "
         "Use the person's name and actual scores. Keep it encouraging. "
         "Return ONLY a JSON array of strings in the same order as input.\n\n"
         f"Input rationales:\n{json.dumps(raw)}"
     )
-    msg = client.messages.create(
-        model="claude-opus-4-20250514",
-        max_tokens=1024,
-        system="You rewrite assignment rationales. Return only valid JSON arrays of strings.",
-        messages=[{"role": "user", "content": prompt}],
-    )
     try:
-        return json.loads(msg.content[0].text.strip())
+        msg = client.messages.create(
+            model="claude-opus-4-20250514",
+            max_tokens=1024,
+            system="You rewrite assignment rationales. Return only valid JSON arrays of strings.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = msg.content[0].text.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        return json.loads(text)
     except Exception:
         return raw
 

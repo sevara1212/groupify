@@ -16,7 +16,11 @@ class AnswerPayload(BaseModel):
 
 
 def generate_questions(project_id: str, criteria: list, unique_skills: list) -> list:
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not configured on server")
+
+    client = anthropic.Anthropic(api_key=api_key)
 
     criteria_json = json.dumps(criteria, indent=2)
     unique_skills_list = ", ".join(unique_skills)
@@ -47,15 +51,24 @@ Each question object:
 
 Return ONLY the JSON array of 5 questions."""
 
-    message = client.messages.create(
-        model="claude-opus-4-20250514",
-        max_tokens=2048,
-        system="You generate structured quiz questions for student group work allocation. Return only valid JSON.",
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        message = client.messages.create(
+            model="claude-opus-4-20250514",
+            max_tokens=2048,
+            system="You generate structured quiz questions for student group work allocation. Return only valid JSON.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except anthropic.APIError as e:
+        raise HTTPException(status_code=502, detail=f"Anthropic API error: {e}")
 
     raw = message.content[0].text.strip()
-    questions = json.loads(raw)
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+    try:
+        questions = json.loads(raw)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="AI returned invalid JSON. Please try again.")
 
     # Replace existing questions for this project
     supabase.table("quiz_questions").delete().eq("project_id", project_id).execute()

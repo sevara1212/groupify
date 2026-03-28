@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,9 +7,13 @@ from routers import projects, rubric_extraction, quiz_generation, allocation, ri
 
 app = FastAPI(title="Groupify API")
 
+# Allow localhost for dev + any *.vercel.app domain for production
+_extra_origins = os.environ.get("ALLOWED_ORIGINS", "").split(",")
+_origins = [o.strip() for o in _extra_origins if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://*.vercel.app"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"] + _origins,
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],

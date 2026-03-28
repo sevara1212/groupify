@@ -28,7 +28,11 @@ def _read_file(data: bytes, filename: str) -> str:
 
 
 def extract_criteria(project_id: str, rubric_text: str, brief_text: str) -> list:
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not configured on server")
+
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""Analyse this university assignment rubric and brief.
 
@@ -49,15 +53,25 @@ Extract ALL marking criteria. Return a JSON array where each object has exactly 
 
 Return ONLY the JSON array. No explanation. No markdown."""
 
-    message = client.messages.create(
-        model="claude-opus-4-20250514",
-        max_tokens=2048,
-        system="You are a precise academic rubric analyser. Return only valid JSON arrays.",
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        message = client.messages.create(
+            model="claude-opus-4-20250514",
+            max_tokens=2048,
+            system="You are a precise academic rubric analyser. Return only valid JSON arrays.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except anthropic.APIError as e:
+        raise HTTPException(status_code=502, detail=f"Anthropic API error: {e}")
 
     raw = message.content[0].text.strip()
-    criteria_list = json.loads(raw)
+    # Strip markdown fences if Claude wraps the JSON
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+    try:
+        criteria_list = json.loads(raw)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="AI returned invalid JSON. Please try again.")
 
     # Delete existing criteria for this project before inserting fresh ones
     supabase.table("rubric_criteria").delete().eq("project_id", project_id).execute()
