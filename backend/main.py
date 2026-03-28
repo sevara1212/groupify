@@ -15,8 +15,10 @@ _origins = [o.strip() for o in _extra_origins if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"] + _origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000"]
+    + _origins,
+    # Frontends on Vercel, Render static, Netlify, GitHub Pages, etc.
+    allow_origin_regex=r"https://.*\.(vercel\.app|onrender\.com|netlify\.app|github\.io)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

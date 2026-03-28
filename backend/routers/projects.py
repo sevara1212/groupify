@@ -36,6 +36,11 @@ def create_project(payload: ProjectCreate):
     creator_name = (data.pop("creator_name") or "").strip()
     data["join_code"] = _generate_join_code(payload.course_name)
     result = supabase.table("projects").insert(data).execute()
+    if not result.data:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not create project — database did not return a row. Check Supabase keys and RLS.",
+        )
     project = result.data[0]
 
     creator_member = None

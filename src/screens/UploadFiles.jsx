@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Upload, CheckCircle, ArrowRight, AlertTriangle, Loader2,
   X, FileText, Type, Wifi, WifiOff, RefreshCw, Zap,
@@ -198,7 +198,18 @@ function ServerBanner({ status }) {
 /* ── Main screen ──────────────────────────────────────────────────────────── */
 export default function UploadFiles() {
   const navigate = useNavigate();
-  const { projectId: PROJECT_ID } = useProject();
+  const location = useLocation();
+  const { projectId: ctxProjectId, setProjectId } = useProject();
+  const routeProjectId = location.state?.projectId;
+  const PROJECT_ID = ctxProjectId || routeProjectId || null;
+
+  // Recover project id if context was not ready yet (e.g. hard refresh) — create flow passes state.projectId
+  useEffect(() => {
+    if (routeProjectId && routeProjectId !== ctxProjectId) {
+      setProjectId(routeProjectId);
+    }
+  }, [routeProjectId, ctxProjectId, setProjectId]);
+
   const serverReady = useServerPing();
 
   const [briefFile, setBriefFile] = useState(null);
@@ -223,6 +234,10 @@ export default function UploadFiles() {
   };
 
   const doUpload = useCallback(async (attempt = 0) => {
+    if (!PROJECT_ID) {
+      setError('No project selected. Go back and create a project first.');
+      return;
+    }
     setError(null);
     setUploadState(attempt > 0 ? 'retrying' : 'uploading');
     try {
@@ -319,6 +334,27 @@ export default function UploadFiles() {
 
             <div className="px-8 py-7">
               <ServerBanner status={serverReady} />
+
+              {!PROJECT_ID && (
+                <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl mb-5"
+                  style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }}>
+                  <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" style={{ color: '#B45309' }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: '#92400E' }}>No project linked</p>
+                    <p className="text-xs mt-1" style={{ color: '#B45309' }}>
+                      Create a project first so we know where to save your brief.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/create')}
+                      className="text-xs font-bold mt-2 px-3 py-1.5 rounded-xl"
+                      style={{ backgroundColor: '#FDE68A', color: '#92400E' }}
+                    >
+                      Create project
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 <UploadSection
@@ -431,7 +467,7 @@ export default function UploadFiles() {
                   </button>
                 ) : (
                   <button
-                    disabled={!canContinue || busy}
+                    disabled={!PROJECT_ID || !canContinue || busy}
                     onClick={() => doUpload(0)}
                     className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold text-white transition-all disabled:opacity-50"
                     style={{ background: 'linear-gradient(135deg,#8B5CF6,#EC4899)', boxShadow: '0 4px 16px rgba(139,92,246,0.3)' }}>

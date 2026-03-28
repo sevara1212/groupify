@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Minus, Plus, ArrowRight } from 'lucide-react';
 import StepProgressBar from '../components/ui/StepProgressBar';
@@ -58,16 +59,32 @@ export default function CreateProject() {
           ...(creatorName ? { creator_name: creatorName } : {}),
         }),
       });
-      if (!res.ok) throw new Error('Failed to create project');
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const detail = errBody.detail;
+        const msg = Array.isArray(detail)
+          ? detail.map((d) => d.msg || d).join(', ')
+          : typeof detail === 'string'
+            ? detail
+            : `HTTP ${res.status}`;
+        throw new Error(msg || 'Failed to create project');
+      }
       const data = await res.json();
       const project = data.project ?? data;
-      setProjectId(project.id);
-      if (data.creator_member?.id) {
-        setCurrentMemberId(data.creator_member.id);
-        setCurrentMemberName(data.creator_member.name);
-      }
+      if (!project?.id) throw new Error('Invalid response from server');
+      // Ensure ProjectContext + localStorage are updated before the next route reads projectId
+      flushSync(() => {
+        setProjectId(project.id);
+        if (data.creator_member?.id) {
+          setCurrentMemberId(data.creator_member.id);
+          setCurrentMemberName(data.creator_member.name);
+        }
+      });
+      navigate('/upload', { state: { projectId: project.id } });
     } catch (err) {
-      setError('Could not create project. Please try again.');
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Could not create project. Please try again.');
+    } finally {
       setCreating(false);
     }
   };
