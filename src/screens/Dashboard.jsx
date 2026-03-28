@@ -976,11 +976,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
-            <div className="space-y-4 min-w-0">
-              <div className="bg-white rounded-3xl overflow-hidden"
-                style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
-                <div className="px-4 py-3" style={{ borderBottom: '1px solid #F5F3FF' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-6 items-stretch">
+            {/* Left: Quick actions + Rubric Coverage */}
+            <div className="space-y-4 min-w-0 flex flex-col">
+              <div className="bg-white rounded-3xl overflow-hidden shadow-card">
+                <div className="px-4 py-3.5" style={{ borderBottom: '1px solid #F5F3FF' }}>
                   <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Quick actions</h2>
                 </div>
                 <div className="p-2.5 grid grid-cols-2 gap-2">
@@ -996,57 +996,50 @@ export default function Dashboard() {
                     color="#64748B" onClick={() => navigate('/settings')} className="col-span-2" />
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4 min-w-0">
-              {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
-              <FilesPanel projectId={projectId} navigate={navigate} />
-              {loading ? (
-                <div className="bg-white rounded-3xl overflow-hidden p-5 sm:p-6"
-                  style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07)' }}>
-                  <Skeleton className="h-9 w-44 mb-5" />
-                  <Skeleton className="h-[340px] w-full rounded-2xl" />
-                </div>
-              ) : (
-                <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact={false} large />
-              )}
-            </div>
-
-            <div className="min-w-0 md:col-span-2 xl:col-span-1">
-              <div className="bg-white rounded-3xl overflow-hidden h-full"
-                style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.07), 0 4px 20px rgba(15,23,42,0.04)' }}>
+              <div className="bg-white rounded-3xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-card">
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #F5F3FF' }}>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Rubric Coverage</h2>
-                    <span className="text-sm font-extrabold" style={{ color: '#EC4899' }}>{rubricCoverage}%</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #EC4899, #8B5CF6)' }}>
+                        <Target size={15} color="white" strokeWidth={2.2} />
+                      </div>
+                      <h2 className="text-sm font-extrabold truncate" style={{ color: '#1C1829' }}>Rubric Coverage</h2>
+                    </div>
+                    <span className="text-sm font-extrabold tabular-nums flex-shrink-0" style={{ color: '#EC4899' }}>{rubricCoverage}%</span>
                   </div>
                   {!loading && criteria.length > 0 && (
-                    <div className="w-full h-2.5 rounded-full mt-2 overflow-hidden" style={{ backgroundColor: '#E9D5FF' }}>
+                    <div className="w-full h-2.5 rounded-full mt-3 overflow-hidden" style={{ backgroundColor: '#E9D5FF' }}>
                       <div className="h-2.5 rounded-full transition-all duration-700"
                         style={{ width: `${rubricCoverage}%`, background: 'linear-gradient(90deg, #EC4899, #8B5CF6)' }} />
                     </div>
                   )}
                 </div>
-                <div className="px-5 py-4">
+                <div className="px-5 py-4 flex-1">
                   {loading ? (
                     <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-6 w-full" />)}</div>
                   ) : criteria.length === 0 ? (
-                    <p className="text-xs text-center py-4" style={{ color: '#A09BB8' }}>No rubric criteria yet.</p>
+                    <div className="py-8 px-2 rounded-2xl text-center" style={{ backgroundColor: '#FAFAFF', border: '1px dashed #E9D5FF' }}>
+                      <p className="text-xs font-medium" style={{ color: '#A09BB8' }}>No rubric criteria yet.</p>
+                      <button type="button" className="text-xs font-bold mt-2" style={{ color: '#8B5CF6' }} onClick={() => navigate('/rubric')}>Open rubric</button>
+                    </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {criteria.slice(0, 5).map(c => {
                         const isCovered = c.coverage_status === 'covered';
                         const isIP = c.coverage_status === 'in_progress';
                         return (
-                          <div key={c.id} className="flex items-center gap-2.5">
+                          <div key={c.id} className="flex items-center gap-2.5 py-1.5 px-2 -mx-2 rounded-xl"
+                            style={{ backgroundColor: isCovered ? '#F0FDF4' : 'transparent' }}>
                             <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
-                              style={{ backgroundColor: isCovered ? '#ECFDF5' : isIP ? '#F5F3FF' : '#FAFAFA' }}>
+                              style={{ backgroundColor: isCovered ? '#DCFCE7' : isIP ? '#F5F3FF' : '#FAFAFA' }}>
                               {isCovered ? <CircleCheck size={12} style={{ color: '#0D9488' }} />
                                 : isIP ? <TrendingUp size={12} style={{ color: '#8B5CF6' }} />
                                 : <Circle size={12} style={{ color: '#D8D3F0' }} />}
                             </div>
                             <span className="text-xs font-medium flex-1 truncate"
-                              style={{ color: isCovered ? '#0D9488' : '#1C1829' }}>
+                              style={{ color: isCovered ? '#15803D' : '#1C1829' }}>
                               {c.name}
                             </span>
                             {c.weight_percent != null && (
@@ -1058,8 +1051,8 @@ export default function Dashboard() {
                         );
                       })}
                       {criteria.length > 5 && (
-                        <button className="text-xs font-semibold flex items-center gap-1 mt-1 transition-colors"
-                          style={{ color: '#8B5CF6' }}
+                        <button className="text-xs font-semibold flex items-center gap-1 mt-2 transition-colors w-full justify-center py-1.5 rounded-lg"
+                          style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
                           onClick={() => navigate('/rubric')}>
                           +{criteria.length - 5} more <ChevronRight size={10} />
                         </button>
@@ -1068,6 +1061,26 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Center: Upcoming + Project Files */}
+            <div className="space-y-4 min-w-0 flex flex-col">
+              {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
+              <FilesPanel projectId={projectId} navigate={navigate} />
+            </div>
+
+            {/* Right: Calendar (large) */}
+            <div className="min-w-0 md:col-span-2 xl:col-span-1 flex flex-col">
+              {loading ? (
+                <div className="bg-white rounded-3xl overflow-hidden p-5 sm:p-6 flex-1 shadow-card">
+                  <Skeleton className="h-9 w-44 mb-5" />
+                  <Skeleton className="min-h-[320px] sm:min-h-[360px] w-full rounded-2xl flex-1" />
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col min-h-[320px] xl:min-h-0">
+                  <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact={false} large />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1133,6 +1146,7 @@ export default function Dashboard() {
 
       <style>{`
         @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+        .shadow-card{border:1px solid #EDE9FE;box-shadow:0 2px 12px rgba(139,92,246,0.07),0 4px 20px rgba(15,23,42,0.04)}
         .skeleton{background:linear-gradient(90deg,#EDE9FE 25%,#F5F3FF 50%,#EDE9FE 75%);background-size:200% 100%;border-radius:8px;animation:shimmer 1.5s infinite}
         .skeleton-light{background:linear-gradient(90deg,rgba(255,255,255,0.12) 25%,rgba(255,255,255,0.22) 50%,rgba(255,255,255,0.12) 75%);background-size:200% 100%;border-radius:12px;animation:shimmer 1.5s infinite}
         @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
