@@ -4,7 +4,7 @@ import { Upload, CheckCircle, ArrowRight, AlertTriangle, Loader2, X, FileText, T
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Button from '../components/ui/Button';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 const PROJECT_ID = 'wzhlzyzfmydqkolbhpbj';
 
 // ── Unified upload/paste section ──────────────────────────────────────────────

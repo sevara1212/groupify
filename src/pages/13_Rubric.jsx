@@ -4,7 +4,7 @@ import { useProject } from '../context/ProjectContext';
 import Card from '../components/ui/Card';
 import ProgressBar from '../components/ui/ProgressBar';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
 const COVERAGE_CFG = {
   covered:     { label: 'Covered',     color: '#8B5CF6', bg: '#F5F3FF' },

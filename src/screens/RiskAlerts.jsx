@@ -5,7 +5,7 @@ import { useProject } from '../context/ProjectContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
 const TYPE_CONFIG = {
   overdue:   { icon: AlertCircle,   color: '#92400E', bg: '#FEF3C7', border: '#FDE68A', accent: '#D97706', label: 'Overdue' },

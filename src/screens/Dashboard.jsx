@@ -6,7 +6,7 @@ import Card from '../components/ui/Card';
 import ProgressBar from '../components/ui/ProgressBar';
 import Avatar from '../components/ui/Avatar';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 const MEMBER_COLORS = ['#8B5CF6', '#EC4899', '#D97706', '#0EA5E9', '#0D9488', '#6366F1'];
 
 function Skeleton({ className = '' }) {
