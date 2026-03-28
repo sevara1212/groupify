@@ -137,20 +137,27 @@ def get_risks(project_id: str):
                 task["id"],
             )
 
-    # ── Imbalance ──
+    # ── Imbalance ──  (compare against ALL members, including those with 0 tasks)
     task_counts: dict[str, int] = defaultdict(int)
     for task in tasks:
         if task.get("member_id"):
             task_counts[task["member_id"]] += 1
 
-    if task_counts:
-        max_count = max(task_counts.values())
-        min_count = min(task_counts.values())
-        if max_count > 2 * min_count and min_count > 0:
+    all_member_counts = {m["id"]: task_counts.get(m["id"], 0) for m in members}
+    if all_member_counts and len(all_member_counts) > 1:
+        max_count = max(all_member_counts.values())
+        min_count = min(all_member_counts.values())
+        # Trigger if someone has ≥2 tasks and someone else has ≤half (incl. 0 tasks)
+        if max_count >= 2 and (min_count == 0 or max_count > 2 * min_count):
+            heavy = [member_by_id.get(mid, "A member") for mid, cnt in all_member_counts.items() if cnt == max_count]
+            light = [member_by_id.get(mid, "A member") for mid, cnt in all_member_counts.items() if cnt == min_count]
+            heavy_str = heavy[0] if heavy else "someone"
+            light_str = light[0] if light else "someone"
             _upsert_alert(
                 project_id,
                 "imbalance",
-                "Workload is uneven across the group. Peer review scores may be affected.",
+                f"Workload is uneven: {heavy_str} has {max_count} tasks while {light_str} has {min_count}. "
+                f"Use AI Auto-Fix to rebalance.",
                 None,
                 None,
             )
@@ -370,3 +377,118 @@ def confirm_rebalance(project_id: str, payload: RebalanceConfirmPayload):
     ).eq("task_id", payload.task_id).eq("dismissed", False).execute()
 
     return {"success": True}
+
+
+# ── POST /projects/{project_id}/auto-rebalance ───────────────────────────────
+
+@router.post("/projects/{project_id}/auto-rebalance")
+def auto_rebalance(project_id: str):
+    """AI-driven: scan all tasks, detect imbalance, return list of suggested moves."""
+    import anthropic as _anthropic
+    import json as _json
+
+    members = supabase.table("members").select("id, name, quiz_done").eq("project_id", project_id).execute().data
+    if not members:
+        raise HTTPException(status_code=404, detail="No members found")
+
+    tasks = (
+        supabase.table("tasks")
+        .select("id, title, member_id, status, progress_percent, due_date, rubric_criterion_id")
+        .eq("project_id", project_id)
+        .execute()
+        .data
+    )
+
+    member_by_id = {m["id"]: m for m in members}
+    buckets: dict[str, list] = {m["id"]: [] for m in members}
+    for t in tasks:
+        if t.get("member_id") and t["member_id"] in buckets:
+            buckets[t["member_id"]].append(t)
+
+    counts = {mid: len(lst) for mid, lst in buckets.items()}
+    if not counts:
+        return {"moves": [], "summary": "No tasks to rebalance."}
+
+    max_c = max(counts.values())
+    min_c = min(counts.values())
+    if max_c <= min_c + 1:
+        return {"moves": [], "summary": "Tasks are already fairly distributed."}
+
+    # Ask Claude to suggest moves
+    moves = []
+    try:
+        client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+        member_summary = [
+            {
+                "id": m["id"],
+                "name": m["name"],
+                "task_count": counts.get(m["id"], 0),
+                "tasks": [{"id": t["id"], "title": t["title"], "status": t.get("status","todo")} for t in buckets.get(m["id"], [])],
+            }
+            for m in members
+        ]
+        prompt = (
+            "You are a project manager. Given this team workload, suggest the minimum moves to make task counts equal (±1).\n\n"
+            f"Team: {_json.dumps(member_summary, indent=2)}\n\n"
+            "Reply ONLY with a JSON array of moves, each: "
+            "{\"task_id\": \"...\", \"task_title\": \"...\", \"from_member_id\": \"...\", \"from_name\": \"...\", "
+            "\"to_member_id\": \"...\", \"to_name\": \"...\", \"reason\": \"one sentence\"}\n"
+            "If already balanced reply with []."
+        )
+        msg = client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=800,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = msg.content[0].text.strip()
+        start = raw.find("[")
+        end = raw.rfind("]") + 1
+        moves = _json.loads(raw[start:end]) if start >= 0 else []
+    except Exception:
+        # Fallback: simple greedy rebalance without Claude
+        sorted_mids = sorted(counts.keys(), key=lambda mid: counts[mid])
+        heavy_mids = [mid for mid in sorted_mids if counts[mid] > min_c + 1]
+        light_mids = [mid for mid in sorted_mids if counts[mid] <= min_c]
+        live_counts = dict(counts)
+        live_buckets = {mid: list(lst) for mid, lst in buckets.items()}
+        for heavy_mid in heavy_mids:
+            for light_mid in light_mids:
+                while live_counts[heavy_mid] > live_counts[light_mid] + 1 and live_buckets[heavy_mid]:
+                    task = live_buckets[heavy_mid].pop()
+                    moves.append({
+                        "task_id": task["id"],
+                        "task_title": task["title"],
+                        "from_member_id": heavy_mid,
+                        "from_name": member_by_id[heavy_mid]["name"],
+                        "to_member_id": light_mid,
+                        "to_name": member_by_id[light_mid]["name"],
+                        "reason": "Balancing workload across team members",
+                    })
+                    live_counts[heavy_mid] -= 1
+                    live_counts[light_mid] += 1
+
+    total = len(tasks)
+    target = total // max(len(members), 1)
+    summary = (
+        f"Found {len(moves)} suggested move(s) to balance tasks (~{target} per member)."
+        if moves else "Tasks are already fairly distributed."
+    )
+    return {"moves": moves, "summary": summary}
+
+
+class AutoRebalanceConfirm(BaseModel):
+    moves: list[dict[str, Any]]
+
+
+@router.post("/projects/{project_id}/auto-rebalance/confirm")
+def confirm_auto_rebalance(project_id: str, payload: AutoRebalanceConfirm):
+    """Apply the AI-suggested moves."""
+    for move in payload.moves:
+        task_id = move.get("task_id")
+        to_member_id = move.get("to_member_id")
+        if not task_id or not to_member_id:
+            continue
+        supabase.table("tasks").update({"member_id": to_member_id}).eq("id", task_id).execute()
+
+    supabase.table("risk_alerts").update({"dismissed": True}).eq("project_id", project_id).eq("type", "imbalance").eq("dismissed", False).execute()
+    return {"success": True, "applied": len(payload.moves)}

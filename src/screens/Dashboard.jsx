@@ -506,7 +506,7 @@ export default function Dashboard() {
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 -mt-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 -mt-3 stagger-children reveal animate-fade-up">
           <StatCard loading={loading}
             value={daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
             sub={daysRemaining !== null && daysRemaining <= 3 ? '⚠️ Due soon!' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : undefined)}
@@ -528,7 +528,7 @@ export default function Dashboard() {
         </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 reveal">
           {/* Left: Tasks + Members */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Tasks */}

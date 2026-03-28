@@ -81,7 +81,7 @@ input[type='range']::-moz-range-thumb {
   box-shadow: 0 2px 8px rgba(139,92,246,0.3);
 }
 
-/* Animations */
+/* ── Keyframes ─────────────────────────────────── */
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -94,9 +94,82 @@ input[type='range']::-moz-range-thumb {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.93); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes floatY {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-8px); }
+}
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(139,92,246,0.35); }
+  70%  { box-shadow: 0 0 0 12px rgba(139,92,246,0); }
+  100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
+/* ── Utility classes ───────────────────────────── */
 .animate-slide-up  { animation: slideUp 280ms ease forwards; }
 .animate-fade-in   { animation: fadeIn 200ms ease forwards; }
+.animate-fade-up   { animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
+.animate-scale-in  { animation: scaleIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+.animate-float     { animation: floatY 3.5s ease-in-out infinite; }
+.animate-pulse-ring { animation: pulseRing 2s ease-out infinite; }
+
+/* Staggered children — add .stagger-children and children get delay */
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+/* Scroll-reveal: elements start hidden and get .in-view when visible */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22,1,0.36,1);
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1);
+}
+.reveal-scale.in-view {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Moving gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #8B5CF6, #EC4899, #8B5CF6);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease infinite;
+}
+
+/* Glass card */
+.glass {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.5);
+}
 
 .skeleton {
   background: linear-gradient(90deg, #F0ECFF 25%, #E8E3FF 50%, #F0ECFF 75%);

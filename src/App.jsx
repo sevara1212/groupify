@@ -1,5 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+/* Global scroll-reveal: watches .reveal / .reveal-scale elements */
+function useScrollReveal() {
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); obs.unobserve(e.target); } }),
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+    );
+    const attach = () => document.querySelectorAll('.reveal, .reveal-scale').forEach(el => obs.observe(el));
+    attach();
+    // Re-attach after route changes / dynamic content
+    const mo = new MutationObserver(attach);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => { obs.disconnect(); mo.disconnect(); };
+  }, []);
+}
 import TopNav from './components/layout/TopNav';
 
 import Landing from './screens/Landing';
@@ -37,6 +53,7 @@ const NAV_ROUTES = ['/dashboard', '/tasks', '/rubric', '/messages', '/profile', 
 function Layout() {
   const location = useLocation();
   const showNav = NAV_ROUTES.some((r) => location.pathname.startsWith(r));
+  useScrollReveal();
 
   return (
     <>

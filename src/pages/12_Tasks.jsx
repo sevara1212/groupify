@@ -475,7 +475,7 @@ export default function Tasks() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 reveal">
             {COLUMNS.map(col => {
               const colTasks = col.key === 'todo' ? todoTasks : col.key === 'in_progress' ? inProgressTasks : doneTasks;
               return (
