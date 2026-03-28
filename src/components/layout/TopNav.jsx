@@ -1,33 +1,33 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, BookOpen, MessageSquare, User } from 'lucide-react';
 
 const tabs = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Tasks',     to: '/tasks',     icon: CheckSquare },
-  { label: 'Rubric',   to: '/rubric',    icon: BookOpen },
-  { label: 'Messages', to: '/messages',  icon: MessageSquare },
+  { label: 'Rubric',    to: '/rubric',    icon: BookOpen },
+  { label: 'Messages',  to: '/messages',  icon: MessageSquare },
 ];
 
 export default function TopNav() {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white sticky top-0 z-50" style={{ borderBottom: '1px solid #EDE9FE' }}>
-      <div className="max-w-5xl mx-auto px-5 flex items-center justify-between h-14">
-        {/* Wordmark */}
+    <header className="bg-white/95 backdrop-blur-md sticky top-0 z-50" style={{ borderBottom: '1px solid #EDE9FE' }}>
+      <div className="max-w-5xl mx-auto px-5 flex items-center justify-between h-16">
+        {/* Brand */}
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2.5 focus:outline-none"
+          className="flex items-center gap-2.5 focus:outline-none group"
         >
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
             style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}
           >
-            <span className="text-white font-black" style={{ fontSize: 15, letterSpacing: '-0.04em' }}>G</span>
+            <span className="text-white font-black" style={{ fontSize: 16, letterSpacing: '-0.04em' }}>G</span>
           </div>
           <span
-            className="font-extrabold tracking-tight bg-clip-text text-transparent"
+            className="font-extrabold tracking-tight bg-clip-text text-transparent hidden sm:inline"
             style={{ fontSize: 20, backgroundImage: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)' }}
           >
             Groupify
@@ -35,27 +35,39 @@ export default function TopNav() {
         </button>
 
         {/* Nav tabs */}
-        <nav className="flex items-center gap-0.5">
+        <nav className="flex items-center gap-1">
           {tabs.map(({ label, to, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all duration-200"
               style={({ isActive }) => ({
-                color: isActive ? '#8B5CF6' : '#A09BB8',
+                color: isActive ? '#8B5CF6' : '#6B6584',
                 backgroundColor: isActive ? '#F5F3FF' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
+                fontWeight: isActive ? 700 : 500,
               })}
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{label}</span>
+                  <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="hidden sm:inline">{label}</span>
                 </>
               )}
             </NavLink>
           ))}
         </nav>
+
+        {/* Profile icon */}
+        <NavLink
+          to="/profile"
+          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
+          style={({ isActive }) => ({
+            backgroundColor: isActive ? '#F5F3FF' : 'transparent',
+            color: isActive ? '#8B5CF6' : '#A09BB8',
+          })}
+        >
+          <User size={18} strokeWidth={2} />
+        </NavLink>
       </div>
     </header>
   );

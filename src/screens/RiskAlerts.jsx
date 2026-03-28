@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, AlertCircle, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+import { AlertTriangle, AlertCircle, CheckCircle, Loader2, ArrowRight, Shield } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
@@ -44,72 +43,83 @@ export default function RiskAlerts() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-8">
-        <h1 className="text-2xl font-extrabold mb-1" style={{ color: '#1C1829', letterSpacing: '-0.02em' }}>
-          Risk Alerts
-        </h1>
-        <p className="text-sm mb-7" style={{ color: '#6B6584' }}>
-          Issues detected in your group that may need attention.
-        </p>
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold mb-2" style={{ color: '#1C1829', letterSpacing: '-0.02em' }}>
+            Risk Alerts
+          </h1>
+          <p className="text-sm font-medium leading-relaxed" style={{ color: '#6B6584' }}>
+            Issues detected in your group's progress that may need attention.
+          </p>
+        </div>
 
         {loading ? (
-          <div className="flex items-center gap-3 py-12 justify-center">
-            <Loader2 size={22} className="animate-spin" style={{ color: '#8B5CF6' }} />
-            <span className="text-sm font-medium" style={{ color: '#6B6584' }}>Loading alerts…</span>
+          <div className="flex items-center gap-3 py-16 justify-center">
+            <Loader2 size={24} className="animate-spin" style={{ color: '#8B5CF6' }} />
+            <span className="text-sm font-semibold" style={{ color: '#6B6584' }}>Loading alerts…</span>
           </div>
         ) : alerts.length === 0 ? (
-          <div className="rounded-3xl p-12 flex flex-col items-center gap-4"
+          <div className="rounded-3xl p-14 flex flex-col items-center gap-5 animate-scale-in"
             style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FDF2F8 100%)', border: '1px solid #EDE9FE' }}>
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)', boxShadow: '0 8px 20px rgba(139,92,246,0.25)' }}>
-              <CheckCircle size={28} color="white" />
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0EA5E9 100%)', boxShadow: '0 8px 24px rgba(13,148,136,0.25)' }}>
+              <Shield size={36} color="white" />
             </div>
             <div className="text-center">
-              <p className="text-base font-extrabold mb-1" style={{ color: '#1C1829' }}>All clear!</p>
-              <p className="text-sm" style={{ color: '#6B6584' }}>No active risks — your group is on track.</p>
+              <p className="text-xl font-extrabold mb-2" style={{ color: '#1C1829' }}>All clear!</p>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#6B6584' }}>
+                No active risks detected — your group is on track. Keep up the great work!
+              </p>
             </div>
+            <Button variant="outlined" onClick={() => navigate('/dashboard')} className="gap-2 mt-2">
+              Back to Dashboard <ArrowRight size={14} />
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
+            <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#A09BB8' }}>
+              {alerts.length} alert{alerts.length !== 1 ? 's' : ''} found
+            </p>
             {alerts.map(alert => {
               const cfg = TYPE_CONFIG[alert.type] || TYPE_CONFIG.at_risk;
               const Icon = cfg.icon;
               const canRebalance = !!alert.task_id && !!alert.member_id;
               return (
-                <div key={alert.id} className="bg-white rounded-2xl overflow-hidden"
+                <div key={alert.id}
+                  className="bg-white rounded-2xl overflow-hidden transition-all duration-200 animate-slide-up"
                   style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.06)', borderLeft: `4px solid ${cfg.accent}` }}>
-                  <div className="p-5">
+                  <div className="p-6">
                     <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: cfg.bg }}>
-                        <Icon size={18} style={{ color: cfg.accent }} />
+                        <Icon size={20} style={{ color: cfg.accent }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-full border"
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="text-xs font-bold px-3 py-1 rounded-full border"
                             style={{ backgroundColor: cfg.bg, color: cfg.color, borderColor: cfg.border }}>
                             {cfg.label}
                           </span>
                           {alert.member_name && (
-                            <span className="text-xs font-medium" style={{ color: '#6B6584' }}>{alert.member_name}</span>
+                            <span className="text-xs font-semibold" style={{ color: '#6B6584' }}>{alert.member_name}</span>
                           )}
                         </div>
-                        <p className="text-sm font-semibold mb-0.5" style={{ color: '#1C1829' }}>{alert.message}</p>
+                        <p className="text-sm font-bold mb-1" style={{ color: '#1C1829' }}>{alert.message}</p>
                         {alert.task_title && (
-                          <p className="text-xs" style={{ color: '#A09BB8' }}>Task: {alert.task_title}</p>
+                          <p className="text-xs font-medium" style={{ color: '#A09BB8' }}>Task: {alert.task_title}</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 mt-4">
+                    <div className="flex justify-end gap-3 mt-5">
                       <button onClick={() => handleDismiss(alert)} disabled={dismissing === alert.id}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
-                        style={{ border: '1px solid #EDE9FE', color: '#6B6584' }}>
+                        className="text-xs font-bold px-4 py-2 rounded-xl transition-all duration-200"
+                        style={{ border: '1px solid #EDE9FE', color: '#6B6584', backgroundColor: 'white' }}>
                         {dismissing === alert.id
                           ? <Loader2 size={12} className="animate-spin inline" />
                           : 'Dismiss'}
                       </button>
                       {canRebalance && (
-                        <Button variant="warning" onClick={() => handleRebalance(alert)} className="gap-1.5 text-xs py-1.5">
+                        <Button variant="warning" onClick={() => handleRebalance(alert)} className="gap-1.5 text-xs py-2">
                           Rebalance <ArrowRight size={12} />
                         </Button>
                       )}
