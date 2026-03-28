@@ -7,6 +7,7 @@ import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
@@ -46,6 +47,7 @@ export default function InviteTeam() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: '' }
   const [sentEmails, setSentEmails] = useState([]);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [quizGenState, setQuizGenState] = useState('generating'); // 'generating' | 'done' | 'error'
 
   // Fetch project to get join code + name, then generate quiz in background
@@ -126,7 +128,7 @@ export default function InviteTeam() {
     }
   };
 
-  const handleSendEmailInvite = () => {
+  const handleSendEmailInvite = async () => {
     const email = inviteEmail.trim();
     if (!email) return;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -138,12 +140,8 @@ export default function InviteTeam() {
       return;
     }
 
-    const projectLabel = projectName ? ` "${projectName}"` : '';
-    const subject = encodeURIComponent(`Join our Groupify project${projectLabel}!`);
-    const body = encodeURIComponent(
-      `Hey!\n\n${inviterName} has invited you to join a group project${projectLabel} on Groupify.\n\nClick the link below to join and take a quick quiz so tasks can be allocated fairly:\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`
-    );
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+    setSendingEmail(true);
+    setEmailStatus(null);
 
     try {
       const { error } = await supabase.functions.invoke('send-invite', {
