@@ -26,14 +26,35 @@ class ProjectCreate(BaseModel):
     due_date: Optional[str] = None
     group_size: Optional[int] = 4
     ai_enabled: Optional[bool] = True
+    # Display name of the signed-in user creating the project — stored as first member (counts toward group_size)
+    creator_name: Optional[str] = None
 
 
 @router.post("/projects")
 def create_project(payload: ProjectCreate):
     data = payload.model_dump()
+    creator_name = (data.pop("creator_name") or "").strip()
     data["join_code"] = _generate_join_code(payload.course_name)
     result = supabase.table("projects").insert(data).execute()
-    return result.data[0]
+    project = result.data[0]
+
+    creator_member = None
+    if creator_name:
+        mem = (
+            supabase.table("members")
+            .insert(
+                {
+                    "project_id": project["id"],
+                    "name": creator_name,
+                    "role": "organiser",
+                }
+            )
+            .execute()
+        )
+        if mem.data:
+            creator_member = mem.data[0]
+
+    return {"project": project, "creator_member": creator_member}
 
 
 @router.get("/projects")

@@ -17,7 +17,7 @@ const inputStyle = {
 
 export default function CreateProject() {
   const navigate = useNavigate();
-  const { setProjectId } = useProject();
+  const { setProjectId, setCurrentMemberId, setCurrentMemberName } = useProject();
   const { user, loading: authLoading } = useAuth();
   const [courseName, setCourseName] = useState('');
   const [assignmentTitle, setAssignmentTitle] = useState('');
@@ -33,6 +33,11 @@ export default function CreateProject() {
       navigate('/signin?redirect=/create');
     }
   }, [user, authLoading, navigate]);
+
+  const creatorName =
+    user?.user_metadata?.full_name?.trim() ||
+    user?.email?.split('@')[0]?.trim() ||
+    '';
 
   const canContinue = courseName.trim() && assignmentTitle.trim() && dueDate && !creating;
 
@@ -50,12 +55,17 @@ export default function CreateProject() {
           due_date: dueDate,
           group_size: groupSize,
           ai_enabled: aiEnabled,
+          ...(creatorName ? { creator_name: creatorName } : {}),
         }),
       });
       if (!res.ok) throw new Error('Failed to create project');
-      const project = await res.json();
+      const data = await res.json();
+      const project = data.project ?? data;
       setProjectId(project.id);
-      navigate('/upload');
+      if (data.creator_member?.id) {
+        setCurrentMemberId(data.creator_member.id);
+        setCurrentMemberName(data.creator_member.name);
+      }
     } catch (err) {
       setError('Could not create project. Please try again.');
       setCreating(false);
@@ -158,7 +168,7 @@ export default function CreateProject() {
                       <Plus size={14} />
                     </button>
                   </div>
-                  <p className="text-xs mt-1" style={{ color: '#A09BB8' }}>2 – 8 members</p>
+                  <p className="text-xs mt-1" style={{ color: '#A09BB8' }}>Total in group including you · 2–8</p>
                 </div>
               </div>
 
