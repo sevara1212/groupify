@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageSquare, Send, Loader2, Users, Hash, ChevronRight, Circle } from 'lucide-react';
+import {
+  MessageSquare, Send, Loader2, Users, Hash,
+  ChevronRight, Circle, AlertTriangle, RefreshCw, Wifi, WifiOff,
+} from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabase';
-import Avatar from '../components/ui/Avatar';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -48,7 +50,6 @@ function formatDayLabel(dateStr) {
 
 /* ─── Member Sidebar ─────────────────────────────── */
 function MemberSidebar({ members, messages, currentName, visible, onClose }) {
-  // Work out who has sent a message recently (within 30 min = "active")
   const activeSet = new Set();
   const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
   messages.forEach(m => {
@@ -57,12 +58,8 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
 
   return (
     <>
-      {/* Overlay on mobile */}
       {visible && (
-        <div
-          className="fixed inset-0 bg-black/20 z-30 md:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={onClose} />
       )}
 
       <aside
@@ -76,7 +73,6 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
         }}
       >
         <div style={{ width: 220, padding: '16px 0 8px 0' }}>
-          {/* Header */}
           <div className="px-4 pb-3" style={{ borderBottom: '1px solid #F5F3FF' }}>
             <div className="flex items-center gap-2">
               <Users size={13} style={{ color: '#8B5CF6' }} />
@@ -88,7 +84,6 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
             </div>
           </div>
 
-          {/* Member list */}
           <div className="py-2">
             {members.length === 0 ? (
               <div className="px-4 py-6 text-center">
@@ -103,7 +98,6 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
                   <div key={m.id}
                     className="flex items-center gap-2.5 px-4 py-2.5 mx-2 rounded-xl transition-colors"
                     style={{ backgroundColor: isMe ? '#F5F3FF' : 'transparent' }}>
-                    {/* Avatar with active dot */}
                     <div className="relative flex-shrink-0">
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
@@ -115,8 +109,6 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
                           style={{ backgroundColor: '#10B981' }} />
                       )}
                     </div>
-
-                    {/* Name */}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate" style={{ color: '#111827' }}>
                         {m.name}{isMe ? ' (you)' : ''}
@@ -131,7 +123,6 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
             )}
           </div>
 
-          {/* Footer info */}
           <div className="mx-4 mt-2 px-3 py-2.5 rounded-xl" style={{ backgroundColor: '#F8F7FF', border: '1px solid #EDE9FE' }}>
             <p className="text-xs font-medium" style={{ color: '#A09BB8' }}>
               <span className="font-bold" style={{ color: '#8B5CF6' }}>{activeSet.size}</span> active · <span className="font-bold" style={{ color: '#6B7280' }}>{members.length}</span> total
@@ -144,15 +135,18 @@ function MemberSidebar({ members, messages, currentName, visible, onClose }) {
 }
 
 export default function Messages() {
-  const { projectId, currentMemberName } = useProject();
+  const { projectId, currentMemberName, currentMemberId } = useProject();
   const [messages, setMessages] = useState([]);
   const [members, setMembers] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [error, setError] = useState(null);
+  const [connected, setConnected] = useState(false);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  const channelRef = useRef(null);
 
   const authorName = currentMemberName || 'You';
 
@@ -171,23 +165,42 @@ export default function Messages() {
       .catch(() => {});
   }, [projectId]);
 
-  // Fetch messages + realtime
+  // Fetch messages + realtime subscription
   useEffect(() => {
     if (!projectId) { setLoading(false); return; }
 
+    let cancelled = false;
+
     const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: true });
-      if (!error && data) setMessages(data);
-      setLoading(false);
-      setTimeout(scrollToBottom, 100);
+      setError(null);
+      try {
+        const { data, error: fetchErr } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true });
+
+        if (cancelled) return;
+
+        if (fetchErr) {
+          console.error('Supabase fetch error:', fetchErr);
+          setError(`Could not load messages: ${fetchErr.message}`);
+        } else {
+          setMessages(data || []);
+        }
+      } catch (err) {
+        if (!cancelled) setError('Could not connect to the database.');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setTimeout(scrollToBottom, 100);
+        }
+      }
     };
 
     fetchMessages();
 
+    // Set up realtime subscription
     const channel = supabase
       .channel(`messages:${projectId}`)
       .on('postgres_changes', {
@@ -196,12 +209,28 @@ export default function Messages() {
         table: 'messages',
         filter: `project_id=eq.${projectId}`,
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new]);
+        // Deduplicate — avoid adding if we already inserted optimistically
+        setMessages(prev => {
+          if (prev.some(m => m.id === payload.new.id)) return prev;
+          return [...prev, payload.new];
+        });
         setTimeout(scrollToBottom, 50);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setConnected(true);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setConnected(false);
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    channelRef.current = channel;
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
   }, [projectId, scrollToBottom]);
 
   const send = async () => {
@@ -209,18 +238,79 @@ export default function Messages() {
     const messageText = text.trim();
     setText('');
     setSending(true);
-    const { error } = await supabase.from('messages').insert({
+
+    // Optimistic insert — show immediately
+    const optimisticMsg = {
+      id: `temp-${Date.now()}`,
       project_id: projectId,
+      member_id: currentMemberId || null,
       author_name: authorName,
       text: messageText,
-    });
-    if (error) setText(messageText);
+      created_at: new Date().toISOString(),
+      _optimistic: true,
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setTimeout(scrollToBottom, 30);
+
+    try {
+      const { data, error: sendErr } = await supabase.from('messages').insert({
+        project_id: projectId,
+        member_id: currentMemberId || null,
+        author_name: authorName,
+        text: messageText,
+      }).select().single();
+
+      if (sendErr) {
+        console.error('Send error:', sendErr);
+        // Remove the optimistic message and restore text
+        setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+        setText(messageText);
+        setError('Failed to send message. Check your connection.');
+        setTimeout(() => setError(null), 4000);
+      } else if (data) {
+        // Replace optimistic with real message
+        setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data : m));
+      }
+    } catch {
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+      setText(messageText);
+      setError('Failed to send message. Check your connection.');
+      setTimeout(() => setError(null), 4000);
+    }
+
     setSending(false);
     inputRef.current?.focus();
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  };
+
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setMessages([]);
+    // Re-trigger effect by forcing component update
+    const handler = async () => {
+      try {
+        const { data, error: fetchErr } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true });
+        if (fetchErr) {
+          setError(`Could not load messages: ${fetchErr.message}`);
+        } else {
+          setMessages(data || []);
+        }
+      } catch {
+        setError('Could not connect to the database.');
+      } finally {
+        setLoading(false);
+        setTimeout(scrollToBottom, 100);
+      }
+    };
+    handler();
   };
 
   if (!projectId) {
@@ -272,11 +362,23 @@ export default function Messages() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Live indicator */}
+              {/* Connection indicator */}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.4)' }}>
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#34D399' }} />
-                <span className="text-xs font-bold text-white">Live</span>
+                style={{
+                  backgroundColor: connected ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)',
+                  border: `1px solid ${connected ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)'}`,
+                }}>
+                {connected ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#34D399' }} />
+                    <span className="text-xs font-bold text-white">Live</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff size={10} style={{ color: '#FBBF24' }} />
+                    <span className="text-xs font-bold text-white">Connecting…</span>
+                  </>
+                )}
               </div>
 
               {/* Toggle sidebar */}
@@ -319,6 +421,21 @@ export default function Messages() {
         </div>
       </div>
 
+      {/* ── Error banner ── */}
+      {error && (
+        <div className="max-w-5xl mx-auto w-full px-6 mt-3">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+            style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
+            <AlertTriangle size={14} style={{ color: '#EF4444' }} />
+            <p className="text-xs font-medium flex-1" style={{ color: '#991B1B' }}>{error}</p>
+            <button onClick={retry} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg"
+              style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}>
+              <RefreshCw size={10} /> Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Main content ── */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-4"
         style={{ height: 'calc(100vh - 56px - 120px)', display: 'flex', flexDirection: 'column' }}>
@@ -355,6 +472,7 @@ export default function Messages() {
                     const prevMsg = idx > 0 ? messages[idx - 1] : null;
                     const showDay = isNewDay(m.created_at, prevMsg?.created_at);
                     const sameAuthorAsPrev = prevMsg && prevMsg.author_name === m.author_name && !showDay;
+                    const isOptimistic = m._optimistic;
 
                     return (
                       <React.Fragment key={m.id}>
@@ -383,16 +501,17 @@ export default function Messages() {
                           <div className={`max-w-[72%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
                             {!sameAuthorAsPrev && (
                               <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}>
-                                <span className="text-xs font-bold" style={{ color: color }}>{m.author_name}</span>
+                                <span className="text-xs font-bold" style={{ color }}>{m.author_name}</span>
                                 <span className="text-xs" style={{ color: '#C4B5FD' }}>{formatTime(m.created_at)}</span>
                               </div>
                             )}
                             <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
                               style={isMe ? {
-                                background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                                background: isOptimistic ? '#A78BFA' : 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
                                 color: 'white',
                                 borderBottomRightRadius: sameAuthorAsPrev ? 16 : 4,
                                 boxShadow: '0 2px 8px rgba(139,92,246,0.2)',
+                                opacity: isOptimistic ? 0.7 : 1,
                               } : {
                                 backgroundColor: '#F8F7FF',
                                 color: '#1C1829',
@@ -413,7 +532,6 @@ export default function Messages() {
             {/* Input area */}
             <div className="px-4 py-3 flex items-end gap-2.5"
               style={{ borderTop: '1px solid #EDE9FE', backgroundColor: '#FAFAFF' }}>
-              {/* Your avatar */}
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mb-0.5"
                 style={{ backgroundColor: getColorForName(authorName) }}>
                 {getInitials(authorName)}

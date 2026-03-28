@@ -144,6 +144,18 @@ create index idx_messages_project     on messages(project_id);
 create index idx_messages_created     on messages(project_id, created_at);
 
 -- ──────────────────────────────────────────────────────────────
+-- Enable Realtime for messages table
+-- ──────────────────────────────────────────────────────────────
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    alter publication supabase_realtime add table messages;
+  end if;
+exception when others then
+  null;
+end $$;
+
+-- ──────────────────────────────────────────────────────────────
 -- Row-Level Security (permissive for anon key)
 -- ──────────────────────────────────────────────────────────────
 alter table projects        enable row level security;
