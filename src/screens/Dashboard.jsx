@@ -50,7 +50,7 @@ function ProgressRing({ value, size = 88, strokeWidth = 7, lightBg = false }) {
 function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick }) {
   return (
     <div
-      className="bg-white rounded-2xl p-5 transition-all duration-200 group"
+      className="bg-white rounded-2xl p-5 sm:p-6 transition-all duration-200 group"
       style={{
         border: '1px solid #EDE9FE',
         boxShadow: '0 1px 4px rgba(139,92,246,0.06), 0 4px 12px rgba(139,92,246,0.04)',
@@ -67,17 +67,17 @@ function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, o
       }}
     >
       {loading ? (
-        <><Skeleton className="h-8 w-16 mb-2" /><Skeleton className="h-3 w-20" /></>
+        <><Skeleton className="h-10 w-20 mb-2" /><Skeleton className="h-4 w-24" /></>
       ) : (
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-2xl font-extrabold tabular-nums" style={{ color: '#1C1829' }}>{value}</p>
-            <p className="text-xs font-semibold mt-1" style={{ color: '#6B6584' }}>{label}</p>
-            {sub && <p className="text-xs mt-0.5" style={{ color: '#A09BB8' }}>{sub}</p>}
+            <p className="text-3xl font-extrabold tabular-nums tracking-tight" style={{ color: '#1C1829' }}>{value}</p>
+            <p className="text-sm font-bold mt-1.5" style={{ color: '#4B5563' }}>{label}</p>
+            {sub && <p className="text-sm mt-1 leading-snug" style={{ color: '#6B7280' }}>{sub}</p>}
           </div>
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
             style={{ backgroundColor: iconBg }}>
-            <Icon size={18} style={{ color: iconColor }} strokeWidth={2.2} />
+            <Icon size={22} style={{ color: iconColor }} strokeWidth={2.2} />
           </div>
         </div>
       )}
@@ -156,37 +156,37 @@ function DeadlineSpotlight({ dueDate, rawDaysUntilDue, daysRemaining, memberCoun
 
   return (
     <div
-      className="rounded-xl pl-2 pr-3 py-1.5 w-full sm:w-auto sm:max-w-[min(100%,220px)] sm:ml-auto"
+      className="rounded-xl pl-2.5 pr-3 py-2 w-full sm:w-auto sm:max-w-[min(100%,260px)] sm:ml-auto"
       style={{
         background: bg,
         border,
         boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)',
       }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: overdue ? 'linear-gradient(135deg,#e11d48,#f97316)' : 'linear-gradient(135deg,#6d28d9,#db2777)' }}
         >
-          <CalendarDays size={14} color="white" strokeWidth={2.2} />
+          <CalendarDays size={16} color="white" strokeWidth={2.2} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             {overdue && (
-              <span className="text-base font-black leading-none" style={{ color: '#be123c' }}>Overdue</span>
+              <span className="text-lg font-black leading-none" style={{ color: '#be123c' }}>Overdue</span>
             )}
             {dueToday && !overdue && (
-              <span className="text-base font-black leading-none" style={{ color: '#b45309' }}>Due today</span>
+              <span className="text-lg font-black leading-none" style={{ color: '#b45309' }}>Due today</span>
             )}
             {!overdue && !dueToday && (
               <>
-                <span className="text-lg font-black tabular-nums leading-none" style={{ color: '#0f172a' }}>{daysRemaining}</span>
-                <span className="text-[10px] font-bold leading-none" style={{ color: '#64748b' }}>days left</span>
-                {urgent && <AlertTriangle size={11} className="flex-shrink-0" style={{ color: '#c2410c' }} strokeWidth={2.5} />}
+                <span className="text-2xl font-black tabular-nums leading-none" style={{ color: '#0f172a' }}>{daysRemaining}</span>
+                <span className="text-xs font-bold leading-none" style={{ color: '#64748b' }}>days left</span>
+                {urgent && <AlertTriangle size={13} className="flex-shrink-0" style={{ color: '#c2410c' }} strokeWidth={2.5} />}
               </>
             )}
           </div>
-          <p className="text-[10px] font-medium truncate mt-0.5" style={{ color: '#64748b' }}>
+          <p className="text-xs font-medium truncate mt-0.5" style={{ color: '#64748b' }}>
             {shortDate}
             {memberCount > 0 ? ` · ${memberCount} members` : ''}
           </p>
@@ -679,94 +679,104 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Hero: thin strip — title + tiny deadline only (stats live in main) ── */}
+      {/* ── Hero: purple through title + deadline + glass stats row (Overall / Tasks / Active / Rubric) ── */}
       <div className="w-full relative overflow-hidden"
-        style={{ background: 'linear-gradient(90deg, #5b21b6 0%, #6d28d9 50%, #7c3aed 100%)' }}>
-        <div className="absolute inset-0 pointer-events-none opacity-25"
+        style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #6d28d9 40%, #7c3aed 75%, #9333ea 100%)' }}>
+        <div className="absolute inset-0 pointer-events-none opacity-30"
           style={{
-            backgroundImage: 'radial-gradient(ellipse 70% 80% at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 55%)',
+            backgroundImage: 'radial-gradient(ellipse 80% 60% at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 50%)',
           }}
         />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-5 sm:pt-5 sm:pb-6 relative z-10">
           {loading ? (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="space-y-2 flex-1">
-                <div className="h-3 w-20 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                <div className="h-6 w-48 max-w-full rounded" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 w-24 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                  <div className="h-7 w-56 max-w-full rounded" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                </div>
+                <div className="h-16 rounded-xl w-full sm:w-56 sm:ml-auto" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
               </div>
-              <div className="h-14 rounded-lg w-full sm:w-52 sm:ml-auto" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
+              <div className="h-24 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-              <div className="flex-1 min-w-0">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full mb-1"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                  <Sparkles size={10} color="white" />
-                  <span className="text-[10px] font-bold text-white/95">{greeting}</span>
-                </span>
-                <h1 className="font-extrabold text-white leading-tight truncate"
-                  style={{ fontSize: 'clamp(1.05rem, 2.8vw, 1.35rem)', letterSpacing: '-0.03em' }}>
-                  {project?.assignment_title || project?.name || 'Group Project'}
-                </h1>
-                {project?.course_name && (
-                  <p className="text-xs font-semibold truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.82)' }}>
-                    {project.course_name}
-                  </p>
-                )}
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-1.5"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.22)' }}>
+                    <Sparkles size={12} color="white" />
+                    <span className="text-xs font-bold text-white">{greeting}</span>
+                  </span>
+                  <h1 className="font-extrabold text-white leading-tight truncate"
+                    style={{ fontSize: 'clamp(1.2rem, 3.2vw, 1.65rem)', letterSpacing: '-0.03em' }}>
+                    {project?.assignment_title || project?.name || 'Group Project'}
+                  </h1>
+                  {project?.course_name && (
+                    <p className="text-sm sm:text-base font-semibold truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                      {project.course_name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-full sm:w-auto sm:flex-shrink-0 sm:max-w-[240px]">
+                  <DeadlineSpotlight
+                    dueDate={project?.due_date}
+                    rawDaysUntilDue={rawDaysUntilDue}
+                    daysRemaining={daysRemaining}
+                    memberCount={members.length}
+                  />
+                </div>
               </div>
 
-              <div className="w-full sm:w-auto sm:flex-shrink-0 sm:max-w-[220px]">
-                <DeadlineSpotlight
-                  dueDate={project?.due_date}
-                  rawDaysUntilDue={rawDaysUntilDue}
-                  daysRemaining={daysRemaining}
-                  memberCount={members.length}
-                />
-              </div>
-            </div>
+              {tasks.length > 0 && (
+                <div
+                  className="mt-5 pt-5 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4 border-t"
+                  style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                >
+                  <div
+                    className="flex flex-row sm:flex-col items-center justify-center gap-2 sm:min-w-[112px] rounded-2xl px-4 py-3"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.14)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(255,255,255,0.28)',
+                    }}
+                  >
+                    <ProgressRing value={overallProgress} size={68} strokeWidth={6} />
+                    <p className="text-[11px] font-extrabold sm:mt-1 tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.9)' }}>Overall</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 flex-1 min-w-0">
+                    {[
+                      { label: 'Tasks', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#6ee7b7' },
+                      { label: 'Active', value: tasksInProgress, icon: TrendingUp, color: '#fcd34d' },
+                      { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: '#f9a8d4' },
+                    ].map(s => (
+                      <div
+                        key={s.label}
+                        className="flex items-center gap-2.5 rounded-2xl px-3 py-3 sm:py-3.5"
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.12)',
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255,255,255,0.22)',
+                        }}
+                      >
+                        <s.icon size={18} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
+                        <div className="min-w-0">
+                          <p className="text-lg sm:text-xl font-extrabold text-white leading-none tabular-nums">{s.value}</p>
+                          <p className="text-xs mt-1 font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>{s.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-12 pt-4 relative z-10">
-        {!loading && tasks.length > 0 && (
-          <div
-            className="rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-stretch gap-4"
-            style={{
-              border: '1px solid #EDE9FE',
-              backgroundColor: 'white',
-              boxShadow: '0 2px 12px rgba(139,92,246,0.06)',
-            }}
-          >
-            <div
-              className="flex flex-row sm:flex-col items-center justify-center gap-2 sm:min-w-[100px] rounded-xl px-3 py-2"
-              style={{ backgroundColor: '#FAFAFF', border: '1px solid #F5F3FF' }}
-            >
-              <ProgressRing value={overallProgress} size={56} strokeWidth={5} lightBg />
-              <p className="text-[9px] font-extrabold sm:mt-1 tracking-wider uppercase" style={{ color: '#6B6584' }}>Overall</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2 flex-1 min-w-0">
-              {[
-                { label: 'Tasks', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#059669' },
-                { label: 'Active', value: tasksInProgress, icon: TrendingUp, color: '#d97706' },
-                { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: '#db2777' },
-              ].map(s => (
-                <div
-                  key={s.label}
-                  className="flex items-center gap-2 rounded-xl px-2.5 py-2"
-                  style={{ backgroundColor: '#FAFAFF', border: '1px solid #F5F3FF' }}
-                >
-                  <s.icon size={14} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-extrabold leading-none tabular-nums" style={{ color: '#1C1829' }}>{s.value}</p>
-                    <p className="text-[9px] mt-0.5 font-semibold" style={{ color: '#6B7280' }}>{s.label}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-12 pt-6 relative z-10">
         {error && (
           <div className="bg-white rounded-2xl px-5 py-4 mb-5 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
@@ -794,13 +804,13 @@ export default function Dashboard() {
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate" style={{ color: '#1C1829' }}>{alerts[0].message}</p>
-              <p className="text-xs mt-0.5" style={{ color: '#A09BB8' }}>
+              <p className="text-base font-semibold leading-snug" style={{ color: '#1C1829' }}>{alerts[0].message}</p>
+              <p className="text-sm mt-1" style={{ color: '#6B7280' }}>
                 {alerts.length === 1 ? '1 alert needs attention' : `${alerts.length} alerts need attention`}
               </p>
             </div>
             <button onClick={() => navigate('/risk-alerts')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: 'white', boxShadow: '0 2px 8px rgba(139,92,246,0.25)' }}>
               View <ArrowRight size={12} />
             </button>
@@ -808,7 +818,7 @@ export default function Dashboard() {
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 mb-8">
           <StatCard loading={loading}
             value={rawDaysUntilDue !== null && rawDaysUntilDue < 0 ? 'Late' : daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
             sub={rawDaysUntilDue !== null && rawDaysUntilDue < 0
@@ -839,27 +849,27 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#F5F3FF]">
                 {/* Recent Tasks — left */}
                 <div className="min-w-0">
-                  <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-2"
+                  <div className="px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2"
                     style={{ borderBottom: '1px solid #F5F3FF' }}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
-                        <CheckCircle size={13} color="white" />
+                        <CheckCircle size={16} color="white" strokeWidth={2.2} />
                       </div>
                       <div className="min-w-0">
-                        <h2 className="text-sm font-extrabold truncate" style={{ color: '#1C1829' }}>Recent tasks</h2>
+                        <h2 className="text-base sm:text-lg font-extrabold truncate" style={{ color: '#1C1829' }}>Recent tasks</h2>
                         {!loading && tasks.length > 0 && (
-                          <p className="text-[11px] truncate" style={{ color: '#A09BB8' }}>{tasksDone}/{tasks.length} done</p>
+                          <p className="text-sm truncate font-medium" style={{ color: '#6B7280' }}>{tasksDone}/{tasks.length} done</p>
                         )}
                       </div>
                     </div>
-                    <button type="button" className="text-[11px] font-bold flex items-center gap-0.5 px-2.5 py-1 rounded-lg flex-shrink-0"
+                    <button type="button" className="text-sm font-bold flex items-center gap-0.5 px-3 py-1.5 rounded-xl flex-shrink-0"
                       style={{ color: '#8B5CF6', backgroundColor: '#F5F3FF' }}
                       onClick={() => navigate('/tasks')}>
-                      All <ChevronRight size={11} />
+                      All <ChevronRight size={14} />
                     </button>
                   </div>
-                  <div className="px-4 py-2 max-h-[280px] overflow-y-auto">
+                  <div className="px-4 py-3 max-h-[320px] overflow-y-auto">
                 {loading ? (
                   <div className="space-y-3 py-3">{[0,1,2].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div>
                 ) : tasks.length === 0 ? (
@@ -880,23 +890,23 @@ export default function Dashboard() {
                       const isOverdue = daysLeft !== null && daysLeft < 0 && !isDone;
                       return (
                         <div key={task.id}
-                          className="flex items-center gap-2.5 py-2.5 transition-all duration-200"
+                          className="flex items-center gap-3 py-3.5 transition-all duration-200"
                           style={{ borderBottom: idx < Math.min(tasks.length, 5) - 1 ? '1px solid #F5F3FF' : 'none' }}>
-                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: isDone ? '#ECFDF5' : isInProgress ? '#F5F3FF' : '#FAFAFA' }}>
-                            {isDone ? <CircleCheck size={14} style={{ color: '#0D9488' }} />
-                              : isInProgress ? <Timer size={14} style={{ color: '#8B5CF6' }} />
-                              : <Circle size={14} style={{ color: '#D8D3F0' }} />}
+                            {isDone ? <CircleCheck size={18} style={{ color: '#0D9488' }} />
+                              : isInProgress ? <Timer size={18} style={{ color: '#8B5CF6' }} />
+                              : <Circle size={18} style={{ color: '#D8D3F0' }} />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium block truncate"
-                              style={{ color: isDone ? '#A09BB8' : '#1C1829', textDecoration: isDone ? 'line-through' : 'none' }}>
+                            <span className="text-base font-semibold block leading-snug"
+                              style={{ color: isDone ? '#9CA3AF' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>
                               {task.title}
                             </span>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              {task.member_name && <span className="text-xs font-medium" style={{ color: '#6B7280' }}>{task.member_name}</span>}
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              {task.member_name && <span className="text-sm font-medium" style={{ color: '#4B5563' }}>{task.member_name}</span>}
                               {task.due_date && (
-                                <span className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-md"
+                                <span className="text-sm font-bold tabular-nums px-2.5 py-1 rounded-lg"
                                   style={{
                                     color: isOverdue ? '#991B1B' : daysLeft !== null && daysLeft <= 3 ? '#9A3412' : '#374151',
                                     backgroundColor: isOverdue ? '#FEE2E2' : daysLeft !== null && daysLeft <= 3 ? '#FFEDD5' : '#F3F4F6',
@@ -910,16 +920,16 @@ export default function Dashboard() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                               type="button"
-                              className="text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
+                              className="text-sm font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-all"
                               style={{ color: '#2563EB', border: '1px solid #BFDBFE', backgroundColor: '#EFF6FF' }}
                               onClick={(e) => { e.stopPropagation(); setReassignTask(task); }}
                             >
-                              <ArrowLeftRight size={11} /> Move
+                              <ArrowLeftRight size={14} /> Move
                             </button>
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md"
+                            <span className="text-sm font-bold px-2.5 py-1 rounded-lg"
                               style={{
-                                backgroundColor: isDone ? '#ECFDF5' : isInProgress ? '#F5F3FF' : '#FAFAFA',
-                                color: isDone ? '#0D9488' : isInProgress ? '#8B5CF6' : '#A09BB8',
+                                backgroundColor: isDone ? '#ECFDF5' : isInProgress ? '#F5F3FF' : '#F3F4F6',
+                                color: isDone ? '#0D9488' : isInProgress ? '#8B5CF6' : '#6B7280',
                               }}>
                               {isDone ? 'Done' : isInProgress ? 'Active' : 'Todo'}
                             </span>
@@ -935,23 +945,23 @@ export default function Dashboard() {
                 {/* Team progress — right column on lg+ */}
                 <div className="min-w-0 flex flex-col border-t lg:border-t-0"
                   style={{ borderColor: '#F5F3FF' }}>
-                  <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-2"
+                  <div className="px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2"
                     style={{ borderBottom: '1px solid #F5F3FF' }}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-                        <Users size={13} color="white" />
+                        <Users size={16} color="white" strokeWidth={2.2} />
                       </div>
-                      <h2 className="text-sm font-extrabold truncate" style={{ color: '#1C1829' }}>Team progress</h2>
+                      <h2 className="text-base sm:text-lg font-extrabold truncate" style={{ color: '#1C1829' }}>Team progress</h2>
                     </div>
                     {members.length > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
                         style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
                         {members.length} people
                       </span>
                     )}
                   </div>
-                  <div className="px-4 py-3 max-h-[280px] overflow-y-auto">
+                  <div className="px-4 py-3.5 max-h-[320px] overflow-y-auto">
                     {loading ? (
                       <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
                     ) : memberContribs.length === 0 ? (
@@ -961,21 +971,21 @@ export default function Dashboard() {
                     ) : (
                       <div className="space-y-3">
                         {memberContribs.map(({ id, name, avg, taskCount, color }) => (
-                          <div key={id} className="flex items-center gap-2.5">
+                          <div key={id} className="flex items-center gap-3">
                             <Avatar name={name} color={color} size="sm" />
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1 mb-1">
-                                <span className="text-xs font-bold truncate" style={{ color: '#1C1829' }}>{name}</span>
-                                <span className="text-[10px] font-bold tabular-nums flex-shrink-0" style={{ color }}>{avg}%</span>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="text-sm font-bold truncate" style={{ color: '#1C1829' }}>{name}</span>
+                                <span className="text-sm font-extrabold tabular-nums flex-shrink-0" style={{ color }}>{avg}%</span>
                               </div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-xs px-2 py-0.5 rounded-lg font-semibold"
                                   style={{ backgroundColor: `${color}12`, color }}>
                                   {taskCount} tasks
                                 </span>
                               </div>
-                              <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
-                                <div className="h-2 rounded-full transition-all duration-700"
+                              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
+                                <div className="h-2.5 rounded-full transition-all duration-700"
                                   style={{
                                     width: `${avg}%`,
                                     background: `linear-gradient(90deg,${color},${color}CC)`,
