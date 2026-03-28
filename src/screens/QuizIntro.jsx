@@ -1,91 +1,108 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, ArrowRight, Clock, Lock, HelpCircle, Sparkles } from 'lucide-react';
-import Button from '../components/ui/Button';
+import { ArrowRight } from 'lucide-react';
 
-const BADGES = [
-  { icon: HelpCircle, label: '5 questions', color: '#8B5CF6' },
-  { icon: Clock,      label: '3 minutes',   color: '#EC4899' },
-  { icon: Lock,       label: 'Private',     color: '#6366F1' },
-];
-
-const WHAT_WE_LEARN = [
-  { emoji: '🎯', text: 'Your preferred roles in a group' },
-  { emoji: '💪', text: 'Your skill confidence levels' },
-  { emoji: '📅', text: 'When you are available to work' },
+const STEPS = [
+  { emoji: '🎭', title: 'Your group role', desc: 'organiser, writer, researcher…' },
+  { emoji: '💪', title: 'Skill strengths', desc: 'what you feel most confident in' },
+  { emoji: '📅', title: 'Your availability', desc: 'when you can work on tasks' },
 ];
 
 export default function QuizIntro() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12"
-      style={{ backgroundColor: '#F8F7FF' }}>
-      <div className="w-full max-w-md bg-white rounded-3xl p-0 overflow-hidden"
-        style={{ border: '1px solid #EDE9FE', boxShadow: '0 8px 32px rgba(139,92,246,0.10)' }}>
-        {/* Gradient header */}
-        <div className="flex flex-col items-center pt-10 pb-8 px-8 relative"
-          style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FDF2F8 50%, #F5F3FF 100%)' }}>
-          {/* Decorative dots */}
-          <div className="absolute top-4 left-4 w-2 h-2 rounded-full" style={{ backgroundColor: '#EDE9FE' }} />
-          <div className="absolute top-8 right-6 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#FBCFE8' }} />
-          <div className="absolute bottom-6 left-8 w-1 h-1 rounded-full" style={{ backgroundColor: '#C4B5FD' }} />
-          
-          <div className="w-18 h-18 rounded-2xl flex items-center justify-center mb-5 relative"
-            style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)', boxShadow: '0 8px 24px rgba(139,92,246,0.35)' }}>
-            <Target size={30} color="white" strokeWidth={2} />
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: '2px solid white' }}>
-              <Sparkles size={10} color="white" />
-            </div>
-          </div>
-          <h1 className="text-xl font-extrabold text-center mb-2" style={{ color: '#1C1829' }}>
-            Let's learn how your group works best
-          </h1>
-          <p className="text-sm text-center leading-relaxed" style={{ color: '#6B6584' }}>
-            A quick quiz helps us divide the assignment fairly based on your strengths
-          </p>
-        </div>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-5 py-10"
+      style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}
+    >
+      <div className="w-full max-w-sm">
+        <div
+          className="bg-white rounded-3xl overflow-hidden"
+          style={{ boxShadow: '0 24px 64px rgba(139,92,246,0.18)', border: '1px solid rgba(196,181,253,0.4)' }}
+        >
+          {/* Hero */}
+          <div
+            className="relative px-8 pt-12 pb-10 text-center overflow-hidden"
+            style={{ background: 'linear-gradient(145deg, #7C3AED 0%, #DB2777 100%)' }}
+          >
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full opacity-20" style={{ backgroundColor: 'white' }} />
+            <div className="absolute -bottom-6 -left-8 w-28 h-28 rounded-full opacity-10" style={{ backgroundColor: 'white' }} />
+            <div className="absolute top-4 left-1/3 w-3 h-3 rounded-full opacity-30" style={{ backgroundColor: 'white' }} />
 
-        <div className="px-8 pb-8">
-          {/* Info badges */}
-          <div className="flex justify-center gap-2 mt-6 mb-6">
-            {BADGES.map(({ icon: Icon, label, color }) => (
-              <span key={label} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold"
-                style={{ backgroundColor: `${color}10`, border: `1px solid ${color}20`, color }}>
-                <Icon size={12} />
-                {label}
-              </span>
-            ))}
-          </div>
+            <div className="text-5xl mb-5 relative" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>🎯</div>
+            <h1 className="text-2xl font-black text-white mb-2.5" style={{ letterSpacing: '-0.03em' }}>
+              Quick team check-in
+            </h1>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              5 short questions so we can match everyone to the right tasks
+            </p>
 
-          {/* What we learn */}
-          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#FAFAFF', border: '1px solid #EDE9FE' }}>
-            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#8B5CF6' }}>What we'll learn</p>
-            <div className="space-y-2.5">
-              {WHAT_WE_LEARN.map(({ emoji, text }) => (
-                <div key={text} className="flex items-center gap-2.5">
-                  <span className="text-base">{emoji}</span>
-                  <span className="text-sm font-medium" style={{ color: '#1C1829' }}>{text}</span>
-                </div>
+            {/* Info pills */}
+            <div className="flex gap-2 justify-center mt-5 flex-wrap">
+              {['⚡ 3 minutes', '🔒 Private', '5 questions'].map(label => (
+                <span
+                  key={label}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-full"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', backdropFilter: 'blur(4px)' }}
+                >
+                  {label}
+                </span>
               ))}
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-medium" style={{ color: '#6B6584' }}>0 of 5 answered</span>
-              <span className="text-xs font-bold" style={{ color: '#8B5CF6' }}>0%</span>
-            </div>
-            <div className="w-full h-2.5 rounded-full" style={{ backgroundColor: '#EDE9FE' }}>
-              <div className="h-2.5 rounded-full transition-all duration-500" style={{ width: '0%', background: 'linear-gradient(90deg, #8B5CF6, #EC4899)' }} />
-            </div>
-          </div>
+          {/* Body */}
+          <div className="px-7 py-7">
+            <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#8B5CF6' }}>
+              What we'll learn about you
+            </p>
 
-          <Button variant="filled" onClick={() => navigate('/quiz/questions')} className="w-full justify-center gap-2 py-3.5 text-base">
-            Let's go <ArrowRight size={16} />
-          </Button>
+            <div className="space-y-3 mb-7">
+              {STEPS.map(({ emoji, title, desc }) => (
+                <div
+                  key={title}
+                  className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl"
+                  style={{ backgroundColor: '#FAFAFF', border: '1.5px solid #EDE9FE' }}
+                >
+                  <span className="text-2xl flex-shrink-0">{emoji}</span>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: '#1C1829' }}>{title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#A09BB8' }}>{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress preview */}
+            <div className="mb-6">
+              <div className="flex justify-between text-xs mb-2" style={{ color: '#A09BB8' }}>
+                <span>0 of 5 completed</span>
+                <span className="font-bold" style={{ color: '#8B5CF6' }}>0%</span>
+              </div>
+              <div className="w-full h-2 rounded-full" style={{ backgroundColor: '#EDE9FE' }}>
+                <div className="h-2 rounded-full w-0" style={{ background: 'linear-gradient(90deg, #8B5CF6, #EC4899)' }} />
+              </div>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => navigate('/quiz/questions')}
+              className="w-full py-4 rounded-2xl font-bold text-base text-white flex items-center justify-center gap-2.5 transition-all active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, #7C3AED 0%, #DB2777 100%)',
+                boxShadow: '0 8px 28px rgba(124,58,237,0.35)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(124,58,237,0.4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(124,58,237,0.35)'; }}
+            >
+              Start quiz <ArrowRight size={18} />
+            </button>
+
+            <p className="text-center text-xs mt-4" style={{ color: '#C4B5FD' }}>
+              Your answers are only shared with your group
+            </p>
+          </div>
         </div>
       </div>
     </div>

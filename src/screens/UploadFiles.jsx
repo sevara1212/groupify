@@ -208,10 +208,6 @@ export default function UploadFiles() {
       await new Promise(r => setTimeout(r, 1200));
       setExtractedCriteria(uploadData.criteria || []);
 
-      setUploadState('generating');
-      const quizRes = await fetch(`${API}/projects/${PROJECT_ID}/quiz/generate`, { method: 'POST' });
-      if (!quizRes.ok) throw new Error('quiz');
-
       setUploadState('done');
     } catch (err) {
       const isNetwork = err.message === 'Failed to fetch';
@@ -291,15 +287,15 @@ export default function UploadFiles() {
               <div className="rounded-xl px-5 py-4 mt-5 space-y-3"
                 style={{ backgroundColor: '#F5F3FF', border: '1px solid #EDE9FE' }}>
                 {uploadState === 'uploading' && <StatusRow icon={Loader2} color="#8B5CF6" text="Uploading…" spin />}
-                {['extracting','generating','done'].includes(uploadState) && (
+                {['extracting','done'].includes(uploadState) && (
                   <StatusRow
                     icon={uploadState === 'extracting' ? Loader2 : CheckCircle}
                     color={uploadState === 'extracting' ? '#EC4899' : '#0D9488'}
-                    text={uploadState === 'extracting' ? 'Reading rubric with AI…' : '✓ Rubric extracted'}
+                    text={uploadState === 'extracting' ? 'Reading rubric with AI…' : '✓ Criteria extracted'}
                     spin={uploadState === 'extracting'}
                   />
                 )}
-                {['generating','done'].includes(uploadState) && extractedCriteria.length > 0 && (
+                {uploadState === 'done' && extractedCriteria.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {extractedCriteria.map((c, i) => (
                       <span key={i} className="text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -309,8 +305,6 @@ export default function UploadFiles() {
                     ))}
                   </div>
                 )}
-                {uploadState === 'generating' && <StatusRow icon={Loader2} color="#EC4899" text="Generating quiz…" spin />}
-                {uploadState === 'done' && <StatusRow icon={CheckCircle} color="#0D9488" text="✓ Quiz ready for your team" />}
               </div>
             )}
 

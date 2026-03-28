@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
-import Button from '../components/ui/Button';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -12,7 +11,15 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const PERIOD_LABELS = ['Morning', 'Afternoon', 'Evening'];
 const PERIOD_ICONS = ['☀️', '🌤️', '🌙'];
 
-/* ─── Sub-components ──────────────────────────────── */
+const TYPE_META = {
+  multi_select_roles:  { icon: '🎭', label: 'Your Role',       hint: 'Pick up to two that feel like you.',         color: '#7C3AED' },
+  confidence_sliders:  { icon: '📊', label: 'Skill Check',     hint: 'Drag to show how confident you are (0–10).', color: '#2563EB' },
+  availability_grid:   { icon: '📅', label: 'Availability',    hint: 'Tap the slots that work for you.',           color: '#059669' },
+  preference_ranking:  { icon: '⚡', label: 'Your Preference', hint: 'Pick the one that fits best.',               color: '#D97706' },
+  text_input:          { icon: '💬', label: 'Your Thoughts',   hint: 'Just type whatever comes to mind.',          color: '#DB2777' },
+};
+
+/* ── Answer components ──────────────────────────────────────────────── */
 
 function MultiSelectRoles({ question, value = [], onChange }) {
   const toggle = (tag) => {
@@ -33,7 +40,7 @@ function MultiSelectRoles({ question, value = [], onChange }) {
             onClick={() => toggle(opt.skill_tag)}
             className="relative text-left rounded-2xl p-4 transition-all duration-200 focus:outline-none"
             style={{
-              border: sel ? '2px solid #8B5CF6' : '1.5px solid #EDE9FE',
+              border: sel ? '2px solid #7C3AED' : '1.5px solid #EDE9FE',
               backgroundColor: sel ? '#F5F3FF' : 'white',
               transform: sel ? 'scale(1.03) translateY(-1px)' : 'scale(1)',
               boxShadow: sel ? '0 6px 20px rgba(139,92,246,0.18)' : '0 1px 4px rgba(139,92,246,0.05)',
@@ -41,7 +48,7 @@ function MultiSelectRoles({ question, value = [], onChange }) {
           >
             {sel && (
               <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #DB2777)' }}>
                 <Check size={10} strokeWidth={3} color="white" />
               </span>
             )}
@@ -57,12 +64,11 @@ function MultiSelectRoles({ question, value = [], onChange }) {
 function ConfidenceSliders({ question, value = {}, onChange }) {
   const set = (tag, score) => onChange({ ...value, [tag]: Number(score) });
 
-  const getColor = (s) => {
-    if (s >= 8) return { main: '#7C3AED', gradient: 'linear-gradient(90deg, #8B5CF6, #7C3AED)', bg: '#F5F3FF', badge: '#6D28D9' };
-    if (s >= 6) return { main: '#8B5CF6', gradient: 'linear-gradient(90deg, #A78BFA, #8B5CF6)', bg: '#F5F3FF', badge: '#7C3AED' };
-    if (s >= 4) return { main: '#EC4899', gradient: 'linear-gradient(90deg, #F9A8D4, #EC4899)', bg: '#FDF2F8', badge: '#DB2777' };
-    if (s >= 2) return { main: '#F59E0B', gradient: 'linear-gradient(90deg, #FCD34D, #F59E0B)', bg: '#FFFBEB', badge: '#D97706' };
-    return { main: '#A09BB8', gradient: 'linear-gradient(90deg, #D8D3F0, #A09BB8)', bg: '#F5F5F5', badge: '#6B6584' };
+  const getColors = (s) => {
+    if (s >= 8) return { fill: 'linear-gradient(90deg, #7C3AED, #4F46E5)', bg: '#EDE9FE', badge: '#6D28D9', text: '#5B21B6' };
+    if (s >= 5) return { fill: 'linear-gradient(90deg, #8B5CF6, #A78BFA)', bg: '#F5F3FF', badge: '#7C3AED', text: '#6D28D9' };
+    if (s >= 3) return { fill: 'linear-gradient(90deg, #EC4899, #F9A8D4)', bg: '#FDF2F8', badge: '#DB2777', text: '#BE185D' };
+    return { fill: 'linear-gradient(90deg, #94A3B8, #CBD5E1)', bg: '#F8FAFC', badge: '#64748B', text: '#475569' };
   };
 
   const getLabel = (s) => {
@@ -79,8 +85,7 @@ function ConfidenceSliders({ question, value = {}, onChange }) {
       {(question.options || []).map((opt) => {
         const score = value[opt.skill_tag] ?? 5;
         const pct = score * 10;
-        const colors = getColor(score);
-        const label = getLabel(score);
+        const { fill, bg, badge, text } = getColors(score);
         return (
           <div key={opt.skill_tag} className="rounded-2xl p-4 transition-all duration-200"
             style={{ backgroundColor: colors.bg, border: `1.5px solid ${colors.main}25` }}>
@@ -92,7 +97,7 @@ function ConfidenceSliders({ question, value = {}, onChange }) {
                   {label}
                 </span>
                 <span className="text-sm font-black w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
-                  style={{ background: colors.gradient, boxShadow: `0 3px 10px ${colors.main}35` }}>
+                  style={{ background: fill, boxShadow: `0 3px 10px ${badge}35` }}>
                   {score}
                 </span>
               </div>
@@ -102,16 +107,15 @@ function ConfidenceSliders({ question, value = {}, onChange }) {
               <div className="absolute left-0 h-2.5 rounded-full transition-all duration-150"
                 style={{ width: `${pct}%`, background: colors.gradient, top: '50%', transform: 'translateY(-50%)', boxShadow: `0 2px 8px ${colors.main}30` }} />
               <div className="absolute transition-all duration-150 pointer-events-none"
-                style={{ left: `calc(${pct}% - 10px)`, top: '50%', transform: 'translateY(-50%)' }}>
-                <div className="w-5 h-5 rounded-full bg-white border-[3px] transition-all duration-150"
-                  style={{ borderColor: colors.main, boxShadow: `0 2px 8px ${colors.main}40, 0 0 0 4px ${colors.main}10` }} />
+                style={{ left: `calc(${pct}% - 11px)`, top: '50%', transform: 'translateY(-50%)' }}>
+                <div className="w-6 h-6 rounded-full bg-white"
+                  style={{ border: `3px solid ${badge}`, boxShadow: `0 2px 8px ${badge}50, 0 0 0 4px ${badge}15` }} />
               </div>
               <input
                 type="range" min={0} max={10} value={score}
                 onChange={e => set(opt.skill_tag, e.target.value)}
                 className="absolute inset-0 w-full cursor-pointer"
-                style={{ margin: 0, opacity: 0, height: 28, zIndex: 10 }}
-              />
+                style={{ margin: 0, opacity: 0, height: 32, zIndex: 10 }} />
             </div>
             <div className="flex justify-between mt-1.5 px-0.5">
               <span className="text-[10px] font-semibold" style={{ color: '#A09BB8' }}>0 · Beginner</span>
@@ -129,18 +133,17 @@ function AvailabilityGrid({ value = {}, onChange }) {
     const key = `${day}_${period}`;
     onChange({ ...value, [key]: !value[key] });
   };
-
   const selectedCount = Object.values(value).filter(Boolean).length;
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+      <div className="overflow-x-auto rounded-2xl" style={{ border: '1.5px solid #EDE9FE' }}>
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', minWidth: 340 }}>
           <thead>
-            <tr>
-              <th className="w-24 pb-3" />
+            <tr style={{ backgroundColor: '#F8F7FF' }}>
+              <th className="w-24 py-3 px-3" />
               {DAY_LABELS.map(d => (
-                <th key={d} className="pb-3 text-center">
+                <th key={d} className="py-3 text-center">
                   <span className="text-xs font-bold" style={{ color: '#6B6584' }}>{d}</span>
                 </th>
               ))}
@@ -148,8 +151,8 @@ function AvailabilityGrid({ value = {}, onChange }) {
           </thead>
           <tbody>
             {PERIODS.map((period, pi) => (
-              <tr key={period}>
-                <td className="pr-2 py-1.5">
+              <tr key={period} style={{ borderTop: '1px solid #EDE9FE' }}>
+                <td className="px-3 py-2.5">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{PERIOD_ICONS[pi]}</span>
                     <span className="text-xs font-semibold" style={{ color: '#6B6584' }}>{PERIOD_LABELS[pi]}</span>
@@ -158,7 +161,7 @@ function AvailabilityGrid({ value = {}, onChange }) {
                 {DAYS.map(day => {
                   const on = !!value[`${day}_${period}`];
                   return (
-                    <td key={day} className="py-1.5 text-center">
+                    <td key={day} className="py-2 text-center">
                       <button
                         onClick={() => toggle(day, period)}
                         className="w-9 h-9 rounded-xl transition-all duration-200 focus:outline-none mx-auto block"
@@ -180,13 +183,14 @@ function AvailabilityGrid({ value = {}, onChange }) {
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between mt-3">
+      <div className="flex items-center justify-between mt-3 px-1">
         <div className="flex items-center gap-4 text-xs" style={{ color: '#6B6584' }}>
           <span className="flex items-center gap-1.5">
             <span className="w-4 h-4 rounded-md inline-block" style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }} /> Selected
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-4 h-4 rounded-md inline-block" style={{ border: '1.5px solid #EDE9FE', backgroundColor: 'white' }} /> Available
+            <span className="w-4 h-4 rounded-md inline-block"
+              style={{ border: '1.5px solid #EDE9FE', backgroundColor: 'white' }} /> Available
           </span>
         </div>
         {selectedCount > 0 && (
@@ -342,6 +346,7 @@ export default function QuizQuestion() {
           <p className="text-base font-bold" style={{ color: '#6B6584' }}>Loading your quiz…</p>
           <style>{`@keyframes loadPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.93);opacity:0.8}}`}</style>
         </div>
+        <style>{`@keyframes quizPulse{0%,100%{transform:scale(1)}50%{transform:scale(0.92)}}`}</style>
       </div>
     );
   }
@@ -447,6 +452,42 @@ export default function QuizQuestion() {
                     boxShadow: '0 1px 6px rgba(139,92,246,0.3)',
                   }} />
               </div>
+              <span className="text-sm font-bold tabular-nums" style={{ color: '#7C3AED' }}>
+                {progress}%
+              </span>
+            </div>
+            <button
+              className="text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all"
+              style={{ color: '#A09BB8', backgroundColor: 'rgba(255,255,255,0.7)', border: '1px solid rgba(196,181,253,0.4)' }}
+              onClick={handleNext}
+            >
+              Skip
+            </button>
+          </div>
+
+          {/* Question card */}
+          <div className="bg-white rounded-3xl overflow-hidden"
+            style={{ boxShadow: '0 8px 32px rgba(124,58,237,0.12)', border: '1px solid rgba(196,181,253,0.3)' }}>
+
+            {/* Card header */}
+            <div className="px-7 pt-7 pb-5 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FDF2F8 100%)' }}>
+              <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-30"
+                style={{ backgroundColor: meta.color + '20' }} />
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="text-2xl">{meta.icon}</span>
+                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: meta.color + '15', color: meta.color }}>
+                  {meta.label}
+                </span>
+                <span className="ml-auto text-xs font-semibold" style={{ color: '#A09BB8' }}>
+                  Q{index + 1} of {total}
+                </span>
+              </div>
+              <h2 className="text-lg font-extrabold leading-snug mb-1.5" style={{ color: '#1C1829', letterSpacing: '-0.02em' }}>
+                {question.question_text}
+              </h2>
+              <p className="text-sm" style={{ color: '#6B6584' }}>{meta.hint}</p>
             </div>
 
             {/* Navigation */}

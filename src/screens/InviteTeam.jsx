@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2, Share2, MessageCircle, Link2, Check, Send, AlertTriangle, X } from 'lucide-react';
+
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -43,11 +44,11 @@ export default function InviteTeam() {
   const [joinCode, setJoinCode] = useState('');
   const [projectName, setProjectName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [sendingEmail, setSendingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: '' }
   const [sentEmails, setSentEmails] = useState([]);
+  const [quizGenState, setQuizGenState] = useState('generating'); // 'generating' | 'done' | 'error'
 
-  // Fetch project to get join code + name
+  // Fetch project to get join code + name, then generate quiz in background
   useEffect(() => {
     (async () => {
       try {
@@ -58,6 +59,14 @@ export default function InviteTeam() {
           setProjectName(proj.assignment_title || proj.name || '');
         }
       } catch { /* ignore */ }
+
+      // Generate quiz in background while user invites members
+      try {
+        const quizRes = await fetch(`${API}/projects/${projectId}/quiz/generate`, { method: 'POST' });
+        setQuizGenState(quizRes.ok ? 'done' : 'error');
+      } catch {
+        setQuizGenState('error');
+      }
     })();
   }, [projectId]);
 
@@ -117,7 +126,7 @@ export default function InviteTeam() {
     }
   };
 
-  const handleSendEmailInvite = async () => {
+  const handleSendEmailInvite = () => {
     const email = inviteEmail.trim();
     if (!email) return;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -129,8 +138,12 @@ export default function InviteTeam() {
       return;
     }
 
-    setSendingEmail(true);
-    setEmailStatus(null);
+    const projectLabel = projectName ? ` "${projectName}"` : '';
+    const subject = encodeURIComponent(`Join our Groupify project${projectLabel}!`);
+    const body = encodeURIComponent(
+      `Hey!\n\n${inviterName} has invited you to join a group project${projectLabel} on Groupify.\n\nClick the link below to join and take a quick quiz so tasks can be allocated fairly:\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`
+    );
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
 
     try {
       const { error } = await supabase.functions.invoke('send-invite', {
@@ -203,9 +216,25 @@ export default function InviteTeam() {
 
           <div className="bg-white rounded-2xl p-8" style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.06)' }}>
             <h1 className="text-xl font-extrabold mb-1" style={{ color: '#1C1829' }}>Invite Your Team</h1>
-            <p className="text-sm mb-7" style={{ color: '#6B6584' }}>
+            <p className="text-sm mb-5" style={{ color: '#6B6584' }}>
               Share the code or link below. Each member completes a short quiz so we can allocate tasks fairly.
             </p>
+
+            {/* Quiz generation status */}
+            {quizGenState === 'generating' && (
+              <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
+                style={{ backgroundColor: '#FDF2F8', border: '1px solid #FBCFE8' }}>
+                <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: '#EC4899' }} />
+                <span className="text-sm font-medium" style={{ color: '#BE185D' }}>Generating team quiz in the background…</span>
+              </div>
+            )}
+            {quizGenState === 'done' && (
+              <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
+                style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+                <CheckCircle size={14} className="flex-shrink-0" style={{ color: '#16A34A' }} />
+                <span className="text-sm font-medium" style={{ color: '#15803D' }}>Quiz ready — members can take it after joining!</span>
+              </div>
+            )}
 
             {/* Big join code */}
             {joinCode && (
@@ -295,13 +324,12 @@ export default function InviteTeam() {
                   style={{ borderColor: '#EDE9FE', color: '#1C1829', outline: 'none', backgroundColor: 'white' }}
                   onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.1)'; }}
                   onBlur={e => { e.target.style.borderColor = '#EDE9FE'; e.target.style.boxShadow = 'none'; }}
-                  disabled={sendingEmail}
                 />
-                <button onClick={handleSendEmailInvite} disabled={!inviteEmail.trim() || sendingEmail}
+                <button onClick={handleSendEmailInvite} disabled={!inviteEmail.trim()}
                   className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40"
                   style={{ background: 'linear-gradient(135deg, #2563EB 0%, #8B5CF6 100%)', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}>
-                  {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  {sendingEmail ? 'Sending…' : 'Send'}
+                  <Send size={14} />
+                  Send
                 </button>
               </div>
               {/* Status message */}
