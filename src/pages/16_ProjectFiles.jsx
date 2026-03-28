@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
-  FolderOpen, Plus, ExternalLink, Loader2, Trash2, Link2, Sparkles, Upload, FileText,
+  FolderOpen, Plus, ExternalLink, Loader2, Trash2, Link2, Upload, FileText,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabase';
@@ -27,6 +28,7 @@ function isMissingTableError(err) {
 
 export default function ProjectFiles() {
   const { projectId, currentMemberName } = useProject();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -37,7 +39,18 @@ export default function ProjectFiles() {
   const [uploadFolder, setUploadFolder] = useState('Shared');
   const [error, setError] = useState(null);
   const [schemaMissing, setSchemaMissing] = useState(false);
+  const [addMode, setAddMode] = useState(() => (searchParams.get('mode') === 'link' ? 'link' : 'upload'));
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'link') setAddMode('link');
+  }, [searchParams]);
+
+  const selectMode = (mode) => {
+    setAddMode(mode);
+    if (mode === 'link') setSearchParams({ mode: 'link' });
+    else setSearchParams({});
+  };
 
   const load = useCallback(async () => {
     if (!projectId) {
@@ -178,158 +191,154 @@ export default function ProjectFiles() {
         className="relative overflow-hidden flex-shrink-0"
         style={{ background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 45%, #DB2777 100%)' }}
       >
-        <div className="max-w-4xl mx-auto px-6 py-8 relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-            >
-              <FolderOpen size={22} color="white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-extrabold text-white" style={{ letterSpacing: '-0.02em' }}>
-                Project Files
-              </h1>
-              <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                Upload files for the team or paste links (Google Docs, Drive, etc.).
-              </p>
-            </div>
+        <div className="max-w-3xl mx-auto px-5 py-5 sm:py-6 relative z-10 flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+          >
+            <FolderOpen size={20} color="white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-extrabold text-white leading-tight" style={{ letterSpacing: '-0.02em' }}>
+              Project Files
+            </h1>
+            <p className="text-xs sm:text-sm mt-0.5 truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
+              Upload or link — same place for the team
+            </p>
           </div>
         </div>
       </div>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-6">
         {schemaMissing && (
-          <div className="rounded-2xl px-4 py-3 mb-6 text-sm" style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A', color: '#92400E' }}>
-            <p className="font-bold mb-1">Database table not found</p>
-            <p className="leading-relaxed">
-              Run the SQL in <code className="text-xs bg-white/80 px-1 rounded">supabase/migrations/20260329000000_project_files_storage.sql</code> in the
-              Supabase Dashboard → SQL Editor (or <code className="text-xs bg-white/80 px-1 rounded">supabase db push</code>), then refresh this page.
-            </p>
-          </div>
+          <p className="text-[11px] sm:text-xs mb-4 px-3 py-2 rounded-lg leading-relaxed" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E' }}>
+            <span className="font-semibold">Files table missing.</span>{' '}
+            Run <code className="px-1 rounded bg-white/70 text-[10px]">20260329000000_project_files_storage.sql</code> in Supabase SQL Editor, then refresh.
+          </p>
         )}
 
-        {/* Upload */}
         <div
-          className="bg-white rounded-2xl p-6 mb-6"
-          style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.08)' }}
+          className="bg-white rounded-2xl p-4 sm:p-5 mb-6"
+          style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 16px rgba(139,92,246,0.06)' }}
         >
-          <div className="flex items-center gap-2 mb-3">
-            <Upload size={16} style={{ color: '#7C3AED' }} />
-            <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Upload files</h2>
+          <div className="flex rounded-xl p-1 gap-1 mb-4" style={{ backgroundColor: '#F5F3FF' }}>
+            <button
+              type="button"
+              onClick={() => selectMode('upload')}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-all"
+              style={
+                addMode === 'upload'
+                  ? { backgroundColor: 'white', color: '#6D28D9', boxShadow: '0 1px 4px rgba(109,40,217,0.12)' }
+                  : { color: '#6B6584', backgroundColor: 'transparent' }
+              }
+            >
+              <Upload size={15} strokeWidth={2.2} /> Upload file
+            </button>
+            <button
+              type="button"
+              onClick={() => selectMode('link')}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-all"
+              style={
+                addMode === 'link'
+                  ? { backgroundColor: 'white', color: '#6D28D9', boxShadow: '0 1px 4px rgba(109,40,217,0.12)' }
+                  : { color: '#6B6584', backgroundColor: 'transparent' }
+              }
+            >
+              <Link2 size={15} strokeWidth={2.2} /> Add link
+            </button>
           </div>
-          <p className="text-xs mb-4" style={{ color: '#6B6580' }}>PDF, images, zip, etc. Max 50 MB per file. Stored in your Supabase project bucket <code>project-files</code>.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+
+          {addMode === 'upload' && (
             <div>
-              <label className="text-xs font-bold mb-1 block" style={{ color: '#6B6584' }}>Folder</label>
-              <select
-                value={uploadFolder}
-                onChange={(e) => setUploadFolder(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl text-sm font-medium border"
-                style={{ borderColor: '#E9D5FF', color: '#1C1829', backgroundColor: '#FAFAFF' }}
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                <div className="sm:w-36 flex-shrink-0">
+                  <label className="text-[10px] font-bold mb-1 block uppercase tracking-wide" style={{ color: '#6B6584' }}>Folder</label>
+                  <select
+                    value={uploadFolder}
+                    onChange={(e) => setUploadFolder(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-sm font-medium border"
+                    style={{ borderColor: '#E9D5FF', color: '#1C1829', backgroundColor: '#FAFAFF' }}
+                  >
+                    {FOLDERS.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
+                  <button
+                    type="button"
+                    disabled={uploading || schemaMissing}
+                    onClick={() => fileRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold border transition-all disabled:opacity-50"
+                    style={{ borderColor: '#C4B5FD', color: '#6D28D9', backgroundColor: '#FAF5FF' }}
+                  >
+                    {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {uploading ? 'Uploading…' : 'Choose files'}
+                  </button>
+                </div>
+              </div>
+              <div
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => { e.preventDefault(); uploadFiles(e.dataTransfer.files); }}
+                className="mt-2 rounded-lg py-3 text-center text-[11px] font-medium"
+                style={{ backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', color: '#64748B' }}
               >
-                {FOLDERS.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+                Or drop files here · max 50 MB each
+              </div>
             </div>
-            <div className="sm:col-span-2 flex items-end">
-              <input ref={fileRef} type="file" multiple className="hidden"
-                onChange={(e) => uploadFiles(e.target.files)} />
+          )}
+
+          {addMode === 'link' && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold mb-1 block uppercase tracking-wide" style={{ color: '#6B6584' }}>Folder</label>
+                  <select
+                    value={folder}
+                    onChange={(e) => setFolder(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-sm font-medium border"
+                    style={{ borderColor: '#E9D5FF', color: '#1C1829', backgroundColor: '#FAFAFF' }}
+                  >
+                    {FOLDERS.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold mb-1 block uppercase tracking-wide" style={{ color: '#6B6584' }}>Title</label>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Week 3 draft"
+                    className="w-full px-3 py-2 rounded-lg text-sm font-medium border"
+                    style={{ borderColor: '#E9D5FF', color: '#1C1829' }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold mb-1 block uppercase tracking-wide" style={{ color: '#6B6584' }}>URL</label>
+                <input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://docs.google.com/…"
+                  className="w-full px-3 py-2 rounded-lg text-sm font-medium border"
+                  style={{ borderColor: '#E9D5FF', color: '#1C1829' }}
+                />
+              </div>
+              {error && <p className="text-xs font-medium" style={{ color: '#B91C1C' }}>{error}</p>}
               <button
                 type="button"
-                disabled={uploading || schemaMissing}
-                onClick={() => fileRef.current?.click()}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border-2 border-dashed transition-all disabled:opacity-50"
-                style={{ borderColor: '#C4B5FD', color: '#6D28D9', backgroundColor: '#FAF5FF' }}
+                disabled={adding || schemaMissing || !title.trim() || !url.trim()}
+                onClick={addLink}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold text-white disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #DB2777)', boxShadow: '0 2px 10px rgba(124,58,237,0.3)' }}
               >
-                {uploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
-                {uploading ? 'Uploading…' : 'Choose files or drop below'}
+                {adding ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                Save link
               </button>
             </div>
-          </div>
-          <div
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onDrop={(e) => {
-              e.preventDefault();
-              uploadFiles(e.dataTransfer.files);
-            }}
-            className="rounded-xl py-8 text-center text-xs font-medium"
-            style={{ backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', color: '#64748B' }}
-          >
-            Drop files here
-          </div>
-        </div>
-
-        {/* Add link */}
-        <div
-          className="bg-white rounded-2xl p-6 mb-8"
-          style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.08)' }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={16} style={{ color: '#8B5CF6' }} />
-            <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>
-              Add a link instead
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="text-xs font-bold mb-1.5 block" style={{ color: '#6B6584' }}>
-                Folder
-              </label>
-              <select
-                value={folder}
-                onChange={(e) => setFolder(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl text-sm font-medium border"
-                style={{ borderColor: '#E9D5FF', color: '#1C1829', backgroundColor: '#FAFAFF' }}
-              >
-                {FOLDERS.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold mb-1.5 block" style={{ color: '#6B6584' }}>
-                Title
-              </label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Week 3 draft"
-                className="w-full px-4 py-3 rounded-xl text-sm font-medium border"
-                style={{ borderColor: '#E9D5FF', color: '#1C1829' }}
-              />
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="text-xs font-bold mb-1.5 block" style={{ color: '#6B6584' }}>
-              URL (Google Docs, Drive, Notion…)
-            </label>
-            <input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://docs.google.com/document/d/..."
-              className="w-full px-4 py-3 rounded-xl text-sm font-medium border"
-              style={{ borderColor: '#E9D5FF', color: '#1C1829' }}
-            />
-          </div>
-          {error && (
-            <p className="text-sm mb-3 font-medium" style={{ color: '#B91C1C' }}>
-              {error}
-            </p>
           )}
-          <button
-            type="button"
-            disabled={adding || schemaMissing || !title.trim() || !url.trim()}
-            onClick={addLink}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #7C3AED, #DB2777)', boxShadow: '0 4px 16px rgba(124,58,237,0.35)' }}
-          >
-            {adding ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-            Add link to folder
-          </button>
         </div>
 
         {loading ? (

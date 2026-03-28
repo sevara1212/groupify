@@ -4,7 +4,7 @@ import {
   AlertTriangle, CheckCircle, Calendar, CalendarDays, Loader2, Clock,
   Sparkles, ArrowRight, TrendingUp, Users, Target, ChevronRight,
   CircleCheck, Circle, Timer, Bell, MessageSquare, Shield,
-  FolderOpen, FileText, ChevronLeft, ArrowLeftRight, ExternalLink, X,
+  FolderOpen, FileText, ChevronLeft, ArrowLeftRight, ExternalLink, X, Link2, Upload,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabase';
@@ -402,7 +402,7 @@ function UpcomingDeadlines({ tasks, navigate }) {
         </div>
       </div>
       <div className="p-3 pt-2">
-        <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {upcoming.map(task => {
             const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / 86400000);
             const isOverdue = daysLeft < 0;
@@ -412,7 +412,7 @@ function UpcomingDeadlines({ tasks, navigate }) {
             return (
               <div
                 key={task.id}
-                className="snap-start flex-shrink-0 w-[min(100%,220px)] sm:w-52 rounded-xl p-2.5 flex flex-col justify-between min-h-[88px]"
+                className="rounded-xl p-2.5 flex flex-col justify-between min-h-[88px]"
                 style={{
                   backgroundColor: isOverdue ? '#FEF2F2' : isUrgent ? '#FFFBEB' : '#F8F7FF',
                   border: `1px solid ${isOverdue ? '#FECACA' : isUrgent ? '#FDE68A' : '#EDE9FE'}`,
@@ -488,7 +488,7 @@ function FilesPanel({ projectId, navigate }) {
           <div className="min-w-0">
             <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Project Files</h2>
             <p className="text-xs font-medium truncate" style={{ color: '#6B6584' }}>
-              {loading ? 'Loading…' : `${links.length} shared link${links.length !== 1 ? 's' : ''}`}
+              {loading ? 'Loading…' : `${links.length} item${links.length !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
@@ -507,19 +507,26 @@ function FilesPanel({ projectId, navigate }) {
             <Loader2 size={20} className="animate-spin" style={{ color: '#8B5CF6' }} />
           </div>
         ) : links.length === 0 ? (
-          <div className="text-center py-5 px-2 rounded-xl" style={{ backgroundColor: '#FAFAFF', border: '1px dashed #E9D5FF' }}>
-            <p className="text-sm font-semibold mb-1" style={{ color: '#374151' }}>No shared links yet</p>
-            <p className="text-xs mb-3 leading-relaxed" style={{ color: '#6B7280' }}>
-              Add Google Docs, Drive, or any link so everyone can open the same documents.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate('/files')}
-              className="text-xs font-bold px-4 py-2 rounded-xl text-white"
-              style={{ background: 'linear-gradient(135deg, #7C3AED, #DB2777)', boxShadow: '0 2px 8px rgba(124,58,237,0.25)' }}
-            >
-              Add a document link
-            </button>
+          <div className="py-4 px-3 rounded-xl" style={{ backgroundColor: '#FAFAFF', border: '1px dashed #E9D5FF' }}>
+            <p className="text-xs font-semibold mb-3 text-center" style={{ color: '#4B5563' }}>Nothing here yet</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/files')}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all"
+                style={{ borderColor: '#DDD6FE', color: '#6D28D9', backgroundColor: 'white' }}
+              >
+                <Upload size={14} strokeWidth={2.2} /> Upload
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/files?mode=link')}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all"
+                style={{ borderColor: '#DDD6FE', color: '#6D28D9', backgroundColor: 'white' }}
+              >
+                <Link2 size={14} strokeWidth={2.2} /> Add link
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -857,9 +864,9 @@ export default function Dashboard() {
             icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
         </div>
 
-        {/* Main: tasks+progress side-by-side (lg+), sidebar 5/12 */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 items-start">
-          <div className="xl:col-span-7 min-w-0">
+        {/* Tasks full width, then 3-column widget grid (no skinny sidebar) */}
+        <div className="space-y-6">
+          <div className="min-w-0">
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
               <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#F5F3FF]">
@@ -1019,89 +1026,87 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right: compact widgets */}
-          <div className="xl:col-span-5 space-y-4 min-w-0">
-            {/* Quick Actions — 2×2 compact */}
-            <div className="bg-white rounded-2xl overflow-hidden"
-              style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-              <div className="px-4 py-2.5" style={{ borderBottom: '1px solid #F5F3FF' }}>
-                <h2 className="text-xs font-extrabold" style={{ color: '#1C1829' }}>Quick actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
+            <div className="space-y-4 min-w-0">
+              <div className="bg-white rounded-2xl overflow-hidden"
+                style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+                <div className="px-4 py-2.5" style={{ borderBottom: '1px solid #F5F3FF' }}>
+                  <h2 className="text-xs font-extrabold" style={{ color: '#1C1829' }}>Quick actions</h2>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 gap-2">
+                  <QuickAction compact icon={CheckCircle} label="Tasks" desc="To-dos"
+                    color="#0D9488" onClick={() => navigate('/tasks')} />
+                  <QuickAction compact icon={Target} label="Rubric" desc="Coverage"
+                    color="#EC4899" onClick={() => navigate('/rubric')} />
+                  <QuickAction compact icon={Shield} label="Alerts" desc={`${alerts.length} active`}
+                    color="#D97706" onClick={() => navigate('/risk-alerts')} />
+                  <QuickAction compact icon={MessageSquare} label="Chat" desc="Messages"
+                    color="#6366F1" onClick={() => navigate('/messages')} />
+                </div>
               </div>
-              <div className="p-2.5 grid grid-cols-2 gap-2">
-                <QuickAction compact icon={CheckCircle} label="Tasks" desc="To-dos"
-                  color="#0D9488" onClick={() => navigate('/tasks')} />
-                <QuickAction compact icon={Target} label="Rubric" desc="Coverage"
-                  color="#EC4899" onClick={() => navigate('/rubric')} />
-                <QuickAction compact icon={Shield} label="Alerts" desc={`${alerts.length} active`}
-                  color="#D97706" onClick={() => navigate('/risk-alerts')} />
-                <QuickAction compact icon={MessageSquare} label="Chat" desc="Messages"
-                  color="#6366F1" onClick={() => navigate('/messages')} />
-              </div>
+              {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact />}
             </div>
 
-            {/* Deadline Calendar — compact */}
-            {!loading && <DeadlineCalendar tasks={tasks} projectDueDate={project?.due_date} compact />}
+            <div className="space-y-4 min-w-0">
+              {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
+              <FilesPanel projectId={projectId} navigate={navigate} />
+            </div>
 
-            {/* Upcoming Deadlines */}
-            {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
-
-            {/* Files Panel */}
-            <FilesPanel projectId={projectId} navigate={navigate} />
-
-            {/* Rubric Coverage */}
-            <div className="bg-white rounded-2xl overflow-hidden"
-              style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-              <div className="px-5 py-4" style={{ borderBottom: '1px solid #F5F3FF' }}>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Rubric Coverage</h2>
-                  <span className="text-sm font-extrabold" style={{ color: '#EC4899' }}>{rubricCoverage}%</span>
+            <div className="min-w-0 md:col-span-2 xl:col-span-1">
+              <div className="bg-white rounded-2xl overflow-hidden h-full"
+                style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
+                <div className="px-5 py-4" style={{ borderBottom: '1px solid #F5F3FF' }}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Rubric Coverage</h2>
+                    <span className="text-sm font-extrabold" style={{ color: '#EC4899' }}>{rubricCoverage}%</span>
+                  </div>
+                  {!loading && criteria.length > 0 && (
+                    <div className="w-full h-2.5 rounded-full mt-2 overflow-hidden" style={{ backgroundColor: '#E9D5FF' }}>
+                      <div className="h-2.5 rounded-full transition-all duration-700"
+                        style={{ width: `${rubricCoverage}%`, background: 'linear-gradient(90deg, #EC4899, #8B5CF6)' }} />
+                    </div>
+                  )}
                 </div>
-                {!loading && criteria.length > 0 && (
-                  <div className="w-full h-2.5 rounded-full mt-2 overflow-hidden" style={{ backgroundColor: '#E9D5FF' }}>
-                    <div className="h-2.5 rounded-full transition-all duration-700"
-                      style={{ width: `${rubricCoverage}%`, background: 'linear-gradient(90deg, #EC4899, #8B5CF6)' }} />
-                  </div>
-                )}
-              </div>
-              <div className="px-5 py-4">
-                {loading ? (
-                  <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-6 w-full" />)}</div>
-                ) : criteria.length === 0 ? (
-                  <p className="text-xs text-center py-4" style={{ color: '#A09BB8' }}>No rubric criteria yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {criteria.slice(0, 5).map(c => {
-                      const isCovered = c.coverage_status === 'covered';
-                      const isIP = c.coverage_status === 'in_progress';
-                      return (
-                        <div key={c.id} className="flex items-center gap-2.5">
-                          <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: isCovered ? '#ECFDF5' : isIP ? '#F5F3FF' : '#FAFAFA' }}>
-                            {isCovered ? <CircleCheck size={12} style={{ color: '#0D9488' }} />
-                              : isIP ? <TrendingUp size={12} style={{ color: '#8B5CF6' }} />
-                              : <Circle size={12} style={{ color: '#D8D3F0' }} />}
-                          </div>
-                          <span className="text-xs font-medium flex-1 truncate"
-                            style={{ color: isCovered ? '#0D9488' : '#1C1829' }}>
-                            {c.name}
-                          </span>
-                          {c.weight_percent != null && (
-                            <span className="text-xs font-semibold tabular-nums" style={{ color: '#A09BB8' }}>
-                              {c.weight_percent}%
+                <div className="px-5 py-4">
+                  {loading ? (
+                    <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-6 w-full" />)}</div>
+                  ) : criteria.length === 0 ? (
+                    <p className="text-xs text-center py-4" style={{ color: '#A09BB8' }}>No rubric criteria yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {criteria.slice(0, 5).map(c => {
+                        const isCovered = c.coverage_status === 'covered';
+                        const isIP = c.coverage_status === 'in_progress';
+                        return (
+                          <div key={c.id} className="flex items-center gap-2.5">
+                            <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: isCovered ? '#ECFDF5' : isIP ? '#F5F3FF' : '#FAFAFA' }}>
+                              {isCovered ? <CircleCheck size={12} style={{ color: '#0D9488' }} />
+                                : isIP ? <TrendingUp size={12} style={{ color: '#8B5CF6' }} />
+                                : <Circle size={12} style={{ color: '#D8D3F0' }} />}
+                            </div>
+                            <span className="text-xs font-medium flex-1 truncate"
+                              style={{ color: isCovered ? '#0D9488' : '#1C1829' }}>
+                              {c.name}
                             </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {criteria.length > 5 && (
-                      <button className="text-xs font-semibold flex items-center gap-1 mt-1 transition-colors"
-                        style={{ color: '#8B5CF6' }}
-                        onClick={() => navigate('/rubric')}>
-                        +{criteria.length - 5} more <ChevronRight size={10} />
-                      </button>
-                    )}
-                  </div>
-                )}
+                            {c.weight_percent != null && (
+                              <span className="text-xs font-semibold tabular-nums" style={{ color: '#A09BB8' }}>
+                                {c.weight_percent}%
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {criteria.length > 5 && (
+                        <button className="text-xs font-semibold flex items-center gap-1 mt-1 transition-colors"
+                          style={{ color: '#8B5CF6' }}
+                          onClick={() => navigate('/rubric')}>
+                          +{criteria.length - 5} more <ChevronRight size={10} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
