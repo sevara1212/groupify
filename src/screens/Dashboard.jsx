@@ -24,64 +24,47 @@ function Skeleton({ className = '' }) {
 }
 
 /* ─── Stat Card ───────────────────────────────────── */
-function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick, variant = 'default' }) {
-  const hero = variant === 'hero';
-  const boxStyle = hero
-    ? {
-        backgroundColor: 'rgba(255,255,255,0.12)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.22)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        cursor: onClick ? 'pointer' : 'default',
-      }
-    : {
+function StatCard({ label, value, sub, icon: Icon, iconColor, iconBg, loading, onClick, compact }) {
+  const tight = !!compact;
+  return (
+    <div
+      className={`bg-white rounded-2xl sm:rounded-3xl transition-all duration-200 group ${tight ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}
+      style={{
         border: '1px solid #EDE9FE',
         boxShadow: '0 2px 8px rgba(139,92,246,0.07), 0 8px 24px rgba(139,92,246,0.05)',
         cursor: onClick ? 'pointer' : 'default',
-      };
-  return (
-    <div
-      className={`${hero ? '' : 'bg-white'} rounded-2xl sm:rounded-3xl transition-all duration-200 group ${hero ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}
-      style={boxStyle}
+      }}
       onClick={onClick}
       onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = hero
-          ? '0 8px 24px rgba(0,0,0,0.12)'
-          : '0 8px 24px rgba(139,92,246,0.12)';
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(139,92,246,0.12)';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = hero
-          ? '0 2px 12px rgba(0,0,0,0.08)'
-          : '0 1px 4px rgba(139,92,246,0.06), 0 4px 12px rgba(139,92,246,0.04)';
+        e.currentTarget.style.boxShadow = '0 1px 4px rgba(139,92,246,0.06), 0 4px 12px rgba(139,92,246,0.04)';
       }}
     >
       {loading ? (
-        hero ? (
-          <><div className="h-8 w-16 mb-2 rounded skeleton-light" /><div className="h-3 w-24 rounded skeleton-light" /></>
-        ) : (
-          <><Skeleton className="h-10 w-20 mb-2" /><Skeleton className="h-4 w-24" /></>
-        )
+        <><Skeleton className="h-8 w-20 mb-2" /><Skeleton className="h-3 w-24" /></>
       ) : (
         <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0">
             <p
-              className={`font-extrabold tabular-nums tracking-tight leading-none ${hero ? 'text-2xl sm:text-3xl' : 'text-4xl'}`}
-              style={{ color: hero ? '#fff' : '#1C1829' }}
+              className={`font-extrabold tabular-nums tracking-tight leading-none ${tight ? 'text-2xl sm:text-3xl' : 'text-4xl'}`}
+              style={{ color: '#1C1829' }}
             >
               {value}
             </p>
-            <p className={`font-bold mt-1.5 ${hero ? 'text-xs sm:text-sm' : 'text-base mt-2'}`} style={{ color: hero ? 'rgba(255,255,255,0.88)' : '#4B5563' }}>{label}</p>
+            <p className={`font-bold ${tight ? 'text-xs sm:text-sm mt-1.5' : 'text-base mt-2'}`} style={{ color: '#4B5563' }}>{label}</p>
             {sub && (
-              <p className={`mt-1 leading-snug ${hero ? 'text-[11px] sm:text-xs' : 'text-sm sm:text-base mt-1.5'}`} style={{ color: hero ? 'rgba(255,255,255,0.72)' : '#6B7280' }}>{sub}</p>
+              <p className={`mt-1 leading-snug ${tight ? 'text-[11px] sm:text-xs' : 'text-sm sm:text-base mt-1.5'}`} style={{ color: '#6B7280' }}>{sub}</p>
             )}
           </div>
           <div
-            className={`${hero ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-14 h-14'} rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
-            style={{ backgroundColor: hero ? 'rgba(255,255,255,0.2)' : iconBg }}
+            className={`${tight ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-14 h-14'} rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
+            style={{ backgroundColor: iconBg }}
           >
-            <Icon size={hero ? 20 : 24} style={{ color: hero ? '#fff' : iconColor }} strokeWidth={2.2} />
+            <Icon size={tight ? 20 : 24} style={{ color: iconColor }} strokeWidth={2.2} />
           </div>
         </div>
       )}
@@ -291,20 +274,45 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false, large = fals
             const hasTasks = dayTasks.length > 0;
             const allDone = hasTasks && dayTasks.every(t => t.status === 'done');
             const isPast = cell.dateStr < todayStr;
+            const isFuture = cell.dateStr > todayStr;
             const hasOverdue = hasTasks && isPast && !allDone;
+            const hasOpenFuture = hasTasks && isFuture && !allDone;
+            const [cy, cm, cd] = cell.dateStr.split('-').map(Number);
+            const cellLocal = new Date(cy, cm - 1, cd);
+            const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const daysUntilCell = Math.round((cellLocal - todayLocal) / 86400000);
+            const dueSoon = hasOpenFuture && daysUntilCell > 0 && daysUntilCell <= 3;
 
             let bg = 'transparent';
             let textColor = '#1C1829';
             let dotColor = null;
 
-            if (isToday) { bg = '#8B5CF6'; textColor = 'white'; }
-            else if (isProjectDue) { bg = '#FDF2F8'; textColor = '#BE185D'; }
-            else if (hasOverdue) { bg = '#FEF2F2'; textColor = '#EF4444'; }
-            else if (isPast) { textColor = '#D1D5DB'; }
+            if (isToday) {
+              bg = '#8B5CF6';
+              textColor = 'white';
+            } else if (isProjectDue) {
+              bg = isPast ? '#FCE7F3' : '#FDF2F8';
+              textColor = '#BE185D';
+            } else if (hasOverdue) {
+              bg = '#FEF2F2';
+              textColor = '#B91C1C';
+            } else if (dueSoon) {
+              bg = '#FFFBEB';
+              textColor = '#9A3412';
+            } else if (hasOpenFuture) {
+              bg = '#F5F3FF';
+              textColor = '#5B21B6';
+            } else if (isPast && !hasTasks) {
+              textColor = '#D1D5DB';
+            } else if (isPast && allDone) {
+              textColor = '#9CA3AF';
+            }
 
             if (hasTasks && !isToday) {
               if (allDone) dotColor = '#10B981';
               else if (hasOverdue) dotColor = '#EF4444';
+              else if (dueSoon) dotColor = '#D97706';
+              else if (hasOpenFuture) dotColor = '#7C3AED';
               else dotColor = '#8B5CF6';
             }
 
@@ -312,7 +320,13 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false, large = fals
               <div key={cell.dateStr}
                 className={`${ch} rounded-lg flex flex-col items-center justify-center relative transition-all`}
                 style={{ backgroundColor: bg }}
-                title={hasTasks ? `${dayTasks.length} task${dayTasks.length !== 1 ? 's' : ''}: ${dayTasks.map(t => t.title).join(', ')}` : isProjectDue ? 'Project due date' : ''}>
+                title={
+                  hasTasks
+                    ? `${dayTasks.length} task${dayTasks.length !== 1 ? 's' : ''}: ${dayTasks.map(t => t.title).join(', ')}`
+                    : isProjectDue
+                      ? (isFuture ? 'Project due (upcoming)' : 'Project due date')
+                      : ''
+                }>
                 <span className={`${fs} font-semibold`} style={{ color: textColor }}>
                   {cell.day}
                 </span>
@@ -334,8 +348,12 @@ function DeadlineCalendar({ tasks, projectDueDate, compact = false, large = fals
         {/* Legend */}
         <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 ${compact ? 'mt-1.5 pt-1.5' : useLarge ? 'mt-4 pt-3' : 'mt-3 pt-2'}`} style={{ borderTop: '1px solid #F5F3FF' }}>
           <div className="flex items-center gap-1.5">
-            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#8B5CF6' }} />
-            <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Upcoming</span>
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#7C3AED' }} />
+            <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Scheduled</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#F59E0B' }} />
+            <span className={compact ? 'text-[9px]' : useLarge ? 'text-xs sm:text-sm' : 'text-xs'} style={{ color: '#A09BB8' }}>Due soon</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className={`rounded-full ${compact ? 'w-1.5 h-1.5' : useLarge ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} style={{ backgroundColor: '#10B981' }} />
@@ -713,7 +731,14 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-2">
                 {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="h-[92px] sm:h-[100px] rounded-2xl skeleton-light" />
+                  <div
+                    key={i}
+                    className="h-[92px] sm:h-[100px] rounded-2xl bg-white p-4 flex flex-col justify-center"
+                    style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 8px rgba(139,92,246,0.07)' }}
+                  >
+                    <Skeleton className="h-7 w-16 mb-2" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
                 ))}
               </div>
             </div>
@@ -751,23 +776,23 @@ export default function Dashboard() {
                 className="mt-6 pt-6 border-t grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
                 style={{ borderColor: 'rgba(255,255,255,0.2)' }}
               >
-                <StatCard variant="hero" loading={false}
+                <StatCard compact loading={false}
                   value={rawDaysUntilDue !== null && rawDaysUntilDue < 0 ? 'Late' : daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
                   sub={rawDaysUntilDue !== null && rawDaysUntilDue < 0
                     ? `Was ${new Date(project?.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
                     : daysRemaining !== null && daysRemaining <= 3 ? 'Due soon' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : undefined)}
                   icon={Clock} iconColor="#8B5CF6" iconBg="#F5F3FF" />
-                <StatCard variant="hero" loading={false}
+                <StatCard compact loading={false}
                   value={`${tasksDone}/${tasks.length}`} label="Tasks Done"
                   sub={tasksInProgress > 0 ? `${tasksInProgress} in progress` : 'Tap to manage'}
                   icon={CheckCircle} iconColor="#0D9488" iconBg="#ECFDF5"
                   onClick={() => navigate('/tasks')} />
-                <StatCard variant="hero" loading={false}
+                <StatCard compact loading={false}
                   value={`${rubricCoverage}%`} label="Rubric Covered"
                   sub={criteria.length > 0 ? `${coveredCriteria} of ${criteria.length} criteria` : undefined}
                   icon={Target} iconColor="#EC4899" iconBg="#FDF2F8"
                   onClick={() => navigate('/rubric')} />
-                <StatCard variant="hero" loading={false}
+                <StatCard compact loading={false}
                   value={members.length || '—'} label="Team Members"
                   sub={members.length > 0 ? `${members.filter(m => m.quiz_done).length} quiz done` : 'Join via code'}
                   icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
@@ -1148,7 +1173,6 @@ export default function Dashboard() {
         @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
         .shadow-card{border:1px solid #EDE9FE;box-shadow:0 2px 12px rgba(139,92,246,0.07),0 4px 20px rgba(15,23,42,0.04)}
         .skeleton{background:linear-gradient(90deg,#EDE9FE 25%,#F5F3FF 50%,#EDE9FE 75%);background-size:200% 100%;border-radius:8px;animation:shimmer 1.5s infinite}
-        .skeleton-light{background:linear-gradient(90deg,rgba(255,255,255,0.12) 25%,rgba(255,255,255,0.22) 50%,rgba(255,255,255,0.12) 75%);background-size:200% 100%;border-radius:12px;animation:shimmer 1.5s infinite}
         @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
       `}</style>
     </div>
