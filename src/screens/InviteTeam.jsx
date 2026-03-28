@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Mail, CheckCircle, Clock, ArrowRight, Bell, UserPlus, Loader2, Share2, MessageCircle, Link2, Check, Send, AlertTriangle, X } from 'lucide-react';
+
 import StepProgressBar from '../components/ui/StepProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
@@ -43,7 +44,6 @@ export default function InviteTeam() {
   const [joinCode, setJoinCode] = useState('');
   const [projectName, setProjectName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [sendingEmail, setSendingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: '' }
   const [sentEmails, setSentEmails] = useState([]);
   const [quizGenState, setQuizGenState] = useState('generating'); // 'generating' | 'done' | 'error'
@@ -126,10 +126,9 @@ export default function InviteTeam() {
     }
   };
 
-  const handleSendEmailInvite = async () => {
+  const handleSendEmailInvite = () => {
     const email = inviteEmail.trim();
     if (!email) return;
-    // Basic validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailStatus({ type: 'error', message: 'Please enter a valid email address.' });
       return;
@@ -139,42 +138,17 @@ export default function InviteTeam() {
       return;
     }
 
-    setSendingEmail(true);
-    setEmailStatus(null);
+    const projectLabel = projectName ? ` "${projectName}"` : '';
+    const subject = encodeURIComponent(`Join our Groupify project${projectLabel}!`);
+    const body = encodeURIComponent(
+      `Hey!\n\n${inviterName} has invited you to join a group project${projectLabel} on Groupify.\n\nClick the link below to join and take a quick quiz so tasks can be allocated fairly:\n\n${joinUrl}${joinCode ? `\n\nOr enter the join code: ${joinCode}` : ''}\n\nSee you there!`
+    );
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
 
-    try {
-      // Use Supabase magic link — sends an email with a link that auto-logs in
-      // and redirects to the join page with the project code
-      const redirectUrl = joinCode
-        ? `${window.location.origin}/join-group?code=${joinCode}`
-        : `${window.location.origin}/join-group?project=${projectId}`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectUrl,
-          shouldCreateUser: true,
-          data: {
-            invited_to_project: projectName,
-            invited_by: inviterName,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      setSentEmails(prev => [...prev, email.toLowerCase()]);
-      setEmailStatus({ type: 'success', message: `Invite sent to ${email}! They'll get a link to join.` });
-      setInviteEmail('');
-      setTimeout(() => setEmailStatus(null), 5000);
-    } catch (err) {
-      setEmailStatus({
-        type: 'error',
-        message: err.message || 'Could not send invite email.',
-      });
-    } finally {
-      setSendingEmail(false);
-    }
+    setSentEmails(prev => [...prev, email.toLowerCase()]);
+    setEmailStatus({ type: 'success', message: `Email opened for ${email}! Check your mail app.` });
+    setInviteEmail('');
+    setTimeout(() => setEmailStatus(null), 5000);
   };
 
   const handleAddMember = async () => {
@@ -328,13 +302,12 @@ export default function InviteTeam() {
                   style={{ borderColor: '#EDE9FE', color: '#1C1829', outline: 'none', backgroundColor: 'white' }}
                   onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.1)'; }}
                   onBlur={e => { e.target.style.borderColor = '#EDE9FE'; e.target.style.boxShadow = 'none'; }}
-                  disabled={sendingEmail}
                 />
-                <button onClick={handleSendEmailInvite} disabled={!inviteEmail.trim() || sendingEmail}
+                <button onClick={handleSendEmailInvite} disabled={!inviteEmail.trim()}
                   className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40"
                   style={{ background: 'linear-gradient(135deg, #2563EB 0%, #8B5CF6 100%)', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}>
-                  {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  {sendingEmail ? 'Sending…' : 'Send'}
+                  <Send size={14} />
+                  Send
                 </button>
               </div>
               {/* Status message */}
