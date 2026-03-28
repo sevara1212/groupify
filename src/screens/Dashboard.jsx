@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  AlertTriangle, CheckCircle, Calendar, Loader2, Clock,
+  AlertTriangle, CheckCircle, Calendar, CalendarDays, Loader2, Clock,
   Sparkles, ArrowRight, TrendingUp, Users, Target, ChevronRight,
   CircleCheck, Circle, Timer, Bell, MessageSquare, Shield,
   FolderOpen, FileText, ChevronLeft, ArrowLeftRight, ExternalLink, X,
@@ -113,6 +113,139 @@ function QuickAction({ icon: Icon, label, desc, onClick, color, compact }) {
         <ChevronRight size={14} style={{ color: '#C4B5FD' }} className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
       )}
     </button>
+  );
+}
+
+/* ─── Hero deadline spotlight (high contrast on gradient) ─── */
+function DeadlineSpotlight({ dueDate, rawDaysUntilDue, daysRemaining, memberCount }) {
+  if (!dueDate) {
+    return (
+      <div
+        className="rounded-3xl px-6 py-5 w-full max-w-md xl:max-w-none xl:ml-auto"
+        style={{
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.12) 100%)',
+          border: '1px solid rgba(255,255,255,0.35)',
+          boxShadow: '0 24px 48px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.4)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
+        <p className="text-sm font-bold text-white/90">No project due date</p>
+        <p className="text-xs mt-1 font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          Add a due date in project settings so everyone sees the countdown.
+        </p>
+      </div>
+    );
+  }
+
+  const dateObj = new Date(dueDate);
+  const longDate = dateObj.toLocaleDateString('en-AU', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const shortDate = dateObj.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const overdue = rawDaysUntilDue < 0;
+  const dueToday = rawDaysUntilDue === 0;
+  const urgent = !overdue && !dueToday && daysRemaining <= 3;
+
+  let border = '1px solid rgba(226,232,240,0.95)';
+  let bg = 'linear-gradient(165deg, #ffffff 0%, #f8fafc 55%, #f5f3ff 100%)';
+  if (overdue) {
+    border = '2px solid #fecaca';
+    bg = 'linear-gradient(165deg, #fff1f2 0%, #ffffff 100%)';
+  } else if (dueToday) {
+    border = '2px solid #fcd34d';
+    bg = 'linear-gradient(165deg, #fffbeb 0%, #ffffff 100%)';
+  } else if (urgent) {
+    border = '2px solid #fde68a';
+    bg = 'linear-gradient(165deg, #fffbeb 0%, #faf5ff 100%)';
+  }
+
+  return (
+    <div
+      className="rounded-3xl px-6 py-6 sm:px-7 sm:py-7 w-full max-w-md xl:max-w-none xl:ml-auto"
+      style={{
+        background: bg,
+        border,
+        boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255,255,255,0.8) inset',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
+            style={{ background: overdue ? 'linear-gradient(135deg,#e11d48,#f97316)' : 'linear-gradient(135deg,#6d28d9,#db2777)' }}
+          >
+            <CalendarDays size={22} color="white" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em]" style={{ color: overdue ? '#be123c' : '#6d28d9' }}>
+              Project deadline
+            </p>
+            <p className="text-xs font-semibold truncate mt-0.5" style={{ color: '#64748b' }}>{shortDate}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        {overdue && (
+          <>
+            <p className="text-4xl sm:text-5xl font-black tracking-tight leading-none" style={{ color: '#be123c' }}>
+              Overdue
+            </p>
+            <p className="text-sm font-semibold mt-2" style={{ color: '#475569' }}>
+              Was due {longDate}
+            </p>
+          </>
+        )}
+        {dueToday && !overdue && (
+          <>
+            <p className="text-4xl sm:text-5xl font-black tracking-tight leading-none" style={{ color: '#b45309' }}>
+              Due today
+            </p>
+            <p className="text-sm font-semibold mt-2" style={{ color: '#475569' }}>
+              {longDate}
+            </p>
+          </>
+        )}
+        {!overdue && !dueToday && (
+          <>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span
+                className="text-6xl sm:text-7xl font-black tabular-nums leading-none tracking-tighter"
+                style={{ color: '#0f172a' }}
+              >
+                {daysRemaining}
+              </span>
+              <span className="text-lg sm:text-xl font-extrabold pb-1" style={{ color: '#475569' }}>
+                {daysRemaining === 1 ? 'day left' : 'days left'}
+              </span>
+            </div>
+            <p className="text-base sm:text-lg font-semibold mt-3 pt-4 border-t" style={{ color: '#334155', borderColor: 'rgba(148,163,184,0.45)' }}>
+              {longDate}
+            </p>
+            {urgent && (
+              <p className="text-xs font-bold mt-2 flex items-center gap-1.5" style={{ color: '#c2410c' }}>
+                <AlertTriangle size={14} strokeWidth={2.5} /> Due soon — prioritise remaining work
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {memberCount > 0 && (
+        <div
+          className="mt-5 pt-4 flex items-center gap-2 border-t"
+          style={{ borderColor: 'rgba(148,163,184,0.35)' }}
+        >
+          <Users size={16} style={{ color: '#64748b' }} strokeWidth={2.2} />
+          <span className="text-sm font-bold" style={{ color: '#475569' }}>
+            {memberCount} team member{memberCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -549,9 +682,10 @@ export default function Dashboard() {
   }, [fetchRisks]);
 
   const today = new Date();
-  const daysRemaining = project?.due_date
-    ? Math.max(0, Math.ceil((new Date(project.due_date) - today) / 86_400_000))
+  const rawDaysUntilDue = project?.due_date
+    ? Math.ceil((new Date(project.due_date) - today) / 86_400_000)
     : null;
+  const daysRemaining = rawDaysUntilDue !== null ? Math.max(0, rawDaysUntilDue) : null;
   const tasksDone = tasks.filter(t => t.status === 'done').length;
   const tasksInProgress = tasks.filter(t => t.status === 'in_progress').length;
   const coveredCriteria = criteria.filter(c => c.coverage_status === 'covered').length;
@@ -593,93 +727,92 @@ export default function Dashboard() {
 
       {/* ── Hero Section ── */}
       <div className="w-full relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 45%, #EC4899 100%)' }}>
-        <div className="absolute pointer-events-none" style={{ top: '-60px', right: '-60px', width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-        <div className="absolute pointer-events-none" style={{ bottom: '-40px', left: '10%', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+        style={{ background: 'linear-gradient(145deg, #5b21b6 0%, #7c3aed 38%, #a855f7 65%, #db2777 100%)' }}>
+        <div className="absolute inset-0 pointer-events-none opacity-[0.35]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45) 0%, transparent 45%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.2) 0%, transparent 40%)',
+          }}
+        />
+        <div className="absolute pointer-events-none" style={{ top: '-80px', right: '-40px', width: 320, height: 320, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+        <div className="absolute pointer-events-none" style={{ bottom: '-60px', left: '-20px', width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
 
-        <div className="max-w-6xl mx-auto px-6 pt-8 pb-10 relative z-0">
+        <div className="max-w-6xl mx-auto px-6 pt-9 pb-11 relative z-10">
           {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="h-4 w-28 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-              <div className="h-8 w-72 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+              <div className="h-9 w-72 max-w-full rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+              <div className="h-36 rounded-3xl max-w-md" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
             </div>
           ) : (
             <>
-              <div className="flex items-start justify-between gap-6 mb-6">
-                <div className="flex-1 min-w-0">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-3"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                    <Sparkles size={10} color="white" />
-                    <span className="text-xs font-bold text-white">{greeting}</span>
+              <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8 xl:gap-12">
+                <div className="flex-1 min-w-0 max-w-2xl">
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full mb-4"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.28)' }}>
+                    <Sparkles size={12} color="white" />
+                    <span className="text-xs font-bold text-white tracking-wide">{greeting}</span>
                   </div>
 
-                  <h1 className="font-extrabold text-white mb-1.5 leading-tight"
-                    style={{ fontSize: 'clamp(20px,3vw,28px)', letterSpacing: '-0.03em' }}>
+                  <h1 className="font-extrabold text-white mb-2 leading-[1.15]"
+                    style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', letterSpacing: '-0.035em', textShadow: '0 2px 24px rgba(15,23,42,0.15)' }}>
                     {project?.assignment_title || project?.name || 'Group Project'}
                   </h1>
 
                   {project?.course_name && (
-                    <p className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    <p className="text-sm sm:text-base font-semibold" style={{ color: 'rgba(255,255,255,0.82)' }}>
                       {project.course_name}
                     </p>
                   )}
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {project?.due_date && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
-                        <Calendar size={11} color="rgba(255,255,255,0.85)" />
-                        <span className="text-xs font-bold text-white">
-                          Due {new Date(project.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
-                      </div>
-                    )}
-                    {daysRemaining !== null && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                        style={{ backgroundColor: daysRemaining <= 3 ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.14)', border: `1px solid ${daysRemaining <= 3 ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.18)'}` }}>
-                        <Clock size={11} color="rgba(255,255,255,0.85)" />
-                        <span className="text-xs font-bold text-white">
-                          {daysRemaining === 0 ? '⚠️ Due today!' : `${daysRemaining}d left`}
-                        </span>
-                      </div>
-                    )}
-                    {members.length > 0 && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
-                        <Users size={11} color="rgba(255,255,255,0.85)" />
-                        <span className="text-xs font-bold text-white">
-                          {members.length} member{members.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    )}
-                  </div>
                 </div>
 
-                {tasks.length > 0 && (
-                  <div className="flex-shrink-0 flex flex-col items-center rounded-2xl px-5 py-4"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                    <ProgressRing value={overallProgress} size={84} strokeWidth={7} />
-                    <p className="text-xs font-bold mt-2" style={{ color: 'rgba(255,255,255,0.65)' }}>Overall</p>
-                  </div>
-                )}
+                <div className="w-full xl:w-[min(100%,420px)] xl:flex-shrink-0">
+                  <DeadlineSpotlight
+                    dueDate={project?.due_date}
+                    rawDaysUntilDue={rawDaysUntilDue}
+                    daysRemaining={daysRemaining}
+                    memberCount={members.length}
+                  />
+                </div>
               </div>
 
               {tasks.length > 0 && (
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: 'Tasks Done', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: 'rgba(52,211,153,0.9)' },
-                    { label: 'In Progress', value: tasksInProgress, icon: TrendingUp, color: 'rgba(251,191,36,0.9)' },
-                    { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: 'rgba(236,72,153,0.9)' },
-                  ].map(s => (
-                    <div key={s.label} className="flex items-center gap-3 rounded-xl px-4 py-3"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.15)' }}>
-                      <s.icon size={16} style={{ color: s.color, flexShrink: 0 }} />
-                      <div className="min-w-0">
-                        <p className="text-base font-extrabold text-white leading-none">{s.value}</p>
-                        <p className="text-xs mt-0.5 font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>{s.label}</p>
+                <div className="mt-10 flex flex-col sm:flex-row items-stretch gap-4 sm:gap-5">
+                  <div
+                    className="flex-shrink-0 flex flex-col items-center justify-center rounded-3xl px-6 py-5 sm:py-6 mx-auto sm:mx-0 w-full sm:w-auto min-w-[140px]"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.18)',
+                      backdropFilter: 'blur(14px)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      boxShadow: '0 12px 40px rgba(15,23,42,0.12)',
+                    }}
+                  >
+                    <ProgressRing value={overallProgress} size={92} strokeWidth={8} />
+                    <p className="text-xs font-extrabold mt-3 tracking-wide uppercase" style={{ color: 'rgba(255,255,255,0.85)' }}>Overall</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 flex-1 min-w-0">
+                    {[
+                      { label: 'Tasks Done', value: `${tasksDone}/${tasks.length}`, icon: CheckCircle, color: '#34d399' },
+                      { label: 'In Progress', value: tasksInProgress, icon: TrendingUp, color: '#fbbf24' },
+                      { label: 'Rubric', value: `${rubricCoverage}%`, icon: Target, color: '#f472b6' },
+                    ].map(s => (
+                      <div
+                        key={s.label}
+                        className="flex items-center gap-3 rounded-2xl px-4 py-4 sm:py-3.5"
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.16)',
+                          backdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(255,255,255,0.28)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+                        }}
+                      >
+                        <s.icon size={18} style={{ color: s.color, flexShrink: 0 }} strokeWidth={2.4} />
+                        <div className="min-w-0">
+                          <p className="text-lg font-extrabold text-white leading-none tabular-nums">{s.value}</p>
+                          <p className="text-[11px] sm:text-xs mt-1 font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>{s.label}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </>
@@ -731,8 +864,10 @@ export default function Dashboard() {
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard loading={loading}
-            value={daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
-            sub={daysRemaining !== null && daysRemaining <= 3 ? '⚠️ Due soon!' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : undefined)}
+            value={rawDaysUntilDue !== null && rawDaysUntilDue < 0 ? 'Late' : daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
+            sub={rawDaysUntilDue !== null && rawDaysUntilDue < 0
+              ? `Was ${new Date(project.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
+              : daysRemaining !== null && daysRemaining <= 3 ? '⚠️ Due soon!' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : undefined)}
             icon={Clock} iconColor="#8B5CF6" iconBg="#F5F3FF" />
           <StatCard loading={loading}
             value={`${tasksDone}/${tasks.length}`} label="Tasks Done"
