@@ -36,9 +36,25 @@ export default function InviteTeam() {
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
 
-  // Build a unique join URL using the project ID
-  const joinUrl = `${window.location.origin}/join-group?project=${projectId}`;
+  // Fetch project to get join code
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API}/projects/${projectId}`);
+        if (res.ok) {
+          const proj = await res.json();
+          setJoinCode(proj.join_code || '');
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [projectId]);
+
+  // Build a unique join URL using the short code
+  const joinUrl = joinCode
+    ? `${window.location.origin}/join-group?code=${joinCode}`
+    : `${window.location.origin}/join-group?project=${projectId}`;
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -110,8 +126,24 @@ export default function InviteTeam() {
           <div className="bg-white rounded-2xl p-8" style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.06)' }}>
             <h1 className="text-xl font-extrabold mb-1" style={{ color: '#1C1829' }}>Invite Your Team</h1>
             <p className="text-sm mb-7" style={{ color: '#6B6584' }}>
-              Share the link below. Each member completes a short quiz so we can allocate tasks fairly.
+              Share the code or link below. Each member completes a short quiz so we can allocate tasks fairly.
             </p>
+
+            {/* Big join code */}
+            {joinCode && (
+              <div className="text-center mb-6 rounded-xl py-5 px-4"
+                style={{ backgroundColor: '#F5F3FF', border: '1px solid #C4B5FD' }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8B5CF6' }}>
+                  Join Code
+                </p>
+                <p className="text-3xl font-black tracking-widest font-mono" style={{ color: '#1C1829', letterSpacing: '0.15em' }}>
+                  {joinCode}
+                </p>
+                <p className="text-xs mt-2" style={{ color: '#6B6584' }}>
+                  Members enter this at <strong>{window.location.origin}/join-group</strong>
+                </p>
+              </div>
+            )}
 
             {/* Unique join URL bar */}
             <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-6"

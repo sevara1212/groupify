@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from 'react';
 const ProjectContext = createContext(null);
 
 export function ProjectProvider({ children }) {
-  const [projectId, setProjectId] = useState('wzhlzyzfmydqkolbhpbj');
+  const [projectId, setProjectId] = useState(null);
   const [currentMemberId, setCurrentMemberId] = useState(null);
   const [currentMemberName, setCurrentMemberName] = useState(null);
 

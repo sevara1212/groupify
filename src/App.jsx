@@ -56,6 +56,7 @@ function Layout() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/create-group" element={<CreateGroup />} />
         <Route path="/join-group" element={<JoinGroup />} />
+        <Route path="/join/:code" element={<JoinGroup />} />
         <Route path="/group-setup" element={<GroupSetup />} />
         <Route path="/assign-roles" element={<AssignRoles />} />
         <Route path="/set-deadlines" element={<SetDeadlines />} />

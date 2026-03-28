@@ -1,3 +1,6 @@
+import random
+import string
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
@@ -5,6 +8,13 @@ from typing import Optional, List
 from db import supabase
 
 router = APIRouter()
+
+
+def _generate_join_code(course_name: str = "") -> str:
+    """Generate a short human-readable join code like INFO2222-A7K3."""
+    prefix = "".join(c for c in (course_name or "GRP").upper() if c.isalnum())[:8]
+    suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    return f"{prefix}-{suffix}"
 
 
 # ── Project endpoints ─────────────────────────────────────────────────────────
@@ -20,7 +30,29 @@ class ProjectCreate(BaseModel):
 
 @router.post("/projects")
 def create_project(payload: ProjectCreate):
-    result = supabase.table("projects").insert(payload.model_dump()).execute()
+    data = payload.model_dump()
+    data["join_code"] = _generate_join_code(payload.course_name)
+    result = supabase.table("projects").insert(data).execute()
+    return result.data[0]
+
+
+@router.get("/projects")
+def list_projects():
+    result = supabase.table("projects").select("*").order("created_at", desc=True).execute()
+    return {"projects": result.data}
+
+
+@router.get("/projects/join/{join_code}")
+def get_project_by_code(join_code: str):
+    """Look up a project by its short join code."""
+    result = (
+        supabase.table("projects")
+        .select("*")
+        .eq("join_code", join_code.upper())
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Invalid join code")
     return result.data[0]
 
 
@@ -35,12 +67,6 @@ def get_project(project_id: str):
     if not result.data:
         raise HTTPException(status_code=404, detail="Project not found")
     return result.data
-
-
-@router.get("/projects")
-def list_projects():
-    result = supabase.table("projects").select("*").order("created_at", desc=True).execute()
-    return {"projects": result.data}
 
 
 # ── Member endpoints ──────────────────────────────────────────────────────────
