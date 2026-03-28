@@ -46,8 +46,9 @@ export default function InviteTeam() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: '' }
   const [sentEmails, setSentEmails] = useState([]);
+  const [quizGenState, setQuizGenState] = useState('generating'); // 'generating' | 'done' | 'error'
 
-  // Fetch project to get join code + name
+  // Fetch project to get join code + name, then generate quiz in background
   useEffect(() => {
     (async () => {
       try {
@@ -58,6 +59,14 @@ export default function InviteTeam() {
           setProjectName(proj.assignment_title || proj.name || '');
         }
       } catch { /* ignore */ }
+
+      // Generate quiz in background while user invites members
+      try {
+        const quizRes = await fetch(`${API}/projects/${projectId}/quiz/generate`, { method: 'POST' });
+        setQuizGenState(quizRes.ok ? 'done' : 'error');
+      } catch {
+        setQuizGenState('error');
+      }
     })();
   }, [projectId]);
 
@@ -211,9 +220,25 @@ export default function InviteTeam() {
 
           <div className="bg-white rounded-2xl p-8" style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 24px rgba(139,92,246,0.06)' }}>
             <h1 className="text-xl font-extrabold mb-1" style={{ color: '#1C1829' }}>Invite Your Team</h1>
-            <p className="text-sm mb-7" style={{ color: '#6B6584' }}>
+            <p className="text-sm mb-5" style={{ color: '#6B6584' }}>
               Share the code or link below. Each member completes a short quiz so we can allocate tasks fairly.
             </p>
+
+            {/* Quiz generation status */}
+            {quizGenState === 'generating' && (
+              <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
+                style={{ backgroundColor: '#FDF2F8', border: '1px solid #FBCFE8' }}>
+                <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: '#EC4899' }} />
+                <span className="text-sm font-medium" style={{ color: '#BE185D' }}>Generating team quiz in the background…</span>
+              </div>
+            )}
+            {quizGenState === 'done' && (
+              <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 mb-5"
+                style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+                <CheckCircle size={14} className="flex-shrink-0" style={{ color: '#16A34A' }} />
+                <span className="text-sm font-medium" style={{ color: '#15803D' }}>Quiz ready — members can take it after joining!</span>
+              </div>
+            )}
 
             {/* Big join code */}
             {joinCode && (
