@@ -245,42 +245,101 @@ function TextInput({ value = '', onChange }) {
   );
 }
 
+const GENERATE_TIMEOUT_MS = 120_000;
+const POLL_MAX_MS = 90_000;
+const POLL_INTERVAL_MS = 1000;
+
+async function fetchQuestionList(projectId) {
+  const r = await fetch(`${API}/projects/${projectId}/quiz/questions`);
+  if (!r.ok) throw new Error(`questions ${r.status}`);
+  const data = await r.json();
+  return data.questions || [];
+}
+
 export default function QuizQuestion() {
   const navigate = useNavigate();
   const { projectId, currentMemberId } = useProject();
   const [questions, setQuestions] = useState([]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [loading, setLoading] = useState(true);
+  /** loading | generating | ready | unavailable | no_project */
+  const [loadStatus, setLoadStatus] = useState('loading');
   const [submitting, setSubmitting] = useState(false);
-  const [fetchError, setFetchError] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
     (async () => {
+      if (!projectId) {
+        setLoadStatus('no_project');
+        return;
+      }
+
+      setLoadStatus('loading');
+      setQuestions([]);
+      setIndex(0);
+      setAnswers({});
+
       try {
-        const r = await fetch(`${API}/projects/${projectId}/quiz/questions`);
-        const data = await r.json();
-        let qs = data.questions || [];
+        let qs = await fetchQuestionList(projectId);
+        if (cancelled) return;
+
         if (qs.length === 0) {
-          const gen = await fetch(`${API}/projects/${projectId}/quiz/generate`, { method: 'POST' });
-          if (gen.ok) {
-            const r2 = await fetch(`${API}/projects/${projectId}/quiz/questions`);
-            const d2 = await r2.json();
-            qs = d2.questions || [];
+          setLoadStatus('generating');
+          let genOk = false;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) await sleep(1500 * attempt);
+            try {
+              const ac = new AbortController();
+              const to = setTimeout(() => ac.abort(), GENERATE_TIMEOUT_MS);
+              try {
+                const gen = await fetch(`${API}/projects/${projectId}/quiz/generate`, {
+                  method: 'POST',
+                  signal: ac.signal,
+                });
+                if (gen.ok) {
+                  genOk = true;
+                  break;
+                }
+                if (gen.status < 500) break;
+              } finally {
+                clearTimeout(to);
+              }
+            } catch {
+              if (attempt === 2) break;
+            }
+          }
+          if (cancelled) return;
+          if (!genOk) {
+            setLoadStatus('unavailable');
+            return;
+          }
+
+          const pollEnd = Date.now() + POLL_MAX_MS;
+          while (Date.now() < pollEnd && !cancelled) {
+            await sleep(POLL_INTERVAL_MS);
+            qs = await fetchQuestionList(projectId);
+            if (qs.length > 0) break;
           }
         }
-        if (!cancelled) setQuestions(qs);
+
+        if (cancelled) return;
+        if (qs.length > 0) {
+          setQuestions(qs);
+          setLoadStatus('ready');
+        } else {
+          setLoadStatus('unavailable');
+        }
       } catch {
-        if (!cancelled) setFetchError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadStatus('unavailable');
       }
     })();
 
     return () => { cancelled = true; };
-  }, [projectId]);
+  }, [projectId, retryToken]);
 
   const question = questions[index];
   const total = questions.length || 5;
@@ -318,23 +377,45 @@ export default function QuizQuestion() {
     }
   })();
 
-  if (loading) {
+  if (loadStatus === 'loading' || loadStatus === 'generating') {
+    const isGen = loadStatus === 'generating';
     return (
-      <div className="min-h-screen flex items-center justify-center"
+      <div className="min-h-screen flex items-center justify-center px-5"
         style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}>
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 max-w-sm text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', boxShadow: '0 8px 24px rgba(139,92,246,0.35)', animation: 'loadPulse 1.6s ease-in-out infinite' }}>
             <Sparkles size={26} color="white" />
           </div>
-          <p className="text-base font-bold" style={{ color: '#6B6584' }}>Loading your quiz…</p>
+          <p className="text-base font-bold" style={{ color: '#6B6584' }}>
+            {isGen ? 'Generating your quiz…' : 'Loading your quiz…'}
+          </p>
+          {isGen && (
+            <p className="text-sm leading-relaxed" style={{ color: '#A09BB8' }}>
+              Building questions from your brief can take up to a minute on a cold server. Hang tight — no need to go back and forth.
+            </p>
+          )}
           <style>{`@keyframes loadPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.93);opacity:0.8}}`}</style>
         </div>
       </div>
     );
   }
 
-  if (fetchError || questions.length === 0) {
+  if (loadStatus === 'no_project') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6"
+        style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}>
+        <div className="text-center max-w-sm bg-white rounded-3xl p-9"
+          style={{ border: '1px solid #EDE9FE', boxShadow: '0 8px 32px rgba(139,92,246,0.10)' }}>
+          <p className="text-base font-bold mb-2" style={{ color: '#1C1829' }}>No project selected</p>
+          <p className="text-sm mb-6" style={{ color: '#6B6584' }}>Join or create a project first, then open the quiz from there.</p>
+          <Button variant="outlined" onClick={() => navigate('/join-group')}>Join a project</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadStatus === 'unavailable' || questions.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6"
         style={{ background: 'linear-gradient(160deg, #EDE9FE 0%, #FDF2F8 55%, #E0F2FE 100%)' }}>
@@ -344,8 +425,15 @@ export default function QuizQuestion() {
             <span className="text-3xl">📋</span>
           </div>
           <p className="text-base font-bold mb-2" style={{ color: '#1C1829' }}>Quiz not available yet</p>
-          <p className="text-sm mb-6" style={{ color: '#6B6584' }}>Ask your project admin to upload the assignment brief. The quiz generates from that — try again in a few seconds.</p>
-          <Button variant="outlined" onClick={() => navigate('/quiz')}>← Go back</Button>
+          <p className="text-sm mb-6" style={{ color: '#6B6584' }}>
+            The assignment brief may still need to be uploaded, or the server is still waking up. Try again — we will retry generation for you.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button variant="filled" onClick={() => setRetryToken((t) => t + 1)} className="justify-center">
+              Try again
+            </Button>
+            <Button variant="outlined" onClick={() => navigate('/quiz')}>← Go back</Button>
+          </div>
         </div>
       </div>
     );

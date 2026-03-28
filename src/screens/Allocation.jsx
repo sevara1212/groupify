@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import {
   Loader2, ArrowRight, AlertTriangle, Sparkles, ChevronDown, ChevronUp,
   Calendar, RefreshCw, CheckCircle, ArrowLeftRight, X, Users, Clock,
-  Zap, Timer, Shield,
+  Zap, Timer, Shield, GripVertical, LayoutGrid,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 const MEMBER_COLORS = ['#8B5CF6', '#EC4899', '#D97706', '#0EA5E9', '#0D9488', '#6366F1', '#DC2626', '#16A34A'];
+
+/** Stable id for suggested tasks before they exist as DB rows */
+function taskKey(t) {
+  return `${t.criterion_id ?? ''}|${t.title}|${t.suggested_due_date ?? ''}`;
+}
 
 function getInitials(name) {
   return (name || '?').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -169,25 +174,37 @@ function TaskCard({ task, memberColor, allMembers, currentMemberId, onReassign }
   const days = daysUntil(task.suggested_due_date);
   const daysLabel = days === null ? null : days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`;
 
+  const onDragStart = (e) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ task, fromMemberId: currentMemberId }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <>
-      <div className="rounded-2xl overflow-hidden transition-all duration-200 group"
+      <div
+        draggable
+        onDragStart={onDragStart}
+        className="rounded-2xl overflow-hidden transition-all duration-200 group cursor-grab active:cursor-grabbing"
         style={{ backgroundColor: 'white', border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
         onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.10)'; e.currentTarget.style.borderColor = '#C4B5FD'; }}
         onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#EDE9FE'; }}>
 
         {/* Left accent */}
         <div className="flex">
-          <div className="w-1 flex-shrink-0 rounded-l-2xl" style={{ backgroundColor: memberColor }} />
+          <div className="w-8 flex-shrink-0 flex items-start justify-center pt-4 rounded-l-2xl opacity-40 group-hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: `${memberColor}12` }}>
+            <GripVertical size={16} style={{ color: memberColor }} />
+          </div>
+          <div className="w-1 flex-shrink-0 rounded-l-sm self-stretch" style={{ backgroundColor: memberColor }} />
           <div className="flex-1 p-4">
             <div className="flex items-start justify-between gap-2 mb-2">
               <p className="text-sm font-bold flex-1 leading-snug" style={{ color: '#111827' }}>{task.title}</p>
-              <button onClick={() => setShowModal(true)}
+              <button type="button" onClick={() => setShowModal(true)}
                 className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all flex-shrink-0"
                 style={{ backgroundColor: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#EFF6FF'; }}>
-                <ArrowLeftRight size={10} /> Change
+                <ArrowLeftRight size={10} /> Assign
               </button>
             </div>
 
@@ -263,6 +280,7 @@ export default function Allocation() {
   const [confirming, setConfirming] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [refreshing, setRefreshing] = useState(false);
+  const [dragOverId, setDragOverId] = useState(null);
   const pollRef = useRef(null);
 
   const checkMembers = useCallback(async () => {
@@ -336,6 +354,12 @@ export default function Allocation() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const clear = () => setDragOverId(null);
+    window.addEventListener('dragend', clear);
+    return () => window.removeEventListener('dragend', clear);
+  }, []);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     const allMembers = await checkMembers();
@@ -351,16 +375,18 @@ export default function Allocation() {
   };
 
   const handleReassign = useCallback((task, newMemberId, fromMemberId) => {
-    setAllocations(prev =>
-      prev.map(m => {
+    if (newMemberId === fromMemberId) return;
+    setAllocations((prev) =>
+      prev.map((m) => {
         if (m.member_id === fromMemberId) {
-          return { ...m, tasks: m.tasks.filter(t => t !== task) };
+          return { ...m, tasks: m.tasks.filter((t) => taskKey(t) !== taskKey(task)) };
         }
         if (m.member_id === newMemberId) {
+          if (m.tasks.some((t) => taskKey(t) === taskKey(task))) return m;
           return { ...m, tasks: [...m.tasks, task] };
         }
         return m;
-      })
+      }),
     );
   }, []);
 
@@ -429,8 +455,8 @@ export default function Allocation() {
             <h1 className="text-2xl font-extrabold text-white mb-1.5" style={{ letterSpacing: '-0.02em' }}>
               Your Group's Task Plan
             </h1>
-            <p className="text-sm text-white/65 max-w-md">
-              {coverageSummary || `${totalTasks} tasks split across ${allocations.length} member${allocations.length !== 1 ? 's' : ''}. Tap Change to reassign any task.`}
+            <p className="text-sm text-white/65 max-w-lg">
+              {coverageSummary || `${totalTasks} tasks across ${allocations.length} teammate${allocations.length !== 1 ? 's' : ''}. Drag cards between columns or use Assign — then accept to save to the team.`}
             </p>
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
@@ -482,11 +508,14 @@ export default function Allocation() {
 
         {/* Tip */}
         {allocations.length > 0 && (
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl mb-6"
-            style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-            <ArrowLeftRight size={13} style={{ color: '#2563EB', flexShrink: 0 }} />
-            <p className="text-xs font-medium" style={{ color: '#1D4ED8' }}>
-              Tap <strong>Change</strong> on any task to move it to a different team member.
+          <div className="flex items-center gap-3 px-5 py-4 rounded-2xl mb-6"
+            style={{ backgroundColor: '#F0FDF4', border: '1px solid #86EFAC' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#DCFCE7' }}>
+              <LayoutGrid size={18} style={{ color: '#15803D' }} />
+            </div>
+            <p className="text-sm font-medium leading-snug" style={{ color: '#166534' }}>
+              <strong>Drag & drop</strong> tasks between people, or <strong>Assign</strong> to pick someone. Accepting the plan writes real tasks in the database — you can reassign again anytime from the dashboard or Tasks page.
             </p>
           </div>
         )}
@@ -500,39 +529,55 @@ export default function Allocation() {
             <p className="text-sm" style={{ color: '#A09BB8' }}>Make sure all members have completed the quiz.</p>
           </div>
         ) : (
-          <div className="space-y-5 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
             {allocations.map((member) => {
               const isExpanded = expanded[member.member_id] !== false;
               const color = member.color || MEMBER_COLORS[0];
+              const isDropTarget = dragOverId === member.member_id;
               return (
-                <div key={member.member_id} className="bg-white rounded-2xl overflow-hidden"
-                  style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.06)', borderLeft: `4px solid ${color}` }}>
-                  <div className="px-5 py-4 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold"
-                      style={{ background: `linear-gradient(135deg, ${color}, ${color}bb)` }}>
+                <div
+                  key={member.member_id}
+                  className="bg-white rounded-2xl overflow-hidden flex flex-col min-h-[200px] transition-all duration-200"
+                  style={{
+                    border: `2px solid ${isDropTarget ? color : '#EDE9FE'}`,
+                    boxShadow: isDropTarget
+                      ? `0 8px 28px ${color}35`
+                      : '0 2px 12px rgba(139,92,246,0.06)',
+                    backgroundColor: isDropTarget ? `${color}08` : 'white',
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    setDragOverId(member.member_id);
+                  }}
+                  onDragLeave={() => setDragOverId((id) => (id === member.member_id ? null : id))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverId(null);
+                    try {
+                      const payload = JSON.parse(e.dataTransfer.getData('application/json'));
+                      handleReassign(payload.task, member.member_id, payload.fromMemberId);
+                    } catch { /* ignore */ }
+                  }}
+                >
+                  <div className="px-4 py-3.5 flex items-center gap-3 flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${color}12, white)`, borderBottom: '1px solid #F5F3FF' }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
+                      style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
                       {getInitials(member.member_name)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>{member.member_name}</h2>
-                        {member.role && <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>{member.role}</span>}
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: color }}>
+                      <h2 className="text-sm font-extrabold truncate" style={{ color: '#1C1829' }}>{member.member_name}</h2>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: color }}>
                           {member.tasks.length} task{member.tasks.length !== 1 ? 's' : ''}
                         </span>
                         {member.total_weight_percent > 0 && (
-                          <span className="text-xs font-semibold" style={{ color: '#A09BB8' }}>
-                            ({member.total_weight_percent}% weight)
-                          </span>
+                          <span className="text-[11px] font-semibold" style={{ color: '#A09BB8' }}>{member.total_weight_percent}% rubric</span>
                         )}
                       </div>
-                      {member.skill_summary && <p className="text-xs truncate" style={{ color: '#6B6584' }}>{member.skill_summary}</p>}
-                      {member.availability_summary && (
-                        <p className="text-xs truncate mt-0.5" style={{ color: '#A09BB8' }}>
-                          <Clock size={9} className="inline mr-1" />{member.availability_summary}
-                        </p>
-                      )}
                     </div>
-                    <button onClick={() => setExpanded(e => ({ ...e, [member.member_id]: !isExpanded }))}
+                    <button type="button" onClick={() => setExpanded((e) => ({ ...e, [member.member_id]: !isExpanded }))}
                       className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: '#F5F3FF', color: '#8B5CF6' }}>
                       {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -540,18 +585,24 @@ export default function Allocation() {
                   </div>
 
                   {isExpanded && (
-                    <div className="px-5 pb-5">
-                      <div className="h-px mb-4" style={{ backgroundColor: '#F5F3FF' }} />
+                    <div className="px-4 pb-4 flex-1 flex flex-col">
+                      {member.skill_summary && (
+                        <p className="text-[11px] leading-relaxed mb-2 px-0.5" style={{ color: '#6B6584' }}>{member.skill_summary}</p>
+                      )}
                       {member.tasks.length === 0 ? (
-                        <div className="text-center py-5 rounded-xl" style={{ border: '1px dashed #EDE9FE' }}>
-                          <p className="text-xs" style={{ color: '#A09BB8' }}>No tasks — use Change on another task to move one here</p>
+                        <div className="flex-1 flex items-center justify-center py-8 rounded-xl border border-dashed mt-1"
+                          style={{ borderColor: `${color}55`, backgroundColor: `${color}06` }}>
+                          <p className="text-xs text-center px-3" style={{ color: '#A09BB8' }}>
+                            Drop a task here
+                          </p>
                         </div>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-3 mt-1">
                           {member.tasks.map((task, ti) => (
                             <TaskCard
-                              key={`${task.criterion_id}-${ti}`}
-                              task={task} memberColor={color}
+                              key={`${taskKey(task)}-${ti}`}
+                              task={task}
+                              memberColor={color}
                               allMembers={allMemberList}
                               currentMemberId={member.member_id}
                               onReassign={handleReassign}

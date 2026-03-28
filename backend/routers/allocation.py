@@ -478,11 +478,12 @@ class TaskUpdate(BaseModel):
     progress_percent: int | None = None
     due_date: str | None = None
     title: str | None = None
+    member_id: str | None = None  # reassign to another team member (same project)
 
 
 @router.patch("/projects/{project_id}/tasks/{task_id}")
 def update_task(project_id: str, task_id: str, payload: TaskUpdate):
-    """Update a task's status, progress, deadline, or title."""
+    """Update a task's status, progress, deadline, title, or assignee."""
     update_data = {}
     if payload.status is not None:
         update_data["status"] = payload.status
@@ -497,6 +498,20 @@ def update_task(project_id: str, task_id: str, payload: TaskUpdate):
         update_data["due_date"] = payload.due_date
     if payload.title is not None:
         update_data["title"] = payload.title
+    if payload.member_id is not None:
+        mcheck = (
+            supabase.table("members")
+            .select("id")
+            .eq("id", payload.member_id)
+            .eq("project_id", project_id)
+            .execute()
+        )
+        if not mcheck.data:
+            raise HTTPException(
+                status_code=400,
+                detail="That person is not a member of this project.",
+            )
+        update_data["member_id"] = payload.member_id
 
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")

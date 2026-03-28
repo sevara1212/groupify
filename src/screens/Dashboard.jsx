@@ -4,16 +4,20 @@ import {
   AlertTriangle, CheckCircle, Calendar, Loader2, Clock,
   Sparkles, ArrowRight, TrendingUp, Users, Target, ChevronRight,
   CircleCheck, Circle, Timer, Bell, MessageSquare, Shield,
-  FolderOpen, Upload, FileText, File, Image, X,
-  Archive, ChevronLeft,
+  FolderOpen, FileText, ChevronLeft, ArrowLeftRight, ExternalLink, X,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
+import { supabase } from '../lib/supabase';
 import ProgressBar from '../components/ui/ProgressBar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 
 const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 const MEMBER_COLORS = ['#8B5CF6', '#EC4899', '#D97706', '#0EA5E9', '#0D9488', '#6366F1'];
+
+function dashInitials(name) {
+  return (name || '?').split(/\s+/).map((p) => p[0]).join('').toUpperCase().slice(0, 2);
+}
 
 function Skeleton({ className = '' }) {
   return <div className={`skeleton ${className}`} />;
@@ -296,10 +300,10 @@ function UpcomingDeadlines({ tasks, navigate }) {
                 <p className="text-xs font-semibold truncate" style={{ color: '#1C1829' }}>{task.title}</p>
                 <p className="text-xs" style={{ color: '#A09BB8' }}>{task.member_name}</p>
               </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-xs font-bold" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }}>{dateLabel}</p>
-                <p className="text-xs font-medium" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#A09BB8' }}>
-                  {isOverdue ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? 'Today!' : `${daysLeft}d left`}
+              <div className="text-right flex-shrink-0 min-w-[4.5rem]">
+                <p className="text-sm font-extrabold tabular-nums" style={{ color: isOverdue ? '#B91C1C' : isUrgent ? '#C2410C' : '#5B21B6' }}>{dateLabel}</p>
+                <p className="text-xs font-bold tabular-nums" style={{ color: isOverdue ? '#DC2626' : isUrgent ? '#EA580C' : '#4B5563' }}>
+                  {isOverdue ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? 'Today' : `${daysLeft}d left`}
                 </p>
               </div>
             </div>
@@ -310,103 +314,132 @@ function UpcomingDeadlines({ tasks, navigate }) {
   );
 }
 
-/* ─── File type helpers ───────────────────────────── */
-function getFileIcon(name) {
-  const ext = name.split('.').pop()?.toLowerCase();
-  if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) return { Icon: Image, color: '#0EA5E9', bg: '#EFF6FF' };
-  if (['pdf'].includes(ext)) return { Icon: FileText, color: '#EF4444', bg: '#FEF2F2' };
-  if (['doc', 'docx'].includes(ext)) return { Icon: FileText, color: '#2563EB', bg: '#EFF6FF' };
-  if (['zip', 'rar', '7z'].includes(ext)) return { Icon: Archive, color: '#D97706', bg: '#FEF3C7' };
-  if (['ppt', 'pptx'].includes(ext)) return { Icon: FileText, color: '#EA580C', bg: '#FFF7ED' };
-  return { Icon: File, color: '#8B5CF6', bg: '#F5F3FF' };
-}
+/* ─── Files Panel (shared links from Supabase; full UI on /files) ─── */
+function FilesPanel({ projectId, navigate }) {
+  const [links, setLinks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-function formatBytes(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+  useEffect(() => {
+    if (!projectId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('project_files')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false })
+          .limit(12);
+        if (!cancelled && !error) setLinks(data || []);
+      } catch {
+        if (!cancelled) setLinks([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
 
-/* ─── Files Panel ─────────────────────────────────── */
-function FilesPanel() {
-  const [files, setFiles] = useState([]);
-  const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const inputRef = useRef(null);
-
-  const addFiles = (incoming) => {
-    const newFiles = Array.from(incoming).map(f => ({
-      id: Math.random().toString(36).slice(2),
-      name: f.name, size: f.size, type: f.type, addedAt: new Date(), file: f,
-    }));
-    setUploading(true);
-    setTimeout(() => { setFiles(prev => [...prev, ...newFiles]); setUploading(false); }, 800);
-  };
-
-  const removeFile = (id) => setFiles(prev => prev.filter(f => f.id !== id));
-  const handleDrop = (e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files); };
+  const byFolder = {};
+  links.forEach((row) => {
+    const f = row.folder || 'Shared';
+    if (!byFolder[f]) byFolder[f] = [];
+    byFolder[f].push(row);
+  });
+  const folderOrder = ['Shared', 'Planning', 'References', 'Other'];
+  const extraFolders = Object.keys(byFolder).filter((k) => !folderOrder.includes(k));
+  const folders = [...folderOrder.filter((k) => byFolder[k]?.length), ...extraFolders];
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden"
       style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
-      <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #F5F3FF' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #D97706, #F59E0B)' }}>
+      <div className="px-5 py-4 flex items-center justify-between gap-2" style={{ borderBottom: '1px solid #F5F3FF' }}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #DB2777)' }}>
             <FolderOpen size={14} color="white" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-sm font-extrabold" style={{ color: '#1C1829' }}>Project Files</h2>
-            {files.length > 0 && <p className="text-xs" style={{ color: '#A09BB8' }}>{files.length} file{files.length !== 1 ? 's' : ''}</p>}
+            <p className="text-xs font-medium truncate" style={{ color: '#6B6584' }}>
+              {loading ? 'Loading…' : `${links.length} shared link${links.length !== 1 ? 's' : ''}`}
+            </p>
           </div>
         </div>
-        <button onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-          style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A' }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FDE68A'; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FEF3C7'; }}>
-          <Upload size={11} /> Upload
+        <button
+          type="button"
+          onClick={() => navigate('/files')}
+          className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 transition-all"
+          style={{ backgroundColor: '#F5F3FF', color: '#7C3AED', border: '1px solid #DDD6FE' }}
+        >
+          Manage <ChevronRight size={12} />
         </button>
-        <input ref={inputRef} type="file" multiple className="hidden"
-          onChange={e => e.target.files?.length && addFiles(e.target.files)} />
       </div>
       <div className="p-4">
-        <div onDragOver={e => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
-          className="rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center py-5 transition-all duration-200 mb-3"
-          style={{ borderColor: dragging ? '#D97706' : '#EDE9FE', backgroundColor: dragging ? '#FFFBEB' : '#FAFAFE' }}>
-          {uploading ? <Loader2 size={20} className="animate-spin mb-2" style={{ color: '#D97706' }} />
-            : <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: dragging ? '#FEF3C7' : '#F5F3FF' }}>
-                <Upload size={16} style={{ color: dragging ? '#D97706' : '#C4B5FD' }} />
-              </div>}
-          <p className="text-xs font-semibold" style={{ color: dragging ? '#D97706' : '#6B6584' }}>
-            {uploading ? 'Uploading…' : dragging ? 'Drop to upload' : 'Drag & drop or click'}
-          </p>
-        </div>
-        {files.length === 0 ? (
-          <p className="text-xs text-center py-3" style={{ color: '#A09BB8' }}>No files yet</p>
+        {loading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 size={20} className="animate-spin" style={{ color: '#8B5CF6' }} />
+          </div>
+        ) : links.length === 0 ? (
+          <div className="text-center py-5 px-2 rounded-xl" style={{ backgroundColor: '#FAFAFF', border: '1px dashed #E9D5FF' }}>
+            <p className="text-sm font-semibold mb-1" style={{ color: '#374151' }}>No shared links yet</p>
+            <p className="text-xs mb-3 leading-relaxed" style={{ color: '#6B7280' }}>
+              Add Google Docs, Drive, or any link so everyone can open the same documents.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/files')}
+              className="text-xs font-bold px-4 py-2 rounded-xl text-white"
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #DB2777)', boxShadow: '0 2px 8px rgba(124,58,237,0.25)' }}
+            >
+              Add a document link
+            </button>
+          </div>
         ) : (
-          <div className="space-y-1.5">
-            {files.map(f => {
-              const { Icon, color, bg } = getFileIcon(f.name);
-              return (
-                <div key={f.id} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl group transition-all"
-                  style={{ backgroundColor: '#FAFAFE', border: '1px solid #F5F3FF' }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: bg }}>
-                    <Icon size={14} style={{ color }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate" style={{ color: '#1C1829' }}>{f.name}</p>
-                    <p className="text-xs" style={{ color: '#A09BB8' }}>{formatBytes(f.size)}</p>
-                  </div>
-                  <button onClick={() => removeFile(f.id)}
-                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
-                    style={{ backgroundColor: '#FEF2F2' }}>
-                    <X size={11} style={{ color: '#EF4444' }} />
-                  </button>
+          <div className="space-y-4">
+            {folders.map((fname) => (
+              <div key={fname}>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider mb-2" style={{ color: '#9CA3AF' }}>
+                  {fname}
+                </p>
+                <div className="space-y-2">
+                  {(byFolder[fname] || []).slice(0, 4).map((row) => (
+                    <a
+                      key={row.id}
+                      href={row.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all group"
+                      style={{ backgroundColor: '#FAFAFF', border: '1px solid #F5F3FF' }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EDE9FE' }}>
+                        <FileText size={14} style={{ color: '#7C3AED' }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: '#111827' }}>{row.title}</p>
+                        <p className="text-[11px] font-medium truncate" style={{ color: '#6B7280' }}>
+                          {row.author_name || 'Team'}
+                        </p>
+                      </div>
+                      <ExternalLink size={14} className="flex-shrink-0 opacity-60 group-hover:opacity-100" style={{ color: '#7C3AED' }} />
+                    </a>
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
+            {links.length > 4 && (
+              <button
+                type="button"
+                onClick={() => navigate('/files')}
+                className="w-full text-xs font-bold py-2 rounded-lg"
+                style={{ color: '#7C3AED', backgroundColor: '#F5F3FF' }}
+              >
+                View all in folder library
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -428,6 +461,8 @@ export default function Dashboard() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reassignTask, setReassignTask] = useState(null);
+  const [reassignSaving, setReassignSaving] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -455,6 +490,23 @@ export default function Dashboard() {
     } catch { setError('Could not load dashboard data.'); }
     finally { setLoading(false); }
   }, [projectId]);
+
+  const patchTaskMember = useCallback(async (taskId, memberId) => {
+    if (!projectId) return;
+    setReassignSaving(true);
+    try {
+      const res = await fetch(`${API}/projects/${projectId}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member_id: memberId }),
+      });
+      if (res.ok) {
+        setReassignTask(null);
+        await fetchAll();
+      }
+    } catch { /* ignore */ }
+    finally { setReassignSaving(false); }
+  }, [projectId, fetchAll]);
 
   const fetchRisks = useCallback(async () => {
     try {
@@ -530,7 +582,7 @@ export default function Dashboard() {
         <div className="absolute pointer-events-none" style={{ top: '-60px', right: '-60px', width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: '-40px', left: '10%', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
 
-        <div className="max-w-5xl mx-auto px-6 pt-8 pb-16 relative">
+        <div className="max-w-6xl mx-auto px-6 pt-8 pb-10 relative z-0">
           {loading ? (
             <div className="space-y-3">
               <div className="h-4 w-28 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
@@ -620,7 +672,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 pb-12 -mt-8">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-12 pt-2 relative z-10">
         {error && (
           <div className="bg-white rounded-2xl px-5 py-4 mb-5 flex items-start gap-3"
             style={{ border: '1px solid #FDE68A', boxShadow: '0 2px 12px rgba(217,119,6,0.08)' }}>
@@ -635,8 +687,8 @@ export default function Dashboard() {
 
         {/* Alert Banner */}
         {!loading && alerts.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 mb-5 flex items-center gap-4"
-            style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 12px rgba(139,92,246,0.06)' }}>
+          <div className="bg-white rounded-2xl p-4 mb-5 flex items-center gap-4 relative z-20"
+            style={{ border: '1px solid #EDE9FE', boxShadow: '0 4px 20px rgba(15,23,42,0.08)' }}>
             <div className="relative flex-shrink-0">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', boxShadow: '0 4px 12px rgba(245,158,11,0.25)' }}>
@@ -662,7 +714,7 @@ export default function Dashboard() {
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 -mt-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard loading={loading}
             value={daysRemaining !== null ? `${daysRemaining}d` : '—'} label="Days Left"
             sub={daysRemaining !== null && daysRemaining <= 3 ? '⚠️ Due soon!' : (project?.due_date ? new Date(project.due_date).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : undefined)}
@@ -683,10 +735,10 @@ export default function Dashboard() {
             icon={Users} iconColor="#6366F1" iconBg="#EEF2FF" />
         </div>
 
-        {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Two-column layout — balanced 50/50 on large screens */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
           {/* Left: Tasks + Members */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Recent Tasks */}
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
@@ -744,17 +796,29 @@ export default function Dashboard() {
                               style={{ color: isDone ? '#A09BB8' : '#1C1829', textDecoration: isDone ? 'line-through' : 'none' }}>
                               {task.title}
                             </span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              {task.member_name && <span className="text-xs" style={{ color: '#A09BB8' }}>{task.member_name}</span>}
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {task.member_name && <span className="text-xs font-medium" style={{ color: '#6B7280' }}>{task.member_name}</span>}
                               {task.due_date && (
-                                <span className="text-xs font-medium" style={{ color: isOverdue ? '#EF4444' : daysLeft !== null && daysLeft <= 3 ? '#D97706' : '#C4B5FD' }}>
-                                  · {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
-                                  {isOverdue ? ' (overdue)' : daysLeft === 0 ? ' (today)' : ''}
+                                <span className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-md"
+                                  style={{
+                                    color: isOverdue ? '#991B1B' : daysLeft !== null && daysLeft <= 3 ? '#9A3412' : '#374151',
+                                    backgroundColor: isOverdue ? '#FEE2E2' : daysLeft !== null && daysLeft <= 3 ? '#FFEDD5' : '#F3F4F6',
+                                  }}>
+                                  {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                                  {isOverdue ? ' · overdue' : daysLeft === 0 ? ' · today' : ''}
                                 </span>
                               )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
+                              style={{ color: '#2563EB', border: '1px solid #BFDBFE', backgroundColor: '#EFF6FF' }}
+                              onClick={(e) => { e.stopPropagation(); setReassignTask(task); }}
+                            >
+                              <ArrowLeftRight size={11} /> Move
+                            </button>
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-md"
                               style={{
                                 backgroundColor: isDone ? '#ECFDF5' : isInProgress ? '#F5F3FF' : '#FAFAFA',
@@ -813,9 +877,13 @@ export default function Dashboard() {
                             </div>
                             <span className="text-xs font-bold tabular-nums" style={{ color }}>{avg}%</span>
                           </div>
-                          <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
-                            <div className="h-2 rounded-full transition-all duration-700"
-                              style={{ width: `${avg}%`, backgroundColor: color }} />
+                          <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
+                            <div className="h-3 rounded-full transition-all duration-700"
+                              style={{
+                                width: `${avg}%`,
+                                background: `linear-gradient(90deg,${color},${color}CC)`,
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                              }} />
                           </div>
                         </div>
                       </div>
@@ -827,7 +895,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right sidebar */}
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0">
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: '1px solid #EDE9FE', boxShadow: '0 1px 4px rgba(139,92,246,0.06)' }}>
@@ -853,7 +921,7 @@ export default function Dashboard() {
             {!loading && <UpcomingDeadlines tasks={tasks} navigate={navigate} />}
 
             {/* Files Panel */}
-            <FilesPanel />
+            <FilesPanel projectId={projectId} navigate={navigate} />
 
             {/* Rubric Coverage */}
             <div className="bg-white rounded-2xl overflow-hidden"
@@ -864,8 +932,8 @@ export default function Dashboard() {
                   <span className="text-sm font-extrabold" style={{ color: '#EC4899' }}>{rubricCoverage}%</span>
                 </div>
                 {!loading && criteria.length > 0 && (
-                  <div className="w-full h-1.5 rounded-full mt-2 overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
-                    <div className="h-1.5 rounded-full transition-all duration-700"
+                  <div className="w-full h-2.5 rounded-full mt-2 overflow-hidden" style={{ backgroundColor: '#E9D5FF' }}>
+                    <div className="h-2.5 rounded-full transition-all duration-700"
                       style={{ width: `${rubricCoverage}%`, background: 'linear-gradient(90deg, #EC4899, #8B5CF6)' }} />
                   </div>
                 )}
@@ -914,6 +982,64 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {reassignTask && members.length > 0 && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center px-5"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+          onClick={() => !reassignSaving && setReassignTask(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 pt-6 pb-4" style={{ borderBottom: '1px solid #F5F3FF', background: 'linear-gradient(135deg,#F5F3FF,#FDF2F8)' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#8B5CF6' }}>Reassign task</p>
+                  <p className="text-sm font-bold leading-snug" style={{ color: '#1C1829' }}>{reassignTask.title}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={reassignSaving}
+                  onClick={() => setReassignTask(null)}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: 'white', color: '#8B5CF6', border: '1px solid #EDE9FE' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 space-y-2 max-h-[min(60vh,320px)] overflow-y-auto">
+              <p className="text-xs font-semibold mb-1" style={{ color: '#A09BB8' }}>Assign to:</p>
+              {members
+                .filter((m) => m.id !== reassignTask.member_id)
+                .map((m, mi) => {
+                  const col = MEMBER_COLORS[mi % MEMBER_COLORS.length];
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={reassignSaving}
+                      onClick={() => patchTaskMember(reassignTask.id, m.id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all"
+                      style={{ border: '1.5px solid #EDE9FE', backgroundColor: 'white' }}
+                    >
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${col}, ${col}bb)` }}
+                      >
+                        {dashInitials(m.name)}
+                      </div>
+                      <span className="text-sm font-semibold flex-1 truncate" style={{ color: '#1C1829' }}>{m.name}</span>
+                      {reassignSaving && <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: '#8B5CF6' }} />}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}

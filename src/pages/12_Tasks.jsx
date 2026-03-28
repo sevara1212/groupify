@@ -3,7 +3,7 @@ import {
   CheckCircle, Calendar, Loader2, Users, Target,
   Circle, Timer, ChevronDown, Sparkles, Filter,
   TrendingUp, Clock, ArrowUpRight, X, AlertTriangle,
-  ChevronRight, ChevronLeft,
+  ChevronRight, ChevronLeft, ArrowLeftRight,
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
@@ -66,10 +66,10 @@ function DeadlineTimeline({ tasks }) {
                 }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <Calendar size={10} style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }} />
-                  <span className="text-xs font-bold" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6' }}>
+                  <span className="text-sm font-extrabold tabular-nums" style={{ color: isOverdue ? '#B91C1C' : isUrgent ? '#B45309' : '#5B21B6' }}>
                     {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
                   </span>
-                  <span className="text-xs font-semibold ml-auto" style={{ color: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#A09BB8' }}>
+                  <span className="text-xs font-bold ml-auto tabular-nums" style={{ color: isOverdue ? '#DC2626' : isUrgent ? '#C2410C' : '#4B5563' }}>
                     {isOverdue ? `${Math.abs(daysLeft)}d late` : daysLeft === 0 ? 'Today' : `${daysLeft}d`}
                   </span>
                 </div>
@@ -77,11 +77,12 @@ function DeadlineTimeline({ tasks }) {
                 {task.member_name && (
                   <p className="text-xs truncate" style={{ color: '#A09BB8' }}>{task.member_name}</p>
                 )}
-                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
-                  <div className="h-full rounded-full transition-all"
+                <div className="mt-2 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: '#E9D5FF' }}>
+                  <div className="h-full rounded-full transition-all shadow-sm"
                     style={{
                       width: `${task.progress_percent || 0}%`,
-                      backgroundColor: isOverdue ? '#EF4444' : isUrgent ? '#D97706' : '#8B5CF6',
+                      background: isOverdue ? 'linear-gradient(90deg,#EF4444,#DC2626)' : isUrgent ? 'linear-gradient(90deg,#D97706,#EA580C)' : 'linear-gradient(90deg,#7C3AED,#8B5CF6)',
+                      boxShadow: '0 1px 3px rgba(124,58,237,0.35)',
                     }} />
                 </div>
               </div>
@@ -123,7 +124,7 @@ function StatusPill({ status, onChange, disabled }) {
 }
 
 /* ─── Task Detail Modal ─────────────────────────────── */
-function TaskDetailModal({ task, memberColor, onUpdate, onClose }) {
+function TaskDetailModal({ task, memberColor, members = [], onUpdate, onClose }) {
   const [localStatus, setLocalStatus] = useState(task.status || 'todo');
   const [localProgress, setLocalProgress] = useState(task.progress_percent || 0);
   const [saving, setSaving] = useState(false);
@@ -217,6 +218,40 @@ function TaskDetailModal({ task, memberColor, onUpdate, onClose }) {
             </div>
           )}
 
+          {/* Reassign — persisted via PATCH member_id */}
+          {members.length > 1 && (
+            <div className="rounded-xl p-4" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <ArrowLeftRight size={14} style={{ color: '#2563EB' }} />
+                <p className="text-xs font-bold" style={{ color: '#1D4ED8' }}>Reassign to teammate</p>
+              </div>
+              <p className="text-[11px] mb-3" style={{ color: '#64748B' }}>Saved on the server — everyone sees the update.</p>
+              <div className="flex flex-wrap gap-2">
+                {members.filter((m) => m.id !== task.member_id).map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={saving}
+                    onClick={async () => {
+                      await handleSave({ member_id: m.id });
+                      onClose();
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                    style={{ border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#1C1829' }}
+                  >
+                    <span
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-extrabold flex-shrink-0"
+                      style={{ background: m.color }}
+                    >
+                      {getInitials(m.name)}
+                    </span>
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Status */}
           <div>
             <p className="text-xs font-bold mb-2" style={{ color: '#6B7280' }}>Status</p>
@@ -248,9 +283,13 @@ function TaskDetailModal({ task, memberColor, onUpdate, onClose }) {
                 <span className="text-xs font-bold" style={{ color: '#6B7280' }}>Progress</span>
                 <span className="text-sm font-extrabold" style={{ color: '#8B5CF6' }}>{localProgress}%</span>
               </div>
-              <div className="relative h-3 rounded-full mb-3" style={{ backgroundColor: '#EDE9FE' }}>
-                <div className="h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${localProgress}%`, background: 'linear-gradient(90deg, #8B5CF6, #EC4899)' }} />
+              <div className="relative h-3.5 rounded-full mb-3 overflow-hidden" style={{ backgroundColor: '#E9E0FF' }}>
+                <div className="h-3.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${localProgress}%`,
+                    background: 'linear-gradient(90deg, #6D28D9, #EC4899)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(109,40,217,0.35)',
+                  }} />
               </div>
               <div className="flex justify-between gap-1">
                 {[0, 25, 50, 75, 100].map(v => (
@@ -282,7 +321,7 @@ function TaskDetailModal({ task, memberColor, onUpdate, onClose }) {
 }
 
 /* ─── Task Row ───────────────────────────────────── */
-function TaskRow({ task, memberColor, onUpdate, isLast }) {
+function TaskRow({ task, memberColor, members, onUpdate, isLast }) {
   const [updating, setUpdating] = useState(false);
   const [localStatus, setLocalStatus] = useState(task.status || 'todo');
   const [showDetail, setShowDetail] = useState(false);
@@ -334,11 +373,14 @@ function TaskRow({ task, memberColor, onUpdate, isLast }) {
                 </span>
               )}
               {task.due_date && (
-                <span className="text-xs font-medium flex items-center gap-1"
-                  style={{ color: overdue ? '#EF4444' : daysLeft !== null && daysLeft <= 3 ? '#D97706' : '#A09BB8' }}>
-                  <Calendar size={9} />
+                <span className="text-xs font-bold flex items-center gap-1 tabular-nums px-2 py-0.5 rounded-md"
+                  style={{
+                    color: overdue ? '#991B1B' : daysLeft !== null && daysLeft <= 3 ? '#9A3412' : '#374151',
+                    backgroundColor: overdue ? '#FEE2E2' : daysLeft !== null && daysLeft <= 3 ? '#FFEDD5' : '#F3F4F6',
+                  }}>
+                  <Calendar size={10} strokeWidth={2.5} />
                   {new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
-                  {overdue ? ' (overdue)' : daysLeft === 0 ? ' (today)' : daysLeft !== null && daysLeft <= 3 ? ` (${daysLeft}d)` : ''}
+                  {overdue ? ' · overdue' : daysLeft === 0 ? ' · today' : daysLeft !== null && daysLeft <= 3 ? ` · ${daysLeft}d` : ''}
                 </span>
               )}
             </div>
@@ -357,13 +399,30 @@ function TaskRow({ task, memberColor, onUpdate, isLast }) {
 
           {/* Progress bar mini */}
           {localStatus === 'in_progress' && (
-            <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0 w-20">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
-                <div className="h-1.5 rounded-full" style={{ width: `${task.progress_percent || 0}%`, backgroundColor: '#8B5CF6' }} />
+            <div className="hidden sm:flex items-center gap-2 flex-shrink-0 w-28">
+              <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E9E0FF' }}>
+                <div
+                  className="h-3 rounded-full transition-all"
+                  style={{
+                    width: `${task.progress_percent || 0}%`,
+                    background: 'linear-gradient(90deg,#6D28D9,#8B5CF6)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(109,40,217,0.35)',
+                  }}
+                />
               </div>
-              <span className="text-xs font-bold w-8 text-right" style={{ color: '#8B5CF6' }}>{task.progress_percent || 0}%</span>
+              <span className="text-xs font-extrabold w-9 text-right tabular-nums" style={{ color: '#5B21B6' }}>{task.progress_percent || 0}%</span>
             </div>
           )}
+
+          <button
+            type="button"
+            className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all sm:hidden"
+            style={{ border: '1px solid #EDE9FE', color: '#8B5CF6' }}
+            title="Reassign"
+            onClick={(e) => { e.stopPropagation(); setShowDetail(true); }}
+          >
+            <ArrowLeftRight size={14} />
+          </button>
 
           {/* Status pill */}
           <div onClick={e => e.stopPropagation()}>
@@ -376,6 +435,7 @@ function TaskRow({ task, memberColor, onUpdate, isLast }) {
         <TaskDetailModal
           task={{ ...task, status: localStatus }}
           memberColor={memberColor}
+          members={members}
           onUpdate={async (id, updates) => {
             await onUpdate(id, updates);
             if (updates.status) setLocalStatus(updates.status);
@@ -388,7 +448,7 @@ function TaskRow({ task, memberColor, onUpdate, isLast }) {
 }
 
 /* ─── Status Section ─────────────────────────────── */
-function StatusSection({ column, tasks, memberColorMap, onUpdate, collapsed, onToggle }) {
+function StatusSection({ column, tasks, memberColorMap, members, onUpdate, collapsed, onToggle }) {
   const cfg = STATUS_CONFIG[column.key];
   if (tasks.length === 0 && column.key !== 'todo') return null;
 
@@ -417,7 +477,7 @@ function StatusSection({ column, tasks, memberColorMap, onUpdate, collapsed, onT
         <div>
           {tasks.map((task, idx) => (
             <TaskRow key={task.id} task={task} memberColor={memberColorMap[task.member_id]}
-              onUpdate={onUpdate} isLast={idx === tasks.length - 1} />
+              members={members} onUpdate={onUpdate} isLast={idx === tasks.length - 1} />
           ))}
         </div>
       )}
@@ -449,19 +509,22 @@ export default function Tasks() {
   const fetchTasks = useCallback(async () => {
     if (!projectId) { setLoading(false); return; }
     try {
-      const res = await fetch(`${API}/projects/${projectId}/tasks`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const all = (data.tasks || []).map(t => ({ ...t, status: t.status || 'todo' }));
+      const [tasksRes, memRes] = await Promise.all([
+        fetch(`${API}/projects/${projectId}/tasks`),
+        fetch(`${API}/projects/${projectId}/members`),
+      ]);
+      if (!tasksRes.ok) return;
+      const data = await tasksRes.json();
+      const all = (data.tasks || []).map((t) => ({ ...t, status: t.status || 'todo' }));
       setTasks(all);
-      const seen = {};
-      all.forEach(t => {
-        if (t.member_id && !seen[t.member_id]) {
-          seen[t.member_id] = { id: t.member_id, name: t.member_name, color: MEMBER_COLORS[Object.keys(seen).length % MEMBER_COLORS.length] };
-        }
-      });
-      setMembers(Object.values(seen));
-    } catch {}
+      let memJson = { members: [] };
+      if (memRes.ok) memJson = await memRes.json();
+      const withColors = (memJson.members || []).map((m, i) => ({
+        ...m,
+        color: MEMBER_COLORS[i % MEMBER_COLORS.length],
+      }));
+      setMembers(withColors);
+    } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [projectId]);
 
@@ -472,14 +535,21 @@ export default function Tasks() {
   }, [fetchTasks]);
 
   const handleUpdateTask = async (taskId, updates) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
     try {
-      await fetch(`${API}/projects/${projectId}/tasks/${taskId}`, {
+      const res = await fetch(`${API}/projects/${projectId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-    } catch {}
+      if (!res.ok) return;
+      if (updates.member_id) {
+        await fetchTasks();
+        return;
+      }
+      const body = await res.json();
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...body } : t)));
+    } catch { /* ignore */ }
   };
 
   const memberColorMap = {};
@@ -518,7 +588,7 @@ export default function Tasks() {
               <h1 className="text-2xl font-extrabold text-white" style={{ letterSpacing: '-0.02em' }}>
                 {loading ? 'Loading…' : `${doneCount} of ${tasks.length} tasks done`}
               </h1>
-              <p className="text-white/60 text-sm mt-1">Click any task to see details · Click status pill to update</p>
+              <p className="text-white/60 text-sm mt-1">Open a task to reassign someone · Status pill cycles progress</p>
             </div>
 
             {!loading && tasks.length > 0 && (
@@ -620,6 +690,7 @@ export default function Tasks() {
               const colTasks = col.key === 'todo' ? todoTasks : col.key === 'in_progress' ? inProgressTasks : doneTasks;
               return (
                 <StatusSection key={col.key} column={col} tasks={colTasks} memberColorMap={memberColorMap}
+                  members={members}
                   onUpdate={handleUpdateTask}
                   collapsed={collapsed[col.key]}
                   onToggle={() => setCollapsed(p => ({ ...p, [col.key]: !p[col.key] }))} />
@@ -657,9 +728,13 @@ export default function Tasks() {
                             <p className="text-sm font-bold truncate" style={{ color: '#111827' }}>{m.name}</p>
                             <span className="text-xs font-extrabold ml-2 flex-shrink-0" style={{ color: m.color }}>{p}%</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FE' }}>
-                            <div className="h-1.5 rounded-full transition-all duration-700"
-                              style={{ width: `${p}%`, backgroundColor: m.color }} />
+                          <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
+                            <div className="h-3 rounded-full transition-all duration-700"
+                              style={{
+                                width: `${p}%`,
+                                background: `linear-gradient(90deg,${m.color},${m.color}CC)`,
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                              }} />
                           </div>
                           <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
                             {done}/{mt.length} done{inProg > 0 ? ` · ${inProg} in progress` : ''}

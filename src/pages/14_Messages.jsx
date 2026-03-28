@@ -327,17 +327,20 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F7FF' }}>
+    <div
+      className="flex flex-col min-h-0"
+      style={{ backgroundColor: '#F8F7FF', height: 'calc(100dvh - 3.5rem)' }}
+    >
 
       {/* ── Hero Header ── */}
-      <div className="relative overflow-hidden"
+      <div className="relative overflow-hidden flex-shrink-0 z-0"
         style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #EC4899 100%)' }}>
         <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
           style={{ background: 'white', transform: 'translate(30%, -50%)' }} />
         <div className="absolute bottom-0 left-12 w-32 h-32 rounded-full opacity-10"
           style={{ background: 'white', transform: 'translate(-20%, 50%)' }} />
 
-        <div className="max-w-5xl mx-auto px-6 py-6 relative">
+        <div className="max-w-5xl mx-auto px-6 py-5 relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -437,31 +440,30 @@ export default function Messages() {
       )}
 
       {/* ── Main content ── */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-4"
-        style={{ height: 'calc(100vh - 56px - 120px)', display: 'flex', flexDirection: 'column' }}>
+      <main className="flex-1 min-h-0 flex flex-col max-w-5xl mx-auto w-full px-4 sm:px-6 pb-4 pt-3">
 
-        <div className="flex-1 flex gap-4 overflow-hidden">
+        <div className="flex-1 min-h-0 flex gap-3 md:gap-4 overflow-hidden">
 
           {/* ── Chat panel ── */}
-          <div className="flex-1 bg-white rounded-2xl flex flex-col overflow-hidden"
-            style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 16px rgba(139,92,246,0.06)' }}>
+          <div className="flex-1 min-h-0 min-w-0 bg-white rounded-2xl flex flex-col overflow-hidden shadow-sm"
+            style={{ border: '1px solid #EDE9FE', boxShadow: '0 2px 16px rgba(139,92,246,0.06)', maxHeight: '100%' }}>
 
             {/* Messages area */}
-            <div ref={scrollRef} className="flex-1 px-5 py-4 overflow-y-auto" style={{ scrollBehavior: 'smooth' }}>
+            <div ref={scrollRef} className="flex-1 min-h-0 px-4 sm:px-5 py-3 overflow-y-auto overscroll-contain" style={{ scrollBehavior: 'smooth' }}>
               {loading ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
+                <div className="flex flex-col items-center justify-center min-h-[10rem] gap-3 py-8">
                   <Loader2 size={24} className="animate-spin" style={{ color: '#8B5CF6' }} />
-                  <p className="text-sm font-medium" style={{ color: '#A09BB8' }}>Loading messages…</p>
+                  <p className="text-sm font-medium" style={{ color: '#6B6584' }}>Loading messages…</p>
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-4">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                <div className="flex flex-col items-center justify-center min-h-[12rem] py-8 gap-3">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
                     style={{ background: 'linear-gradient(135deg, #F5F3FF, #FDF2F8)', border: '1px solid #EDE9FE' }}>
-                    <MessageSquare size={24} style={{ color: '#C4B5FD' }} />
+                    <MessageSquare size={22} style={{ color: '#C4B5FD' }} />
                   </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold mb-1" style={{ color: '#1C1829' }}>No messages yet</p>
-                    <p className="text-xs" style={{ color: '#A09BB8' }}>Start the conversation with your group!</p>
+                  <div className="text-center px-2">
+                    <p className="text-sm font-bold mb-0.5" style={{ color: '#1C1829' }}>No messages yet</p>
+                    <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: '#6B6584' }}>Start the conversation with your group.</p>
                   </div>
                 </div>
               ) : (

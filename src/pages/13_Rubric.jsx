@@ -245,7 +245,7 @@ export default function Rubric() {
           backgroundSize: '28px 28px',
         }} />
 
-        <div className="max-w-4xl mx-auto px-6 pt-8 pb-14 relative">
+        <div className="max-w-4xl mx-auto px-6 pt-8 pb-10 relative z-0">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-3">
@@ -292,7 +292,7 @@ export default function Rubric() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 pb-12 -mt-6">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 pb-12 pt-8 relative z-10">
 
         {/* Filter tabs */}
         {!loading && criteria.length > 0 && (
