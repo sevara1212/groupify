@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import projects, rubric_extraction, quiz_generation, allocation, risks
+from routers import projects, rubric_extraction, quiz_generation, allocation, risks, auth
 
 app = FastAPI(title="Groupify API")
 
@@ -40,8 +40,18 @@ app.include_router(rubric_extraction.router, prefix="/api")
 app.include_router(quiz_generation.router, prefix="/api")
 app.include_router(allocation.router, prefix="/api")
 app.include_router(risks.router, prefix="/api")
-
+app.include_router(auth.router, prefix="/api")
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        ssl_certfile="certs/server.crt",
+        ssl_keyfile="certs/server.key",
+    )

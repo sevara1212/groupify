@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
-const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'https://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
 const COVERAGE = {
   covered:     { label: 'Covered',     color: '#10B981', bg: '#ECFDF5', border: '#6EE7B7',  icon: CheckCircle, dot: '#10B981' },

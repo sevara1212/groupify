@@ -6,10 +6,51 @@ import {
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabase';
 
-const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
+const API = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'https://localhost:8000/api' : 'https://groupify-fuq7.onrender.com/api');
 
 const MEMBER_COLORS = ['#8B5CF6', '#EC4899', '#D97706', '#0EA5E9', '#0D9488', '#6366F1'];
+// ── E2EE Helpers ─────────────────────────────────────────────────────────────
+const E2EE_KEY_RAW = "groupify-e2ee-shared-key-32bytes!"; // 32 chars = 256-bit
 
+async function getKey() {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(E2EE_KEY_RAW), { name: "PBKDF2" }, false, ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: enc.encode("groupify-salt"), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptMessage(text) {
+  const key = await getKey();
+  const enc = new TextEncoder();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(text));
+  const combined = new Uint8Array(iv.byteLength + encrypted.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(encrypted), iv.byteLength);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptMessage(encoded) {
+  try {
+    const combined = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const data = combined.slice(12);
+    const key = await getKey();
+    const dec = new TextDecoder();
+    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+    return dec.decode(decrypted);
+  } catch {
+    return encoded; // fallback: show as-is if decryption fails
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 function getColorForName(name) {
   if (!name) return MEMBER_COLORS[0];
   let hash = 0;
@@ -186,7 +227,13 @@ export default function Messages() {
           console.error('Supabase fetch error:', fetchErr);
           setError(`Could not load messages: ${fetchErr.message}`);
         } else {
-          setMessages(data || []);
+          const decrypted = await Promise.all(
+            (data || []).map(async (msg) => ({
+              ...msg,
+              _decrypted: await decryptMessage(msg.text),
+            }))
+          );
+          setMessages(decrypted);
         }
       } catch (err) {
         if (!cancelled) setError('Could not connect to the database.');
@@ -236,6 +283,7 @@ export default function Messages() {
   const send = async () => {
     if (!text.trim() || !projectId) return;
     const messageText = text.trim();
+    const encryptedText = await encryptMessage(messageText);
     setText('');
     setSending(true);
 
@@ -257,7 +305,7 @@ export default function Messages() {
         project_id: projectId,
         member_id: currentMemberId || null,
         author_name: authorName,
-        text: messageText,
+        text: encryptedText,
       }).select().single();
 
       if (sendErr) {
@@ -520,7 +568,7 @@ export default function Messages() {
                                 borderBottomLeftRadius: sameAuthorAsPrev ? 16 : 4,
                                 border: '1px solid #EDE9FE',
                               }}>
-                              {m.text}
+                              {m._decrypted || m.text}
                             </div>
                           </div>
                         </div>
