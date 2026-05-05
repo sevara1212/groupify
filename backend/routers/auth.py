@@ -37,3 +37,26 @@ def login(payload: LoginPayload):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     return {"message": "Login successful", "username": payload.username}
+
+
+import sqlite3
+
+def setup_demo_db():
+    conn = sqlite3.connect(':memory:')
+    conn.execute('CREATE TABLE users (username TEXT, password TEXT)')
+    conn.execute("INSERT INTO users VALUES ('admin', 'secret123')")
+    conn.commit()
+    return conn
+
+demo_db = setup_demo_db()
+
+@router.post("/auth/vulnerable-login")
+def vulnerable_login(payload: LoginPayload):
+    # DELIBERATELY VULNERABLE — never do this in real code
+    query = f"SELECT * FROM users WHERE username='{payload.username}' AND password='{payload.password}'"
+    print(f"Executing query: {query}")  # show the query on screen
+    cursor = demo_db.execute(query)
+    result = cursor.fetchone()
+    if result:
+        return {"message": "Login successful", "user": result[0]}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
