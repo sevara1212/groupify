@@ -255,11 +255,12 @@ export default function Messages() {
         schema: 'public',
         table: 'messages',
         filter: `project_id=eq.${projectId}`,
-      }, (payload) => {
+      }, async (payload) => {
         // Deduplicate — avoid adding if we already inserted optimistically
+        const decryptedNew = { ...payload.new, _decrypted: await decryptMessage(payload.new.text) };
         setMessages(prev => {
           if (prev.some(m => m.id === payload.new.id)) return prev;
-          return [...prev, payload.new];
+          return [...prev, decryptedNew];
         });
         setTimeout(scrollToBottom, 50);
       })
@@ -316,8 +317,9 @@ export default function Messages() {
         setError('Failed to send message. Check your connection.');
         setTimeout(() => setError(null), 4000);
       } else if (data) {
-        // Replace optimistic with real message
-        setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data : m));
+        // Replace optimistic with real message (decrypted)
+        const decryptedData = { ...data, _decrypted: await decryptMessage(data.text) };
+        setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? decryptedData : m));
       }
     } catch {
       setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
@@ -349,7 +351,10 @@ export default function Messages() {
         if (fetchErr) {
           setError(`Could not load messages: ${fetchErr.message}`);
         } else {
-          setMessages(data || []);
+          const decrypted = await Promise.all(
+            (data || []).map(async (msg) => ({ ...msg, _decrypted: await decryptMessage(msg.text) }))
+          );
+          setMessages(decrypted);
         }
       } catch {
         setError('Could not connect to the database.');
